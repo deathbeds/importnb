@@ -1,10 +1,5 @@
 from nbconvert.exporters.notebook import NotebookExporter
-try:
-    from IPython.core.compilerop import CachingCompiler
-except:
-    try: __import__('pytest').skip()
-    except: ...
-
+from IPython.core.compilerop import CachingCompiler
 from dataclasses import dataclass, field
 from nbformat import NotebookNode
 import ast
