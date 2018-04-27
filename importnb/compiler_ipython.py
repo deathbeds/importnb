@@ -2,7 +2,9 @@ from nbconvert.exporters.notebook import NotebookExporter
 try:
     from IPython.core.compilerop import CachingCompiler
 except:
-    pytestmark = pytest.mark.skipif(...)
+    try:
+        pytestmark = pytest.mark.skipif(...)
+    except: ...
 
 from dataclasses import dataclass, field
 from nbformat import NotebookNode
