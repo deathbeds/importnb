@@ -9,7 +9,7 @@ install:
 - pip install -r requirements.txt
 - python -m pip install dist/importnb-*.tar.gz --ignore-installed --no-deps
 - echo "Run Python tests\n"
-- pytest  tests/__init__.py importnb/*.py --doctest-modules --verbose --cov=importnb
+- python -m pytest --  tests/__init__.py importnb/*.py --doctest-modules --verbose --cov=importnb
 - pip install -r requirements-test.txt
 - mkdir -p tests/PythonDataScienceHandbook/notebooks
 - wget https://raw.githubusercontent.com/jakevdp/PythonDataScienceHandbook/master/notebooks/02.02-The-Basics-Of-NumPy-Arrays.ipynb -O tests/PythonDataScienceHandbook/notebooks/_02_The_Basics_Of_NumPy_Arrays.ipynb
