@@ -10,7 +10,7 @@ install:
 - python -m pip install dist/importnb-*.tar.gz --ignore-installed --no-deps
 
 script:
-- detox
+- tox
 
 deploy:
   provider: pypi

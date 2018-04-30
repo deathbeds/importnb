@@ -2,4 +2,4 @@ dataclasses
 black
 pytest
 pytest-cov
-detox
+tox
