@@ -23,6 +23,8 @@ setup_args = dict(
     url="https://github.com/deathbeds/importnb",
     python_requires=">=3.6",
     license="BSD-3-Clause",
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
     install_requires=[
         "dataclasses",
         "nbconvert",
