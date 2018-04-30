@@ -15,7 +15,7 @@ install:
 - wget https://raw.githubusercontent.com/jakevdp/PythonDataScienceHandbook/master/notebooks/02.02-The-Basics-Of-NumPy-Arrays.ipynb -O tests/PythonDataScienceHandbook/notebooks/_02_The_Basics_Of_NumPy_Arrays.ipynb
 script:
 - echo "Run IPython tests\n"
-- ipython setup.py -- pytest
+- ipython setup.py -- pytest --verbose
 # Make the PythonDataScienceHandbook structure
 deploy:
   provider: pypi
