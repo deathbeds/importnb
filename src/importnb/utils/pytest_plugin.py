@@ -28,5 +28,5 @@ if __name__ ==  '__main__':
     except:
         from importnb.compiler_python import ScriptExporter
     from pathlib import Path
-    Path('pytest_plugin.py').write_text(ScriptExporter().from_filename('pytest_plugin.ipynb')[0])
+    Path('../../importnb/utils/pytest_plugin.py').write_text(ScriptExporter().from_filename('pytest_plugin.ipynb')[0])
 
