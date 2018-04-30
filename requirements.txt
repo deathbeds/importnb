@@ -1,5 +1,4 @@
 dataclasses
-nbconvert
 black
 pytest
 pytest-cov
