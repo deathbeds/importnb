@@ -1,6 +1,14 @@
 from pathlib import Path
 import setuptools
 
+test_requires = ['pytest']
+
+try:
+    from IPython import get_ipython
+    get_ipython() and test_requires.append('ipython')
+except: ...
+
+
 name = "importnb"
 
 __version__ = None
@@ -24,7 +32,7 @@ setup_args = dict(
     python_requires=">=3.6",
     license="BSD-3-Clause",
     setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
+    tests_require=test_requires,
     install_requires=[
         "dataclasses",
         "nbconvert",
