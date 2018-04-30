@@ -43,9 +43,7 @@ setup_args = dict(
     ),
     zip_safe=False,
     entry_points = {
-        'pytest11': [
-            'pytest-importnb = importnb.pytest_plugin',
-        ]
+        'pytest11': ['pytest-importnb = importnb.utils.pytest_plugin',]
     },
 )
 
