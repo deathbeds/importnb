@@ -8,15 +8,11 @@ install:
 - python setup.py bdist_wheel
 - pip install -r requirements.txt
 - python -m pip install dist/importnb-*.tar.gz --ignore-installed --no-deps
-- mkdir -p tests/PythonDataScienceHandbook/notebooks
-- wget https://raw.githubusercontent.com/jakevdp/PythonDataScienceHandbook/master/notebooks/02.02-The-Basics-Of-NumPy-Arrays.ipynb -O tests/PythonDataScienceHandbook/notebooks/_02_The_Basics_Of_NumPy_Arrays.ipynb
+- pip install detox tox-travis
+
 script:
-- echo "Run Python tests\n"
-- python setup.py pytest
-- echo "Run IPython tests\n"
-- pip install ipython
-- ipython setup.py -- pytest --verbose
-# Make the PythonDataScienceHandbook structure
+- detox
+
 deploy:
   provider: pypi
   user: docfast
