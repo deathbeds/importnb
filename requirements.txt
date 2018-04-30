@@ -3,3 +3,5 @@ nbconvert
 black
 pytest
 pytest-cov
+detox
+tox-travis

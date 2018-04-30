@@ -8,7 +8,6 @@ install:
 - python setup.py bdist_wheel
 - pip install -r requirements.txt
 - python -m pip install dist/importnb-*.tar.gz --ignore-installed --no-deps
-- pip install detox tox-travis
 
 script:
 - detox
