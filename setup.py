@@ -7,7 +7,7 @@ __version__ = None
 
 here = Path(__file__).parent
 
-exec((here / name / "_version.py").read_text())
+exec((here / 'src' / name / "_version.py").read_text())
 
 setup_args = dict(
     name=name,
