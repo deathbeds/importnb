@@ -58,9 +58,18 @@ Notebooks maybe reloaded with the standard Python Import machinery.
     
 This extension will install a script into the default IPython profile startup that is called each time an IPython session is created.  
 
+#### Command
+
+After the `importnb` extension is created notebooks can be execute from the command line.
+
+    ipython -m readme
+
+### Unloading the Extension
+
 The default settings may be discarded temporarily with
 
     %unload_ext importnb
+    
 
 ### py.test
 
@@ -80,17 +89,12 @@ The default settings may be discarded temporarily with
 
 
 ```python
-    from pathlib import Path
-```
-
-
-```python
     if __name__ == '__main__':
         from pathlib import Path
         import black
         from nbconvert.exporters.markdown import MarkdownExporter
         from importnb.compiler_python import ScriptExporter
-        for path in Path('src/importnb').glob('*.ipynb'):
+        for path in Path('src/notebooks/').glob('*.ipynb'):
             (Path('src/importnb') / path.with_suffix('.py').name).write_text(
                 black.format_str(ScriptExporter().from_filename(path)[0], 100))
         for path in map(Path, ('readme.ipynb', 'changelog.ipynb')):
@@ -100,9 +104,9 @@ The default settings may be discarded temporarily with
 
 ```
 
-    ..xx....
+    ..xx...s
     ----------------------------------------------------------------------
-    Ran 8 tests in 2.082s
+    Ran 8 tests in 2.022s
     
-    OK (expected failures=2)
+    OK (skipped=1, expected failures=2)
 
