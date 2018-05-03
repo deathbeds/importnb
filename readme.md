@@ -94,8 +94,9 @@ The default settings may be discarded temporarily with
         import black
         from nbconvert.exporters.markdown import MarkdownExporter
         from importnb.compiler_python import ScriptExporter
-        for path in Path('src/notebooks/').rglob("*-[!'checkpoint'].ipynb"):
-            (Path('src/importnb') / path.with_suffix('.py')).write_text(
+        for path in Path('src/notebooks/').rglob("""*.ipynb"""):
+            print(path)
+            (Path('src/importnb') / path.with_suffix('.py').relative_to('src/notebooks')).write_text(
                 black.format_str(ScriptExporter().from_filename(path)[0], 100))
         for path in map(Path, ('readme.ipynb', 'changelog.ipynb')):
             path.with_suffix('.md').write_text(MarkdownExporter().from_filename(path)[0])
@@ -103,6 +104,16 @@ The default settings may be discarded temporarily with
         __import__('unittest').main(module='tests', argv="discover".split(), exit=False)
 
 ```
+
+    src/notebooks/compiler_ipython.ipynb
+    src/notebooks/compiler_python.ipynb
+    src/notebooks/decoder.ipynb
+    src/notebooks/exporter.ipynb
+    src/notebooks/loader.ipynb
+    src/notebooks/utils/ipython.ipynb
+    src/notebooks/utils/pytest_plugin.ipynb
+    src/notebooks/utils/setup.ipynb
+
 
     ..xx...s
     ----------------------------------------------------------------------
