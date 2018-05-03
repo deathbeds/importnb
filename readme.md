@@ -94,8 +94,9 @@ The default settings may be discarded temporarily with
         import black
         from nbconvert.exporters.markdown import MarkdownExporter
         from importnb.compiler_python import ScriptExporter
-        for path in Path('src/notebooks/').rglob("*-[!'checkpoint'].ipynb"):
-            (Path('src/importnb') / path.with_suffix('.py')).write_text(
+        for path in Path('src/notebooks/').rglob("""*.ipynb"""):
+            
+            'checkpoint' not in str(path) and (Path('src/importnb') / path.with_suffix('.py').relative_to('src/notebooks')).write_text(
                 black.format_str(ScriptExporter().from_filename(path)[0], 100))
         for path in map(Path, ('readme.ipynb', 'changelog.ipynb')):
             path.with_suffix('.md').write_text(MarkdownExporter().from_filename(path)[0])
@@ -104,9 +105,9 @@ The default settings may be discarded temporarily with
 
 ```
 
-    ..xx...s
+    ..xu...s
     ----------------------------------------------------------------------
-    Ran 8 tests in 2.026s
+    Ran 8 tests in 1.014s
     
-    OK (skipped=1, expected failures=2)
+    FAILED (skipped=1, expected failures=1, unexpected successes=1)
 
