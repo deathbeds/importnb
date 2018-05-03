@@ -9,7 +9,7 @@ __importnb__ supports the ability to use Jupyter notebooks as python source.
 
 
 ```python
-    %reload_ext importnb
+    %reload_ext importnb    
     foo = 42
     import readme
     assert readme.foo is 42
@@ -27,11 +27,9 @@ Notebooks maybe reloaded with the standard Python Import machinery.
         reload(readme)
 ```
 
+## Unload the extension
 
-```python
-    %%capture
     %unload_ext importnb
-```
 
 ## Context Manager
 
@@ -101,13 +99,21 @@ The default settings may be discarded temporarily with
         for path in map(Path, ('readme.ipynb', 'changelog.ipynb')):
             path.with_suffix('.md').write_text(MarkdownExporter().from_filename(path)[0])
 
-        __import__('unittest').main(module='tests', argv="discover".split(), exit=False)
+        __import__('unittest').main(module='tests', argv="discover --verbose".split(), exit=False)
 
 ```
 
-    ..xu...s
+    test_import (tests.test_.TestContext) ... ok
+    test_reload_with_context (tests.test_.TestContext) ... ok
+    test_reload_without_context (tests.test_.TestContext) ... unexpected success
+    test_failure (tests.test_.TestExtension) ... expected failure
+    test_import (tests.test_.TestExtension) ... ok
+    test_exception (tests.test_.TestPartial) ... ok
+    test_traceback (tests.test_.TestPartial) ... ok
+    test_imports (tests.test_.TestRemote) ... skipped 'requires IP'
+    
     ----------------------------------------------------------------------
-    Ran 8 tests in 1.014s
+    Ran 8 tests in 3.026s
     
     FAILED (skipped=1, expected failures=1, unexpected successes=1)
 
