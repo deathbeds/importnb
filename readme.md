@@ -7,9 +7,10 @@ __importnb__ supports the ability to use Jupyter notebooks as python source.
 
 ## Jupyter Extension
 
+    %reload_ext importnb    
+
 
 ```python
-    %reload_ext importnb    
     foo = 42
     import readme
     assert readme.foo is 42
@@ -21,10 +22,7 @@ Notebooks maybe reloaded with the standard Python Import machinery.
 
 ```python
     from importnb import Notebook, reload
-    
-    if __name__ == '__main__':
-        %reload_ext importnb
-        reload(readme)
+    reload(readme)
 ```
 
 ## Unload the extension
@@ -35,11 +33,8 @@ Notebooks maybe reloaded with the standard Python Import machinery.
 
 
 ```python
-    try:  
-        reload(readme)
-        assert False, """Reload will not work without the extension."""
-    except: ...
     with Notebook(): 
+        import readme
         reload(readme)
 ```
 
@@ -105,7 +100,7 @@ The default settings may be discarded temporarily with
 
     test_import (tests.test_.TestContext) ... ok
     test_reload_with_context (tests.test_.TestContext) ... ok
-    test_reload_without_context (tests.test_.TestContext) ... unexpected success
+    test_reload_without_context (tests.test_.TestContext) ... skipped 'importnb is probably installed'
     test_failure (tests.test_.TestExtension) ... expected failure
     test_import (tests.test_.TestExtension) ... ok
     test_exception (tests.test_.TestPartial) ... ok
@@ -113,7 +108,7 @@ The default settings may be discarded temporarily with
     test_imports (tests.test_.TestRemote) ... skipped 'requires IP'
     
     ----------------------------------------------------------------------
-    Ran 8 tests in 3.026s
+    Ran 8 tests in 2.021s
     
-    FAILED (skipped=1, expected failures=1, unexpected successes=1)
+    OK (skipped=2, expected failures=1)
 
