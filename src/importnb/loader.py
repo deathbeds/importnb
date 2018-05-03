@@ -69,12 +69,8 @@ class Notebook(SourceFileLoader, ImportContextMixin):
 
     def exec_module(Loader, module):
         module.__output__ = None
-        try:
-            from IPython import get_ipython
-
-            module.__dict__["get_ipython"] = get_ipython
-        except:
-            ...
+        if __IPYTHON__:
+            module.get_ipython = get_ipython
 
         if __IPYTHON__ and Loader.capture:
             return Loader.exec_module_capture(module)
@@ -132,5 +128,5 @@ if __name__ == "__main__":
         from compiler_python import ScriptExporter
     from pathlib import Path
 
-    Path("loader.py").write_text(ScriptExporter().from_filename("loader.ipynb")[0])
+    Path("../importnb/loader.py").write_text(ScriptExporter().from_filename("loader.ipynb")[0])
     __import__("doctest").testmod()
