@@ -4,6 +4,7 @@ except:
     from decoder import LineNoDecoder
 
 __file__ = globals().get("__file__", "exporter.ipynb")
+__nb__ = __file__.replace("src/importnb", "src/notebooks")
 
 __IPYTHON__ = False
 try:
@@ -37,7 +38,7 @@ from dataclasses import dataclass
 class Code(NotebookExporter, Compiler):
     """An exporter than returns transforms a NotebookNode through the InputSplitter.
 
-    >>> assert type(Code().from_filename(Path(__file__).with_suffix('.ipynb'))) is NotebookNode"""
+    >>> assert type(Code().from_filename(Path(__nb__).with_suffix('.ipynb'))) is NotebookNode"""
     filename: str = "<module exporter>"
     name: str = "__main__"
     decoder: type = LineNoDecoder
@@ -69,7 +70,7 @@ class Code(NotebookExporter, Compiler):
 class AST(Code):
     """An exporter than returns parsed ast.
 
-    >>> assert type(AST().from_filename(Path(__file__).with_suffix('.ipynb'))) is ast.Module"""
+    >>> assert type(AST().from_filename(Path(__nb__).with_suffix('.ipynb'))) is ast.Module"""
 
     def from_notebook_node(AST, nb: NotebookNode, resource: dict = None, **dict):
         return AST.ast_transform(
@@ -94,7 +95,7 @@ class AST(Code):
 class Compile(AST):
     """An exporter that returns compiled and cached bytecode.
 
-    >>> assert Compile().from_filename(Path(__file__).with_suffix('.ipynb'))"""
+    >>> assert Compile().from_filename(Path(__nb__).with_suffix('.ipynb'))"""
 
     def from_notebook_node(Compile, nb, resources: dict = None, **dict):
         return Compile.compile(super().from_notebook_node(nb, resources, **dict))
@@ -104,5 +105,5 @@ if __name__ == "__main__":
     from pathlib import Path
     from nbconvert.exporters.script import ScriptExporter
 
-    Path("exporter.py").write_text(ScriptExporter().from_filename("exporter.ipynb")[0])
+    Path("../importnb/exporter.py").write_text(ScriptExporter().from_filename("exporter.ipynb")[0])
     __import__("doctest").testmod()
