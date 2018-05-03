@@ -19,10 +19,8 @@ except:
     ...
 
 
-def update_path_hooks(loader: SourceFileLoader, extensions: tuple = None, lazy=False):
+def add_path_hooks(loader: SourceFileLoader, extensions: tuple, lazy=False):
     """Update the FileFinder loader in sys.path_hooks to accomodate a {loader} with the {extensions}"""
-    from importlib.util import LazyLoader
-
     for id, hook in enumerate(sys.path_hooks):
         try:
             closure = inspect.getclosurevars(hook).nonlocals
@@ -30,33 +28,40 @@ def update_path_hooks(loader: SourceFileLoader, extensions: tuple = None, lazy=F
             continue
         if issubclass(closure["cls"], FileFinder):
             sys.path_hooks.pop(id)
-            sys.path_hooks.insert(
-                id,
-                FileFinder.path_hook(
-                    *(
-                        ((lazy and LazyLoader.factory(loader) or loader, extensions),)
-                        if (loader and extensions)
-                        else tuple()
-                    )
-                    + tuple(
-                        (cls, ext)
-                        for cls, ext in closure["loader_details"]
-                        if not issubclass(
-                            cls, loader
-                        )  # Need to add logic for lazy loaders before they may be introduced.
-                    )
-                ),
-            )
+            loader_details = list(closure["loader_details"])
+            loader_details.insert(0, (loader, extensions))
+            sys.path_hooks.insert(id, FileFinder.path_hook(*loader_details))
+    sys.path_importer_cache.clear()
+
+
+def remove_single_path_hook(loader):
+    for id, hook in enumerate(sys.path_hooks):
+        try:
+            closure = inspect.getclosurevars(hook).nonlocals
+        except TypeError:
+            continue
+        if issubclass(closure["cls"], FileFinder):
+            sys.path_hooks.pop(id)
+            loader_details = list()
+            cls_found = 0
+            for cls, ext in closure["loader_details"]:
+                if issubclass(cls, loader):
+                    if cls_found:
+                        loader_details.append((cls, ext))
+                    cls_found += 1
+                else:
+                    loader_details.append((cls, ext))
+            sys.path_hooks.insert(id, FileFinder.path_hook(*loader_details))
     sys.path_importer_cache.clear()
 
 
 class ImportContextMixin:
 
     def __enter__(self):
-        update_path_hooks(type(self), self.EXTENSION_SUFFIXES)
+        add_path_hooks(type(self), self.EXTENSION_SUFFIXES)
 
     def __exit__(self, exception_type=None, exception_value=None, traceback=None):
-        update_path_hooks(type(self))
+        remove_single_path_hook(type(self))
 
 
 class Notebook(SourceFileLoader, ImportContextMixin):
@@ -69,8 +74,6 @@ class Notebook(SourceFileLoader, ImportContextMixin):
 
     def exec_module(Loader, module):
         module.__output__ = None
-        if __IPYTHON__:
-            module.get_ipython = get_ipython
 
         if __IPYTHON__ and Loader.capture:
             return Loader.exec_module_capture(module)
@@ -115,6 +118,12 @@ class Partial(Notebook):
 
 def load_ipython_extension(ip=None):
     Notebook().__enter__()
+    try:
+        from IPython import get_ipython
+
+        ip.user_ns["get_ipython"] = get_ipython
+    except:
+        ...
 
 
 def unload_ipython_extension(ip=None):
