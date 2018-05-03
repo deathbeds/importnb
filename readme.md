@@ -106,7 +106,7 @@ The default settings may be discarded temporarily with
 
     ..xx...s
     ----------------------------------------------------------------------
-    Ran 8 tests in 2.023s
+    Ran 8 tests in 2.026s
     
     OK (skipped=1, expected failures=2)
 
