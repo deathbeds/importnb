@@ -7,7 +7,7 @@ __importnb__ supports the ability to use Jupyter notebooks as python source.
 
 ## Jupyter Extension
 
-    %reload_ext importnb    
+    %load_ext importnb    
 
 
 ```python
@@ -22,7 +22,7 @@ Notebooks maybe reloaded with the standard Python Import machinery.
 
 ```python
     from importnb import Notebook, reload
-    reload(readme)
+    reload(readme);
 ```
 
 ## Unload the extension
