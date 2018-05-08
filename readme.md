@@ -101,8 +101,9 @@ When the default extension is loaded any notebook can be run from the command li
 For example, create a file called `tricks.yaml` containing
 
     tricks:
-    - patterns: ['*.ipynb']
-      shell_command: ipython -m ${watch_dest_path}
+    - importnb.utils.watch.ModuleTrick:
+          patterns: ['*.ipynb']
+          shell_command: ipython -m ${watch_dest_path}
       
 #### Run the watcher in a terminal
 
