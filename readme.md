@@ -126,27 +126,40 @@ For example, create a file called `tricks.yaml` containing
         import black
         from importnb.compiler_python import ScriptExporter
         for path in Path('src/notebooks/').rglob("""*.ipynb"""):
-            
-            'checkpoint' not in str(path) and (Path('src/importnb') / path.with_suffix('.py').relative_to('src/notebooks')).write_text(
+            if 'checkpoint' not in str(path):
+                print(path)
+                (Path('src/importnb') / path.with_suffix('.py').relative_to('src/notebooks')).write_text(
                 black.format_str(ScriptExporter().from_filename(path)[0], 100))
             
         __import__('unittest').main(module='tests', argv="discover --verbose".split(), exit=False) 
 
 ```
 
-    test_import (tests.test_.TestContext) ... ok
-    test_reload_with_context (tests.test_.TestContext) ... ok
-    test_reload_without_context (tests.test_.TestContext) ... skipped 'importnb is probably installed'
-    test_failure (tests.test_.TestExtension) ... expected failure
-    test_import (tests.test_.TestExtension) ... ok
-    test_exception (tests.test_.TestPartial) ... ok
-    test_traceback (tests.test_.TestPartial) ... ok
-    test_imports (tests.test_.TestRemote) ... skipped 'requires IP'
+    src/notebooks/compiler_ipython.ipynb
+    src/notebooks/compiler_python.ipynb
+    src/notebooks/decoder.ipynb
+    src/notebooks/exporter.ipynb
+    src/notebooks/loader.ipynb
+    src/notebooks/utils/__init__.ipynb
+    src/notebooks/utils/ipython.ipynb
+    src/notebooks/utils/pytest_plugin.ipynb
+    src/notebooks/utils/setup.ipynb
+    src/notebooks/utils/watch.ipynb
+
+
+    test_import (tests.test_unittests.TestContext) ... ok
+    test_reload_with_context (tests.test_unittests.TestContext) ... ok
+    test_reload_without_context (tests.test_unittests.TestContext) ... skipped 'importnb is probably installed'
+    test_failure (tests.test_unittests.TestExtension) ... unexpected success
+    test_import (tests.test_unittests.TestExtension) ... ok
+    test_exception (tests.test_unittests.TestPartial) ... ok
+    test_traceback (tests.test_unittests.TestPartial) ... ok
+    test_imports (tests.test_unittests.TestRemote) ... skipped 'requires IP'
     
     ----------------------------------------------------------------------
-    Ran 8 tests in 2.018s
+    Ran 8 tests in 1.013s
     
-    OK (skipped=2, expected failures=1)
+    FAILED (skipped=2, unexpected successes=1)
 
 
 ### Format the Github markdown files
