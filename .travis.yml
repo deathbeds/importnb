@@ -35,5 +35,5 @@ deploy:
   github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
   local-dir: docs
   on:
-    branch: docs
+    branch: $TRAVIS_BRANCH
     python: '3.6'
