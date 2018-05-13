@@ -7,7 +7,16 @@ __version__ = None
 
 here = Path(__file__).parent
 
-exec((here / 'src' / name / "_version.py").read_text())
+# This should be replaced with proper pathlib business
+
+with here.open('r') as file
+    exec(file.read())
+
+description =""""""
+for name in ("readme.md", "changelog.md"):
+    with open(here/name).read() as file:
+        description += file.read()
+        description += "\n\n"
 
 setup_args = dict(
     name=name,
@@ -15,10 +24,7 @@ setup_args = dict(
     author="deathbeds",
     author_email="tony.fast@gmail.com",
     description="Import .ipynb files as modules in the system path.",
-    long_description=(
-        (here / "readme.md").read_text() + "\n\n" +
-        (here / "changelog.md").read_text()
-    ),
+    long_description=description,
     long_description_content_type='text/markdown',
     url="https://github.com/deathbeds/importnb",
     python_requires=">=3.4",
