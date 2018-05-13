@@ -13,8 +13,8 @@ with (here/ 'src' / 'importnb'/ '_version.py').open('r') as file:
     exec(file.read())
 
 description =""""""
-for name in ("readme.md", "changelog.md"):
-    with (here/name).open('r') as file:
+for info in ("readme.md", "changelog.md"):
+    with (here/info).open('r') as file:
         description += file.read()
         description += "\n\n"
 
