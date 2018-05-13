@@ -6,7 +6,11 @@ except:
     from utils import __IPYTHON__, export
 import inspect, sys
 from importlib.machinery import SourceFileLoader
-from importlib._bootstrap_external import FileFinder
+try: 
+    from importlib._bootstrap_external import FileFinder
+except:
+    #python 3.4
+    from importlib.machinery import FileFinder
 from importlib import reload
 from traceback import print_exc
 from contextlib import contextmanager
