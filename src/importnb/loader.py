@@ -44,7 +44,7 @@ def add_path_hooks(loader: SourceFileLoader, extensions, *, position=0, lazy=Fal
             if lazy: 
                 loader = LazyLoader.factory(loader)
         except:
-            raise ImportError("""LazyLoading is only available in > Python 3.5""")
+            ImportWarning("""LazyLoading is only available in > Python 3.5""")
         details.insert(position, (loader, extensions))
 
 def remove_one_path_hook(loader):
