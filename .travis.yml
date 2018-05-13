@@ -10,7 +10,6 @@ install:
 - python setup.py sdist
 - python setup.py bdist_wheel
 - pip install -r requirements.txt
-- pip uninstall importnb -y
 - python -m pip install dist/importnb-*.tar.gz --ignore-installed --no-deps
 
 script:
