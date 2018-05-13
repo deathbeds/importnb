@@ -6,6 +6,7 @@ except:
     from utils import __IPYTHON__, export
 import inspect, sys
 from importlib.machinery import SourceFileLoader
+from importlib.util import LazyLoader
 from importlib._bootstrap_external import FileFinder
 from importlib import reload
 from traceback import print_exc
@@ -38,6 +39,8 @@ def modify_file_finder_details():
 def add_path_hooks(loader: SourceFileLoader, extensions, *, position=0, lazy=False):
     """Update the FileFinder loader in sys.path_hooks to accomodate a {loader} with the {extensions}"""
     with modify_file_finder_details() as details:
+        if lazy:
+            loader = LazyLoader.factory(loader)
         details.insert(position, (loader, extensions))
 
 
@@ -45,17 +48,25 @@ def remove_one_path_hook(loader):
     with modify_file_finder_details() as details:
         _details = list(details)
         for ct, (cls, ext) in enumerate(_details):
+            cls = lazy_loader_cls(cls)
             if issubclass(cls, loader):
                 details.pop(ct)
                 break
+
+
+def lazy_loader_cls(loader):
+    """Extract the loader contents of a lazy loader in the import path."""
+    if not isinstance(loader, type) and callable(loader):
+        return inspect.getclosurevars(loader).nonlocals.get("cls", loader)
+    return loader
 
 
 class ImportContextManagerMixin:
     """A context maanager to add and remove loader_details from the path_hooks.
     """
 
-    def __enter__(self, position=0):
-        add_path_hooks(type(self), self.EXTENSION_SUFFIXES, position=position)
+    def __enter__(self, position=0, *, lazy=False):
+        add_path_hooks(type(self), self.EXTENSION_SUFFIXES, position=position, lazy=self.lazy)
 
     def __exit__(self, exception_type=None, exception_value=None, traceback=None):
         remove_one_path_hook(type(self))
@@ -65,13 +76,13 @@ class Notebook(SourceFileLoader, ImportContextManagerMixin):
     """A SourceFileLoader for notebooks that provides line number debugginer in the JSON source."""
     EXTENSION_SUFFIXES = ".ipynb",
 
-    def __init__(self, fullname=None, path=None, *, capture=True):
+    def __init__(self, fullname=None, path=None, *, capture=True, lazy=False):
         self.capture = capture
+        self.lazy = lazy
         super().__init__(fullname, path)
 
     def exec_module(Loader, module):
         module.__output__ = None
-
         if __IPYTHON__ and Loader.capture:
             return Loader.exec_module_capture(module)
         else:
