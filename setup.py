@@ -14,7 +14,7 @@ with (here/ 'src' / 'importnb'/ '_version.py').open('r') as file:
 
 description =""""""
 for name in ("readme.md", "changelog.md"):
-    with (here/name).read() as file:
+    with (here/name).open('r') as file:
         description += file.read()
         description += "\n\n"
 
