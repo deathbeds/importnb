@@ -9,7 +9,7 @@ here = Path(__file__).parent
 
 # This should be replaced with proper pathlib business
 
-with here.open('r') as file
+with here.open('r') as file:
     exec(file.read())
 
 description =""""""
