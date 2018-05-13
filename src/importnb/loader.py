@@ -65,8 +65,8 @@ class ImportContextManagerMixin:
     """A context maanager to add and remove loader_details from the path_hooks.
     """
 
-    def __enter__(self, position=0, *, lazy=False):
-        add_path_hooks(type(self), self.EXTENSION_SUFFIXES, position=position, lazy=self.lazy)
+    def __enter__(self, position=0):
+        add_path_hooks(type(self), self.EXTENSION_SUFFIXES, position=position, lazy=self._lazy)
 
     def __exit__(self, exception_type=None, exception_value=None, traceback=None):
         remove_one_path_hook(type(self))
@@ -76,22 +76,32 @@ class Notebook(SourceFileLoader, ImportContextManagerMixin):
     """A SourceFileLoader for notebooks that provides line number debugginer in the JSON source."""
     EXTENSION_SUFFIXES = ".ipynb",
 
-    def __init__(self, fullname=None, path=None, *, capture=True, lazy=False):
-        self.capture = capture
-        self.lazy = lazy
+    def __init__(
+        self, fullname=None, path=None, *, stdout=False, stderr=False, display=True, lazy=False
+    ):
+        self._lazy = lazy
+        self._stdout = stdout
+        self._stderr = stderr
+        self._display = display
         super().__init__(fullname, path)
 
-    def exec_module(Loader, module):
+    @property
+    def _capture(self):
+        return any((self._stdout, self._stderr, self._display))
+
+    def exec_module(self, module):
         module.__output__ = None
-        if __IPYTHON__ and Loader.capture:
-            return Loader.exec_module_capture(module)
+        if __IPYTHON__ and self._capture:
+            return self.exec_module_capture(module)
         else:
             return super().exec_module(module)
 
-    def exec_module_capture(Loader, module):
+    def exec_module_capture(self, module):
         from IPython.utils.capture import capture_output
 
-        with capture_output(stdout=False, stderr=False) as output:
+        with capture_output(
+            stdout=self._stdout, stderr=self._stderr, display=self._display
+        ) as output:
             try:
                 super().exec_module(module)
             except type("pass", (BaseException,), {}):
@@ -118,7 +128,7 @@ class Partial(Notebook):
                     )
                 )
             except ImportWarning as error:
-                if not loader.capture:
+                if not loader._capture:
                     print_exc()
                 module.__exception__ = exception
         return module
