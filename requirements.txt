@@ -1,4 +1,3 @@
-dataclasses
 black
 pytest
 pytest-cov

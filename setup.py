@@ -21,7 +21,7 @@ setup_args = dict(
     ),
     long_description_content_type='text/markdown',
     url="https://github.com/deathbeds/importnb",
-    python_requires=">=3.6",
+    python_requires=">=3.4",
     license="BSD-3-Clause",
     setup_requires=[
         'pytest-runner',
@@ -29,10 +29,8 @@ setup_args = dict(
         'twine>=1.11.0',
         'setuptools>=38.6.',
     ],
-    tests_require=['pytest'],
+    tests_require=['pytest', 'nbformat'],
     install_requires=[
-        "dataclasses",
-        "nbconvert",
         "watchdog",
     ],
     include_package_data=True,
