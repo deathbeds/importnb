@@ -6,7 +6,6 @@ except:
     from utils import __IPYTHON__, export
 import inspect, sys
 from importlib.machinery import SourceFileLoader
-from importlib.util import LazyLoader
 from importlib._bootstrap_external import FileFinder
 from importlib import reload
 from traceback import print_exc
@@ -36,7 +35,12 @@ def modify_file_finder_details():
 def add_path_hooks(loader: SourceFileLoader, extensions, *, position=0, lazy=False):
     """Update the FileFinder loader in sys.path_hooks to accomodate a {loader} with the {extensions}"""
     with modify_file_finder_details() as details:
-        if lazy: loader = LazyLoader.factory(loader)
+        try:
+            from importlib.util import LazyLoader
+            if lazy: 
+                loader = LazyLoader.factory(loader)
+        except:
+            raise ImportError("""LazyLoading is only available in > Python 3.5""")
         details.insert(position, (loader, extensions))
 
 def remove_one_path_hook(loader):
