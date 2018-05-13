@@ -18,6 +18,8 @@ for info in ("readme.md", "changelog.md"):
         description += file.read()
         description += "\n\n"
 
+import sys
+
 setup_args = dict(
     name=name,
     version=__version__,
@@ -31,10 +33,9 @@ setup_args = dict(
     license="BSD-3-Clause",
     setup_requires=[
         'pytest-runner',
-        'wheel>=0.31.0',
         'twine>=1.11.0',
         'setuptools>=38.6.',
-    ],
+    ] + ([] if sys.version_info.minor == 4 else ['wheel>=0.31.0']),
     tests_require=['pytest', 'nbformat'],
     install_requires=[
         "watchdog",
