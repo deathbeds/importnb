@@ -9,7 +9,7 @@ here = Path(__file__).parent
 
 # This should be replaced with proper pathlib business
 
-with (here/ 'src' / '_version.py').open('r') as file:
+with (here/ 'src' / 'importnb'/ '_version.py').open('r') as file:
     exec(file.read())
 
 description =""""""
