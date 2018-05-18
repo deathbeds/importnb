@@ -20,7 +20,7 @@ from traceback import print_exc, format_exc
 from warnings import warn
 from contextlib import contextmanager, ExitStack
 
-__all__ = "Notebook", "Partial", "reload",
+__all__ = "Notebook", "Partial", "reload", "Lazy"
 
 
 @contextmanager
