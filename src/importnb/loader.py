@@ -1,10 +1,10 @@
 try:
     from .exporter import Compile, AST
-    from .utils import __IPYTHON__, export
+    from .utils import __IPYTHON__
     from .capture import capture_output
 except:
     from exporter import Compile, AST
-    from utils import __IPYTHON__, export
+    from utils import __IPYTHON__
     from capture import capture_output
 import inspect, sys
 from importlib.machinery import SourceFileLoader
@@ -166,5 +166,9 @@ def unload_ipython_extension(ip=None):
 
 
 if __name__ == "__main__":
+    try:
+        from .utils import export
+    except:
+        from utils import export
     export("loader.ipynb", "../importnb/loader.py")
     __import__("doctest").testmod()
