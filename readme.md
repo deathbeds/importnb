@@ -159,6 +159,39 @@ For example, create a file called `tricks.yaml` containing
 
 ```
 
+    src/notebooks/capture.ipynb
+    src/notebooks/compiler_ipython.ipynb
+    src/notebooks/compiler_python.ipynb
+    src/notebooks/decoder.ipynb
+    src/notebooks/exporter.ipynb
+    src/notebooks/loader.ipynb
+    src/notebooks/Untitled.ipynb
+    src/notebooks/utils/__init__.ipynb
+    src/notebooks/utils/ipython.ipynb
+    src/notebooks/utils/pytest_plugin.ipynb
+
+
+    test_import (src.importnb.tests.test_unittests.TestContext) ... 
+
+    src/notebooks/utils/setup.ipynb
+    src/notebooks/utils/watch.ipynb
+
+
+    ok
+    test_reload_with_context (src.importnb.tests.test_unittests.TestContext) ... ok
+    test_reload_without_context (src.importnb.tests.test_unittests.TestContext) ... skipped 'importnb is probably installed'
+    test_failure (src.importnb.tests.test_unittests.TestExtension) ... expected failure
+    test_import (src.importnb.tests.test_unittests.TestExtension) ... ok
+    test_exception (src.importnb.tests.test_unittests.TestPartial) ... ok
+    test_traceback (src.importnb.tests.test_unittests.TestPartial) ... ok
+    test_imports (src.importnb.tests.test_unittests.TestRemote) ... skipped 'requires IP'
+    
+    ----------------------------------------------------------------------
+    Ran 8 tests in 2.015s
+    
+    OK (skipped=2, expected failures=1)
+
+
 ### Format the Github markdown files
 
 
