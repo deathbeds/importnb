@@ -100,16 +100,6 @@ When the default extension is loaded any notebook can be run from the command li
 
 `importnb` installs a pytest plugin when it is setup.  Any notebook obeying the py.test discovery conventions can be used in to pytest.  _This is great because notebooks are generally your first test._
 
-### Setuptools
-
-`importnb` provides a setuptool command that will place notebooks in a source distribution.  In setuptools, update the command classs with
-
-    from importnb.utils.setup import build_ipynb
-    setup(
-        ...,
-        cmdclass=dict(build_py=build_ipynb)
-        ...,)
-
 ### [Watchdog](https://github.com/gorakhargosh/watchdog/tree/master/src/watchdog/tricks)
 
     pip install importnb[watch]
@@ -169,11 +159,11 @@ For example, create a file called `tricks.yaml` containing
     src/notebooks/utils/__init__.ipynb
     src/notebooks/utils/ipython.ipynb
     src/notebooks/utils/pytest_plugin.ipynb
+    src/notebooks/utils/setup.ipynb
 
 
     test_import (src.importnb.tests.test_unittests.TestContext) ... 
 
-    src/notebooks/utils/setup.ipynb
     src/notebooks/utils/watch.ipynb
 
 
@@ -187,7 +177,7 @@ For example, create a file called `tricks.yaml` containing
     test_imports (src.importnb.tests.test_unittests.TestRemote) ... skipped 'requires IP'
     
     ----------------------------------------------------------------------
-    Ran 8 tests in 2.015s
+    Ran 8 tests in 2.024s
     
     OK (skipped=2, expected failures=1)
 
