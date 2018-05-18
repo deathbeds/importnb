@@ -65,6 +65,37 @@ The context manager is required to `reload` a module.
         import readme
 ```
 
+# Parameterize Notebooks
+
+Literal ast statements are converted to notebooks parameters.
+
+In `readme`, `foo` is a parameter because it may be evaluated with ast.literal_val
+
+
+```python
+    from importnb import Parameterize
+    f = Parameterize(readme)
+    
+```
+
+The parameterized module is a callable that evaluates with different literal statements.
+
+
+```python
+    assert callable(f)
+    f.__signature__
+```
+
+
+
+
+    <Signature (*, foo=42)>
+
+
+
+    assert f().foo == 42
+    assert f(foo='importnb').foo == 'importnb'
+
 ## Integrations
 
 
@@ -159,14 +190,19 @@ For example, create a file called `tricks.yaml` containing
     src/notebooks/decoder.ipynb
     src/notebooks/exporter.ipynb
     src/notebooks/loader.ipynb
+    src/notebooks/parameterize.ipynb
     src/notebooks/utils/__init__.ipynb
     src/notebooks/utils/ipython.ipynb
     src/notebooks/utils/pytest_plugin.ipynb
+
+    test_import (src.importnb.tests.test_unittests.TestContext) ... 
+
+    
     src/notebooks/utils/setup.ipynb
     src/notebooks/utils/watch.ipynb
 
 
-    test_import (src.importnb.tests.test_unittests.TestContext) ... ok
+    ok
     test_reload_with_context (src.importnb.tests.test_unittests.TestContext) ... ok
     test_failure (src.importnb.tests.test_unittests.TestExtension) ... expected failure
     test_import (src.importnb.tests.test_unittests.TestExtension) ... ok
@@ -175,7 +211,7 @@ For example, create a file called `tricks.yaml` containing
     test_imports (src.importnb.tests.test_unittests.TestRemote) ... skipped 'requires IP'
     
     ----------------------------------------------------------------------
-    Ran 7 tests in 2.019s
+    Ran 7 tests in 2.025s
     
     OK (skipped=1, expected failures=1)
 
