@@ -56,7 +56,7 @@ import ast, sys
 from copy import copy
 from importlib.machinery import SourceFileLoader
 from importlib.util import spec_from_loader
-
+from importlib._bootstrap import _installed_safely
 
 try:
     from importlib._bootstrap_external import decode_source
@@ -124,6 +124,7 @@ def from_resource(loader, file=None, resource=None, exec=True, **globals):
         else:
             file = Path(file or loader.path)
         name = (getattr(loader, "name", False) == "__main__" and "__main__") or file.stem
+
         if file.suffixes[-1] == ".ipynb":
             loader = loader(name, file)
         else:
@@ -140,7 +141,9 @@ def from_resource(loader, file=None, resource=None, exec=True, **globals):
 
         module = module_from_spec(spec_from_loader(name, loader))
         if exec:
+            stack.enter_context(_installed_safely(module))
             module.__loader__.exec_module(module, **globals)
+
     return module
 
 
@@ -231,6 +234,8 @@ class NotebookLoader(SourceFileLoader, PathHooksContext):
     from_filename = from_resource
 
     def __call__(self, fullname=None, path=None):
+        """The PathFinder calls this when looking for objects 
+        on the path."""
         self = copy(self)
         return SourceFileLoader.__init__(self, str(fullname), str(path)) or self
 
