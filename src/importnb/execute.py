@@ -107,13 +107,21 @@ class Interactive(Notebook):
                 node.body.clear()
                 return cell, node
 
-        _cell, _node = prev or ({}, {})
+        _cell, _node = prev or ({}, ast.Module())
 
         if cell["cell_type"] == "markdown":
+            """Leading markdown class/function cells become the docstring"""
             if getattr(_node, "body", False) and _cell.get("cell_type", None) == "markdown":
                 self._call_exec(ast.Expression(_node.body[0].value), module)
 
         if cell["cell_type"] == "code":
+            if _cell.get("cell_type", None) == "markdown":
+                if (
+                    isinstance(node.body[0], (ast.ClassDef, ast.FunctionDef))
+                    and ast.get_docstring(node.body[0]) is None
+                ):
+                    """Make a leading markdown cell the docstring"""
+                    node.body[0].body.insert(0, _node.body[0])
             # This is where we could assign function and class docstrings
             for expression in node.body:
                 """Evaluate one node at a time."""
@@ -197,6 +205,11 @@ class Execute(Interactive):
 
 if __name__ == "__main__":
     nb = Execute(display=True).from_filename("execute.ipynb", "importnb.notebooks")
+
+
+class f:
+    a = 10
+
 
 """# Developer
 """
