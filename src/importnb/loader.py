@@ -124,6 +124,7 @@ def from_resource(loader, file=None, resource=None, exec=True, **globals):
         else:
             file = Path(file or loader.path)
         name = (getattr(loader, "name", False) == "__main__" and "__main__") or file.stem
+        name = name.replace(".", "_")
 
         if file.suffixes[-1] == ".ipynb":
             loader = loader(name, file)
@@ -255,7 +256,7 @@ class NotebookLoader(SourceFileLoader, PathHooksContext):
             module.body.extend(node.body)
         return module
 
-    def source_to_code(self, object, path=None):
+    def source_to_code(self, object, path):
         nb = loads(decode_source(object))
         module = self.nb_to_ast(nb)
         return compile(module, path or "<importnb>", "exec")
