@@ -16,7 +16,7 @@ try:
     from importlib._bootstrap_external import FileFinder as _FileFinder
 except:
     # python 3.4
-    from importlib.machinery import FileFinder
+    from importlib.machinery import FileFinder as _FileFinder
 
 from contextlib import contextmanager, ExitStack
 
