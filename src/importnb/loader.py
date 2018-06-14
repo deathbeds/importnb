@@ -54,7 +54,7 @@ except:
 
 import ast, sys
 from copy import copy
-from importlib.machinery import SourceFileLoader
+from importlib.machinery import SourceFileLoader, ModuleSpec
 from importlib.util import spec_from_loader
 from importlib._bootstrap import _installed_safely
 
@@ -123,10 +123,16 @@ def from_resource(loader, file=None, resource=None, exec=True, **globals):
             file = Path(stack.enter_context(path(resource, file)))
         else:
             file = Path(file or loader.path)
+
         name = (getattr(loader, "name", False) == "__main__" and "__main__") or file.stem
         name = name.replace(".", "_")
 
         if file.suffixes[-1] == ".ipynb":
+            if any(map(str(file).startswith, ("http:", "https:"))):
+                file = str(file)
+                if "://" not in file:
+                    file = file.replace(":/", "://")
+
             loader = loader(name, file)
         else:
             loader = SourceFileLoader(name, str(file))
@@ -140,7 +146,9 @@ def from_resource(loader, file=None, resource=None, exec=True, **globals):
             except:
                 ImportWarning("""LazyLoading is only available in > Python 3.5""")
 
-        module = module_from_spec(spec_from_loader(name, loader))
+        spec = ModuleSpec(name, loader, origin=loader.path)
+        spec._set_fileattr = True
+        module = module_from_spec(spec)
         if exec:
             stack.enter_context(_installed_safely(module))
             module.__loader__.exec_module(module, **globals)
@@ -257,6 +265,9 @@ class NotebookLoader(SourceFileLoader, PathHooksContext):
         return module
 
     def source_to_code(self, object, path):
+        """Notebook uses source_to_code to get notebooks, while Interactive
+        objects use get_notebook.
+        """
         nb = loads(decode_source(object))
         module = self.nb_to_ast(nb)
         return compile(module, path or "<importnb>", "exec")
