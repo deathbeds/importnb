@@ -42,11 +42,9 @@ class FileFinder(_FileFinder):
 
             if "_" in fullname:
                 files = chain(
-                    Path(self.path).glob(fullname + "*"),
+                    Path(self.path).glob(fullname + ".*"),
                     Path(self.path).glob(
-                        fullname.replace("__", "*").replace("_", "?").__add__("*").replace(
-                            "**", "*"
-                        )
+                        fullname.replace("__", "*").replace("_", "?").__add__(".*")
                     ),
                 )
 
