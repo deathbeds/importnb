@@ -117,7 +117,8 @@ class Interactive(Notebook):
         if cell["cell_type"] == "code":
             if _cell.get("cell_type", None) == "markdown":
                 if (
-                    isinstance(node.body[0], (ast.ClassDef, ast.FunctionDef))
+                    getattr(node, "body", [])
+                    and isinstance(node.body[0], (ast.ClassDef, ast.FunctionDef))
                     and ast.get_docstring(node.body[0]) is None
                 ):
                     """Make a leading markdown cell the docstring"""
@@ -149,9 +150,12 @@ class Interactive(Notebook):
             module.__dict__,
         )
 
+    def set_notebook(self, module):
+        module._notebook = loads(self.get_data(self.path).decode("utf-8"))
+
     @advanced_exec_module
     def exec_module(self, module, **globals):
-        loader_include_notebook(self, module)
+        self.set_notebook(module)
         prev = None
         for cell, node in self._iter_cells(module._notebook):
             if module._exception:
