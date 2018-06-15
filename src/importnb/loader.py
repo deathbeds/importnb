@@ -376,7 +376,7 @@ class Notebook(ShellMixin, NotebookLoader):
 
 
 def load_ipython_extension(ip=None):
-    add_path_hooks(Notebook, Notebook.EXTENSION_SUFFIXES)
+    add_path_hooks(Notebook(shell=True), Notebook.EXTENSION_SUFFIXES)
 
 
 def unload_ipython_extension(ip=None):
