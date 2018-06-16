@@ -35,15 +35,17 @@ class RelativeImport(ast.NodeTransformer):
         return node
 
 
-def load_ipython_extension(ip):
-    unload_ipython_extension(ip)
-    ip.ast_transformers += [RelativeImport()]
+def load_ipython_extension(ip=None):
+    if ip:
+        unload_ipython_extension(ip)
+        ip.ast_transformers += [RelativeImport()]
 
 
 def unload_ipython_extension(ip):
-    ip.ast_transformers = [
-        object for object in ip.ast_transformers if not isinstance(object, RelativeImport)
-    ]
+    if ip:
+        ip.ast_transformers = [
+            object for object in ip.ast_transformers if not isinstance(object, RelativeImport)
+        ]
 
 
 if __name__ == "__main__":
