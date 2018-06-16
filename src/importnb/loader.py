@@ -317,13 +317,13 @@ class ShellMixin:
 
     def format(self, str):
         return (
-            self.shell and self._shell.input_transformer_manager.transform_cell or super().dedent
+            self._shell and self._shell.input_transformer_manager.transform_cell or super().dedent
         )(
             str
         )
 
     def visit(self, node):
-        if self.shell:
+        if self._shell:
             for visitor in self._shell.ast_transformers:
                 node = visitor.visit(node)
         return node
@@ -360,7 +360,7 @@ class Notebook(ShellMixin, NotebookLoader):
         globals=None,
         exceptions=ImportNbException,
         dir=None,
-        shell=None
+        shell=True
     ):
         super().__init__(fullname, path)
         self.stdout = stdout
