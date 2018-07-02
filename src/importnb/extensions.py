@@ -2,43 +2,78 @@
 """# Jupyter magic extensions
 """
 
-from .loader import Notebook
-from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
+"""    %importnb --stdout --stderr --display --shell
+"""
+
+import argparse
+from importlib import import_module
 
 
-@magics_class
-class ImportNbExtension(Magics):
+def get_module_object(str):
+    module, object = str.split(":", 1)
+    return getattr(import_module(module), object)
 
-    @line_magic
-    def lmagic(self, line):
-        "my line magic"
-        print("Full access to the main IPython object:", self.shell)
-        print("Variables in the user namespace:", list(self.shell.user_ns.keys()))
-        return line
 
-    @cell_magic
-    def cmagic(self, line, cell):
-        "my cell magic"
-        return line, cell
+parser = argparse.ArgumentParser(description="""Define the importnb loader properties.""")
+parser.add_argument("--stdout", action="store_false")
+parser.add_argument("--stderr", action="store_false")
+parser.add_argument("--display", action="store_false")
+parser.add_argument("--cls", type=get_module_object, default="importnb.Notebook")
+parser.add_argument("--fuzzy", action="store_true")
 
-    @line_cell_magic
-    def lcmagic(self, line, cell=None):
-        "Magic that works both as %lcmagic and as %%lcmagic"
-        if cell is None:
-            print("Called as line magic")
+"""    parser.parse_args("--stdout --cls importnb.execute:Execute".split())
+"""
+
+try:
+    from IPython.core import magic_arguments
+    from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
+
+    __IPYTHON__ = True
+except:
+    __IPYTHON__ = False
+
+if __IPYTHON__:
+
+    @magics_class
+    class ImportNbExtension(Magics):
+
+        def __init__(self, shell):
+            super().__init__(shell)
+
+        @line_magic
+        def importnb(self, line):
+            args = parser.parse_args(line.split())
             return line
-        else:
-            print("Called as cell magic")
+
+        @cell_magic
+        def cmagic(self, line, cell):
+            eval()
             return line, cell
+
+        @line_cell_magic
+        def lcmagic(self, line, cell=None):
+            "Magic that works both as %lcmagic and as %%lcmagic"
+            if cell is None:
+                print("Called as line magic")
+                return line
+            else:
+                print("Called as cell magic")
+                return line, cell
 
 
 def load_ipython_extension(ip=None):
-    add_path_hooks(Notebook(shell=True), Notebook.EXTENSION_SUFFIXES)
-    ip.register_magics(ImportNbExtension)
+    from .loader import Notebook
+
+    loader = Notebook(shell=True)
+    if ip:
+        ip.register_magics(ImportNbExtension)
+    loader.__enter__()
 
 
 def unload_ipython_extension(ip=None):
-    remove_one_path_hook(Notebook)
+    from .loader import Notebook
+
+    Notebook(shell=True).__exit__(None, None, None)
 
 
 """# Developer
@@ -50,5 +85,5 @@ if __name__ == "__main__":
     except:
         from .utils.export import export
     export("extensions.ipynb", "../extensions.py")
-    m = Notebook(shell=True).from_filename("extensions.ipynb")
-    print(__import__("doctest").testmod(m, verbose=2))
+    # m = Notebook(shell=True).from_filename('extensions.ipynb')
+    # print(__import__('doctest').testmod(m, verbose=2))

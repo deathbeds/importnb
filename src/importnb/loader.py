@@ -46,7 +46,8 @@ if globals().get("show", None):
     print("Catch me if you can")
 
 from .capture import capture_output
-from .path_hooks import PathHooksContext, modify_sys_path, add_path_hooks, remove_one_path_hook
+from .finder import BaseFinder
+from .extensions import load_ipython_extension, unload_ipython_extension
 from .shell import ShellMixin, dedent
 from .decoder import loads
 
@@ -157,23 +158,27 @@ def markdown_string_expression(cell):
     return ast.Module(body=[ast.Expr(ast.Str(s="".join(cell["source"])))])
 
 
-class NotebookLoader(SourceFileLoader, PathHooksContext):
+class NotebookLoader(SourceFileLoader, BaseFinder):
     """The simplest implementation of a Notebook Source File Loader.
     >>> with NotebookLoader():
     ...    from importnb.notebooks import loader
     >>> assert loader.__file__.endswith('.ipynb')
     """
-    EXTENSION_SUFFIXES = ".ipynb",
-    __slots__ = "name", "path",
+    extensions = ".ipynb",
+    __slots__ = "name", "path", "finder", "lazy"
 
-    def __init__(self, fullname=None, path=None):
+    def __init__(self, fullname=None, path=None, *, fuzzy=True, lazy=False, extensions=None):
         super().__init__(fullname, path)
-        PathHooksContext.__init__(self)
+        BaseFinder.__init__(self, fuzzy=fuzzy, lazy=lazy, extensions=extensions)
 
     def format(self, str):
+        """The default transformer dedents the code cell to make indented code 
+        valid Python.
+        """
         return dedent(str)
 
     def visit(self, node):
+        """A method that allows a NodeTransformer to modify code."""
         return node
 
     from_filename = from_resource
@@ -217,7 +222,7 @@ def advanced_exec_module(exec_module):
     """Decorate `SourceFileLoader.exec_module` objects with abilities to:
     * Capture output in Python and IPython
     * Prepopulate a model namespace.
-    * Allow exceptions while notebooks are loading.s
+    * Allow exceptions while notebooks are loading.
     
     >>> assert advanced_exec_module(SourceFileLoader.exec_module)
     """
@@ -253,7 +258,7 @@ class Notebook(ShellMixin, NotebookLoader):
     """
     EXTENSION_SUFFIXES = ".ipynb",
 
-    __slots__ = "stdout", "stderr", "display", "lazy", "exceptions", "globals", "dir", "shell"
+    __slots__ = "stdout", "stderr", "display", "lazy", "exceptions", "globals", "dir", "shell", "finder"
 
     def __init__(
         self,
@@ -267,9 +272,11 @@ class Notebook(ShellMixin, NotebookLoader):
         globals=None,
         exceptions=ImportNbException,
         dir=None,
-        shell=True
+        shell=True,
+        fuzzy=True,
+        extensions=None
     ):
-        super().__init__(fullname, path)
+        super().__init__(fullname, path, fuzzy=fuzzy, extensions=None)
         self.stdout = stdout
         self.stderr = stderr
         self.display = display
@@ -280,14 +287,6 @@ class Notebook(ShellMixin, NotebookLoader):
         self.shell = shell
 
     exec_module = advanced_exec_module(NotebookLoader.exec_module)
-
-
-def load_ipython_extension(ip=None):
-    add_path_hooks(Notebook(shell=True), Notebook.EXTENSION_SUFFIXES)
-
-
-def unload_ipython_extension(ip=None):
-    remove_one_path_hook(Notebook)
 
 
 """# Developer
