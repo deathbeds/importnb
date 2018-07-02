@@ -46,7 +46,7 @@ if globals().get("show", None):
     print("Catch me if you can")
 
 from .capture import capture_output
-from .finder import BaseFinder
+from .finder import BaseFinder, FileModuleSpec, FuzzySpec
 from .extensions import load_ipython_extension, unload_ipython_extension
 from .shell import ShellMixin, dedent
 from .decoder import loads
@@ -136,8 +136,7 @@ def from_resource(loader, file=None, resource=None, exec=True, **globals):
             except:
                 ImportWarning("""LazyLoading is only available in > Python 3.5""")
 
-        spec = ModuleSpec(name, loader, origin=loader.path)
-        spec._set_fileattr = True
+        spec = FileModuleSpec(name, loader, origin=loader.path)
         module = module_from_spec(spec)
         if exec:
             stack.enter_context(_installed_safely(module))
@@ -239,6 +238,9 @@ def advanced_exec_module(exec_module):
                 exec_module(loader, module)
             except loader.exceptions as Exception:
                 module._exception = Exception
+
+        if isinstance(module.__spec__, FuzzySpec):
+            sys.modules[module.__spec__.alias] = sys.modules[module.__name__]
 
     return _exec_module
 

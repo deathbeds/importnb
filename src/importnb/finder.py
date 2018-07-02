@@ -17,6 +17,26 @@ from contextlib import contextmanager, ExitStack
 
 from itertools import chain
 
+from importlib.machinery import SourceFileLoader, ModuleSpec
+
+
+class FileModuleSpec(ModuleSpec):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._set_fileattr = True
+
+
+class FuzzySpec(FileModuleSpec):
+
+    def __init__(
+        self, name, loader, *, alias=None, origin=None, loader_state=None, is_package=None
+    ):
+        super().__init__(
+            name, loader, origin=origin, loader_state=loader_state, is_package=is_package
+        )
+        self.alias = alias
+
 
 class FuzzyFinder(FileFinder):
     """Adds the ability to open file names with special characters using underscores."""
@@ -47,6 +67,16 @@ class FuzzyFinder(FileFinder):
                     spec = super().find_spec(
                         (original + "." + next(files).stem).lstrip("."), target=target
                     )
+                    fullname = (original + "." + fullname).lstrip(".")
+                    if fullname != spec.name:
+                        spec = FuzzySpec(
+                            spec.name,
+                            spec.loader,
+                            origin=spec.origin,
+                            loader_state=spec.loader_state,
+                            alias=fullname,
+                            is_package=bool(spec.submodule_search_locations),
+                        )
                 except StopIteration:
                     ...
         return spec
@@ -174,6 +204,3 @@ if __name__ == "__main__":
     except:
         from .utils.export import export
     export("finder.ipynb", "../finder.py")
-    import path_hooks
-
-    print(__import__("doctest").testmod(path_hooks))
