@@ -6,81 +6,71 @@ Many suggestions for importing notebooks use `sys.meta_paths`, but `importnb` re
 
 import inspect, sys, ast, os
 from pathlib import Path
-
-try:
+try:  
     from importlib._bootstrap_external import FileFinder
 except:
-    # python 3.4
+    #python 3.4
     from importlib.machinery import FileFinder
-
+    
 from contextlib import contextmanager, ExitStack
 
 from itertools import chain
 
 from importlib.machinery import SourceFileLoader, ModuleSpec
 
-
 class FileModuleSpec(ModuleSpec):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._set_fileattr = True
 
-
 class FuzzySpec(FileModuleSpec):
-
-    def __init__(
-        self, name, loader, *, alias=None, origin=None, loader_state=None, is_package=None
-    ):
-        super().__init__(
-            name, loader, origin=origin, loader_state=loader_state, is_package=is_package
-        )
+    def __init__(self, name, loader, *, alias=None, origin=None, loader_state=None, is_package=None):
+        super().__init__(name, loader, origin=origin, loader_state=loader_state, is_package=is_package)
         self.alias = alias
 
+def match_fuzzy_files(path, fullname):
+    return chain(
+        Path(path).glob(fullname + '.*'),
+        Path(path).glob(
+            fullname
+            .replace('__', '*').
+            replace('_', '?').__add__('.*')
+        ))
 
 class FuzzyFinder(FileFinder):
     """Adds the ability to open file names with special characters using underscores."""
-
     def find_spec(self, fullname, target=None):
         """Try to finder the spec and if it cannot be found, use the underscore starring syntax
         to identify potential matches.
         """
         spec = super().find_spec(fullname, target=target)
-
+        
         if spec is None:
             original = fullname
 
-            if "." in fullname:
-                original, fullname = fullname.rsplit(".", 1)
+            if '.' in fullname:
+                original, fullname = fullname.rsplit('.', 1)
             else:
-                original, fullname = "", original
+                original, fullname = '', original
 
-            if "_" in fullname:
-                files = chain(
-                    Path(self.path).glob(fullname + ".*"),
-                    Path(self.path).glob(
-                        fullname.replace("__", "*").replace("_", "?").__add__(".*")
-                    ),
-                )
-
-                try:
-                    spec = super().find_spec(
-                        (original + "." + next(files).stem).lstrip("."), target=target
-                    )
-                    fullname = (original + "." + fullname).lstrip(".")
-                    if fullname != spec.name:
+            if '_' in fullname:
+                files = match_fuzzy_files(self.path, fullname)
+                    
+                try: 
+                    spec = super().find_spec((
+                        original + "." + next(files).stem
+                    ).lstrip('.'), target=target)
+                    fullname = (original + "." + fullname).lstrip('.')
+                    if spec and fullname != spec.name:
                         spec = FuzzySpec(
-                            spec.name,
-                            spec.loader,
-                            origin=spec.origin,
-                            loader_state=spec.loader_state,
+                            spec.name, spec.loader, 
+                            origin=spec.origin, loader_state=spec.loader_state,
                             alias=fullname,
-                            is_package=bool(spec.submodule_search_locations),
+                            is_package=bool(spec.submodule_search_locations)
                         )
-                except StopIteration:
-                    ...
+                except StopIteration: ...
         return spec
-
+        
 
 @contextmanager
 def modify_file_finder_details(finder=FileFinder):
@@ -91,65 +81,60 @@ def modify_file_finder_details(finder=FileFinder):
     * This function is independent
     
     """
-
+    
     for id, hook in enumerate(sys.path_hooks):
         try:
             closure = inspect.getclosurevars(hook).nonlocals
-        except TypeError:
-            continue
-        if issubclass(closure["cls"], FileFinder):
+        except TypeError: continue
+        if issubclass(closure['cls'], FileFinder):
             sys.path_hooks.pop(id)
-            details = list(closure["loader_details"])
+            details = list(closure['loader_details'])
             yield details
             break
     sys.path_hooks.insert(id, finder.path_hook(*details))
     sys.path_importer_cache.clear()
 
-
 """Update the file_finder details with functions to append and remove the [loader details](https://docs.python.org/3.7/library/importlib.html#importlib.machinery.FileFinder).
 """
-
 
 def unwrap_loader(loader):
     """Extract the loader contents of a lazy loader in the import path."""
     try:
-        return inspect.getclosurevars(loader).nonlocals.get("cls", loader)
+        return inspect.getclosurevars(loader).nonlocals.get('cls', loader)
     except:
         return loader
-
 
 """The Finder with add a finder factory the sys.path closure containing the filefinder.
 """
 
-
 class BaseFinder(ExitStack):
-    __slots__ = "finder", "lazy"
-
+    __slots__ = 'finder', 'lazy'
+    extensions = tuple()
+    
     def __init__(self, *, fuzzy=True, lazy=False, extensions=None):
         self.finder = fuzzy and FuzzyFinder or FileFinder
         self.lazy = lazy
         self.extensions = extensions or self.extensions or tuple()
         super().__init__()
-
-    def __enter__(self, position=0):
+        
+    def __enter__(self, position=0):  
         self = super().__enter__()
         self.add_path_hooks(self.prepare(self), self.extensions, position=position)
-        if getattr(self, "dir", None):
+        if getattr(self, 'dir', None):
             self.enter_context(change_dir(self.dir))
             self.enter_context(modify_sys_path(self.dir))
         return self
-
-    def __exit__(self, *excepts):
+    
+    def __exit__(self, *excepts): 
         self.remove_one_path_hook(self)
         super().__exit__(*excepts)
 
     def prepare(self, loader):
         """Wrap the loader in a LazyLoader."""
-        if getattr(self, "lazy", None):
+        if getattr(self, 'lazy', None): 
             try:
                 from importlib.util import LazyLoader
-
-                if self.lazy:
+                if self.lazy: 
                     loader = LazyLoader.factory(loader)
             except:
                 ImportWarning("""LazyLoading is only available in > Python 3.5""")
@@ -172,7 +157,6 @@ class BaseFinder(ExitStack):
                     details.pop(ct)
                     break
 
-
 @contextmanager
 def change_dir(dir):
     next = Path().absolute()
@@ -182,7 +166,7 @@ def change_dir(dir):
         os.chdir(str(next))
     else:
         yield None
-
+    
 
 @contextmanager
 def modify_sys_path(file):
@@ -191,16 +175,14 @@ def modify_sys_path(file):
     if path not in map(str, map(Path, sys.path)):
         yield sys.path.insert(0, path)
         sys.path = [object for object in sys.path if str(Path(object)) != path]
-    else:
-        yield
-
+    else: yield
 
 """# Developer
 """
 
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("finder.ipynb", "../finder.py")
+if __name__ ==  '__main__':
+    try:  from utils.export import export
+    except: from .utils.export import export
+    export('finder.ipynb', '../finder.py')
+
+
