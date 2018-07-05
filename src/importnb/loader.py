@@ -80,7 +80,7 @@ except:
 
 from json.decoder import JSONObject, JSONDecoder, WHITESPACE, WHITESPACE_STR
 
-__all__ = "Notebook", "reload",
+__all__ = "Notebook", "reload"
 
 
 class ImportNbException(BaseException):
@@ -157,13 +157,17 @@ def markdown_string_expression(cell):
     return ast.Module(body=[ast.Expr(ast.Str(s="".join(cell["source"])))])
 
 
+import json
+
+
 class NotebookLoader(SourceFileLoader, BaseFinder):
     """The simplest implementation of a Notebook Source File Loader.
     >>> with NotebookLoader():
     ...    from importnb.notebooks import loader
     >>> assert loader.__file__.endswith('.ipynb')
     """
-    extensions = ".ipynb",
+
+    extensions = (".ipynb",)
     __slots__ = "name", "path", "finder", "lazy"
 
     def __init__(self, fullname=None, path=None, *, fuzzy=True, lazy=False, extensions=None):
@@ -208,7 +212,11 @@ class NotebookLoader(SourceFileLoader, BaseFinder):
         """Notebook uses source_to_code to get notebooks, while Interactive
         objects use get_notebook.
         """
-        nb = loads(decode_source(object))
+        source = decode_source(object)
+        if path.endswith(".py") or path.endswith(".pyi"):
+            source = '''{[{"source": "''' + json.dumps(source) + """, "cell_type": "code"}]}"""
+        if path.endswith(".ipynb"):
+            nb = loads(source)
         module = self.nb_to_ast(nb)
         return compile(module, path or "<importnb>", "exec")
 
@@ -258,9 +266,20 @@ class Notebook(ShellMixin, NotebookLoader):
     
     >>> assert Notebook().from_filename('loader.ipynb', 'importnb.notebooks')
     """
-    EXTENSION_SUFFIXES = ".ipynb",
 
-    __slots__ = "stdout", "stderr", "display", "lazy", "exceptions", "globals", "dir", "shell", "finder"
+    EXTENSION_SUFFIXES = (".ipynb",)
+
+    __slots__ = (
+        "stdout",
+        "stderr",
+        "display",
+        "lazy",
+        "exceptions",
+        "globals",
+        "dir",
+        "shell",
+        "finder",
+    )
 
     def __init__(
         self,
