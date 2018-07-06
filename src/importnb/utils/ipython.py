@@ -46,12 +46,13 @@ def uninstall(ip=None):
 
     with location.open('w') as file:  json.dump(config, file)
 
-def load_ipython_extension(ip):        
+def load_ipython_extension(ip):
     from ..loader import Notebook, reload
     from .relative import load_ipython_extension
-    Notebook(shell=ip).__enter__(position=-1)
+
+    Notebook(shell=False).__enter__(position=-1)
     load_ipython_extension(ip)
-    ip.user_ns['reload'] = ip.user_ns.get('reload', reload)
+    ip.user_ns["reload"] = ip.user_ns.get("reload", reload)
 
 if __name__ ==  '__main__':
     from importnb.utils.export import export
