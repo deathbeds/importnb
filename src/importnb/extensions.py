@@ -70,7 +70,6 @@ manager = None
 
 
 def load_ipython_extension(ip=None):
-    print("loaded")
     global manager
     from .execute import Interactive
 
