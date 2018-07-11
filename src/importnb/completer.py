@@ -45,12 +45,14 @@ def align_match(match, prefix, *, i=0):
 
 
 def predict_fuzzy(fullname):
-    package, paths, specs = "", [], []
+    package, paths, specs, extras = "", [], [], []
     if "." in fullname:
         package, fullname = fullname.rsplit(".", 1)
         fullname = fullname.strip()
         try:
-            paths.append(Path(__import__("importlib").import_module(package).__file__).parent)
+            module = __import__("importlib").import_module(package)
+            paths.append(Path(module.__file__).parent)
+            extras = [object for object in dir(module) if object.startswith("fullname")]
         except:
             ...
     else:
@@ -67,20 +69,19 @@ def predict_fuzzy(fullname):
     return set(
         (package and package + "." or "") + align_match(fuzzify_string(spec), fullname)
         for spec in specs
-    )
+    ).union(set(extras))
 
 
 def fuzzy_complete_event(self, event):
     event.line = event.line.lstrip()
     symbol = event.symbol
-    if "_" in symbol:
-        if event.line.startswith("from"):
-            if " import" in event.line:
-                package = event.line.split(" import ", 1)[0].lstrip().lstrip("from").lstrip()
-                symbol = (package + "." + symbol).lstrip(".")
-                return [object.lstrip(package).lstrip(".") for object in predict_fuzzy(symbol)]
-        return predict_fuzzy(symbol)
-    return []
+    if event.line.startswith("from"):
+        package = event.line.split(" import ", 1)[0].lstrip().lstrip("from").lstrip()
+        if " import" in event.line:
+            symbol = (package + "." + symbol).lstrip(".")
+            return [object.lstrip(package).lstrip(".") for object in predict_fuzzy(symbol)]
+
+    return predict_fuzzy(symbol)
 
 
 """* The extension adds the new fuzzy completer.  Our completer has a higher priority than the default completers.  Since we stripped the leading whitespace from the completion line event; the extension will permit completion on tabbed lines.
