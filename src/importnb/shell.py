@@ -20,7 +20,7 @@ class ShellMixin:
     def format(self, str): 
         shell = self._shell
         return (
-            self.shell and shell.input_transformer_manager.transform_cell
+            self.shell and shell and shell.input_transformer_manager.transform_cell
             or dedent
         )(str)
     
@@ -33,3 +33,5 @@ class ShellMixin:
 if __name__ ==  '__main__':
     from importnb.utils.export import export
     export('shell.ipynb', '../shell.py')
+
+
