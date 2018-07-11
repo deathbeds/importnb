@@ -74,8 +74,9 @@ def load_ipython_extension(ip=None):
     global manager
     from .execute import Interactive
 
-    manager = ImportNbExtension(ip, Interactive)
-    ip.register_magics(manager)
+    if ip:
+        manager = ImportNbExtension(ip, Interactive)
+        ip.register_magics(manager)
 
 
 def unload_ipython_extension(ip=None):
