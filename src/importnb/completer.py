@@ -4,10 +4,10 @@
 The fuzzy importer could be confusing and perhaps a completer could help.
 
     >>> ip = get_ipython(); load_ipython_extension(ip)
-    >>> assert ip.complete('deathbeds.__complete', 'import deathbeds.__complete')[0]
-    >>> assert ip.complete('__complete', 'import __complete')[0]
-    >>> assert ip.complete('req', '\timport req')[0]
-    >>> assert ip.complete('__complete', 'from deathbeds import __complete')[0]
+    >>> assert ip.complete('importnb.__ture', 'import importnb.__ture')[1]
+    >>> assert ip.complete('__capt__', 'import __capt__')[1]
+    >>> assert ip.complete('req', '\timport req')[1]
+    >>> assert ip.complete('__________capt__', 'from importnb import __________capt__')[1]
 """
 
 from .finder import fuzzy_file_search
@@ -19,8 +19,8 @@ import string
 """
 
 
-def fuzzify_string(str, *, fuzzified=""):
-    return str[0] in string.ascii_letters + "_" and str[0] or "_" + "".join(
+def fuzzify_string(str):
+    return (str[0] in string.ascii_letters + "_" and str[0] or "_") + "".join(
         letter if letter in string.ascii_letters + "_" + string.digits else "_"
         for letter in str[1:]
     )
@@ -31,10 +31,12 @@ def fuzzify_string(str, *, fuzzified=""):
 
 
 def align_match(match, prefix, *, i=0):
-    pattern = prefix.replace("__", " *").replace("_", "?").strip()
+    pattern = prefix.replace("__", "*").replace("_", "?").strip()
     for i in range(len(match)):
         if fnmatch(match[:i], pattern):
             break
+    else:
+        i += 1
     return prefix + match[i:]
 
 
@@ -68,21 +70,15 @@ def predict_fuzzy(fullname):
     )
 
 
-"""* The completion event requires a function with `self` & `event` .
-"""
-
-
 def fuzzy_complete_event(self, event):
     event.line = event.line.lstrip()
     symbol = event.symbol
     if "_" in symbol:
         if event.line.startswith("from"):
             if " import" in event.line:
-                package = event.line.split(" import", 1)[0].lstrip().lstrip("from").lstrip()
-                return [
-                    object.lstrip(package).lstrip(".")
-                    for object in predict_fuzzy(".".join((package, symbol)))
-                ]
+                package = event.line.split(" import ", 1)[0].lstrip().lstrip("from").lstrip()
+                symbol = (package + "." + symbol).lstrip(".")
+                return [object.lstrip(package).lstrip(".") for object in predict_fuzzy(symbol)]
         return predict_fuzzy(symbol)
     return []
 
@@ -104,5 +100,6 @@ if __name__ == "__main__":
     from .execute import Interactive
 
     export("completer.ipynb", "../completer.py")
+    ip = get_ipython()
     m = Interactive().from_filename("completer.ipynb")
     print(__import__("doctest").testmod(m, verbose=2))
