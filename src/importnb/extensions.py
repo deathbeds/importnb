@@ -18,11 +18,8 @@ parser = argparse.ArgumentParser(description="""Define the importnb loader prope
 parser.add_argument("--stdout", action="store_false")
 parser.add_argument("--stderr", action="store_false")
 parser.add_argument("--display", action="store_false")
-parser.add_argument("--cls", type=get_module_object, default="importnb.Notebook")
+parser.add_argument("--cls", type=get_module_object, default="importnb:Notebook")
 parser.add_argument("--fuzzy", action="store_true")
-
-"""    parser.parse_args("--stdout --cls importnb.execute:Execute".split())
-"""
 
 try:
     from IPython.core import magic_arguments
@@ -36,43 +33,54 @@ if __IPYTHON__:
 
     @magics_class
     class ImportNbExtension(Magics):
-        def __init__(self, shell):
+        loaders = None
+
+        def __init__(self, shell, loader=None):
             super().__init__(shell)
+            self.loaders = []
 
-        @line_magic
-        def importnb(self, line):
-            args = parser.parse_args(line.split())
-            return line
-
-        @cell_magic
-        def cmagic(self, line, cell):
-            eval()
-            return line, cell
+            # A default loader to install
+            if loader:
+                self.loaders.append(loader(shell=True).__enter__(-1))
 
         @line_cell_magic
-        def lcmagic(self, line, cell=None):
-            "Magic that works both as %lcmagic and as %%lcmagic"
+        def importnb(self, line, cell=None):
+            if line.strip() == "pop":
+                return self.pop()
+
+            details = vars(parser.parse_args(line.split()))
+            self.loaders.append(details.pop("cls")(**details))
+
             if cell is None:
-                print("Called as line magic")
-                return line
-            else:
-                print("Called as cell magic")
-                return line, cell
+                self.loaders[-1].__enter__(0)
+                return
+
+            with self.loaders.pop(-1):
+                self.parent.run_cell(cell)
+
+        def unload(self):
+            while self.loaders:
+                self.pop()
+
+        def pop(self):
+            self.loaders.pop().__exit__(None, None, None)
+
+
+manager = None
 
 
 def load_ipython_extension(ip=None):
-    from .loader import Notebook
+    print("loaded")
+    global manager
+    from .execute import Interactive
 
-    loader = Notebook(shell=True)
-    if ip:
-        ip.register_magics(ImportNbExtension)
-    loader.__enter__()
+    manager = ImportNbExtension(ip, Interactive)
+    ip.register_magics(manager)
 
 
 def unload_ipython_extension(ip=None):
-    from .loader import Notebook
-
-    Notebook(shell=True).__exit__(None, None, None)
+    global manager
+    manager and manager.unload()
 
 
 """# Developer
