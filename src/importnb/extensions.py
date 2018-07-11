@@ -29,19 +29,26 @@ try:
 except:
     __IPYTHON__ = False
 
+
+class ImportNbExtensionBase:
+    loaders = None
+
+    def __init__(self, shell, loader=None):
+        self.loaders = []
+        # A default loader to install
+        if loader:
+            self.loaders.append(loader(shell=True).__enter__(-1))
+
+
 if __IPYTHON__:
 
     @magics_class
-    class ImportNbExtension(Magics):
+    class ImportNbExtension(Magics, ImportNbExtensionBase):
         loaders = None
 
         def __init__(self, shell, loader=None):
-            super().__init__(shell)
-            self.loaders = []
-
-            # A default loader to install
-            if loader:
-                self.loaders.append(loader(shell=True).__enter__(-1))
+            Magics.__init__(self, shell)
+            ImportNbExtension.__init__(self, shell, loader)
 
         @line_cell_magic
         def importnb(self, line, cell=None):
@@ -66,6 +73,12 @@ if __IPYTHON__:
             self.loaders.pop().__exit__(None, None, None)
 
 
+else:
+
+    class ImportNbExtension(ImportNbExtensionBase):
+        ...
+
+
 manager = None
 
 
@@ -73,14 +86,13 @@ def load_ipython_extension(ip=None):
     global manager
     from .execute import Interactive
 
-    if ip:
-        manager = ImportNbExtension(ip, Interactive)
-        ip.register_magics(manager)
+    manager = ImportNbExtension(ip, Interactive)
+    ip and ip.register_magics(manager)
 
 
 def unload_ipython_extension(ip=None):
     global manager
-    manager and manager.unload()
+    ip and manager and manager.unload()
 
 
 """# Developer
