@@ -21,6 +21,7 @@ def pytest_addoption(parser):
     group.addoption(
         "--shell", action="store_false", help="Load notebooks with a shared transformer."
     )
+    group.addoption("--main", action="store_true", help="Run in the main context.")
 
 
 def pytest_collect_file(parent, path):
@@ -37,7 +38,10 @@ def pytest_collect_file(parent, path):
 class PytestModule(pytest.Module):
     def collect(self):
         global loader
-        with loader(shell=self.parent.config.option):
+        with loader(
+            self.parent.config.option.main and "__main__" or None,
+            shell=self.parent.config.option.shell,
+        ):
             return super().collect()
 
 
