@@ -20,6 +20,12 @@ from abc import ABCMeta, abstractmethod
 """
 
 
+def getframeinfo(object):
+    if __import__("sys").version_info.minor == 4:
+        return object[0]
+    return object.frame
+
+
 class state(metaclass=ABCMeta):
     """Base class for the state objects."""
 
@@ -27,7 +33,7 @@ class state(metaclass=ABCMeta):
         self.id = id
 
     def _retrieve_frames(self):
-        return [object.frame for object in getouterframes(currentframe())]
+        return [getframeinfo(object) for object in getouterframes(currentframe())]
 
     def _retrieve_caller_frame(self):
         """Frames in stack
@@ -166,7 +172,7 @@ def test_imported():
 
 
 if INTERACTIVE:
-    __import__("pytest").main("-s whereami.ipynb".split())
+    __import__("pytest").main("-s helpers.ipynb".split())
 
 if MAIN:
     from importnb.utils.export import export
