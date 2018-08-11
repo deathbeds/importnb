@@ -5,7 +5,7 @@ The fuzzy importer could be confusing and perhaps a completer could help.
 
     >>> ip = get_ipython(); load_ipython_extension(ip)
     >>> assert ip.complete('importnb.__ture', 'import importnb.__ture')[1]
-    >>> assert ip.complete('__capt__', 'import __capt__')[1]
+    >>> assert ip.complete('__find__', 'import __find__')[1]
     >>> assert ip.complete('req', '\timport req')[1]
     >>> assert ip.complete('__________capt__', 'from importnb import __________capt__')[1]
 """
@@ -69,9 +69,7 @@ def predict_fuzzy(fullname):
     return set(
         (package and package + "." or "") + align_match(fuzzify_string(spec), fullname)
         for spec in specs
-    ).union(
-        set(extras)
-    )
+    ).union(set(extras))
 
 
 def fuzzy_complete_event(self, event):
@@ -100,9 +98,9 @@ def load_ipython_extension(ip):
 
 if __name__ == "__main__":
     from .utils.export import export
-    from .execute import Interactive
+    from importnb import Notebook
 
     export("completer.ipynb", "../completer.py")
     ip = get_ipython()
-    m = Interactive().from_filename("completer.ipynb")
+    m = Notebook().from_filename("completer.ipynb")
     print(__import__("doctest").testmod(m, verbose=2))
