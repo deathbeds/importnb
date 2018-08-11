@@ -2,11 +2,11 @@
 import pytest
 
 try:
-    from .. import Interactive
+    from .. import Notebook
 except:
-    from importnb import Interactive
+    from importnb import Notebook
 
-loader = Interactive
+loader = Notebook
 
 
 def pytest_addoption(parser):
@@ -40,7 +40,7 @@ class PytestModule(pytest.Module):
         global loader
         with loader(
             self.parent.config.option.main and "__main__" or None,
-            shell=self.parent.config.option.shell,
+            _shell=self.parent.config.option.shell,
         ):
             return super().collect()
 
