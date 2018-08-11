@@ -36,6 +36,8 @@
 """
 
 from .loader import Notebook
+from .decoder import decoder
+from importlib.util import decode_source
 
 try:
     from importlib._bootstrap import _init_module_attrs
@@ -60,10 +62,13 @@ def urlopen(path):
 
 
 class RemoteMixin:
-
     def get_data(self, path):
         global _REMOTE_IMPORT_CACHE
-        return _REMOTE_IMPORT_CACHE.pop(path, urlopen(path)).read()
+        return decoder.decode(
+            decode_source(_REMOTE_IMPORT_CACHE.pop(path, urlopen(path)).read()),
+            self.path,
+            self.format,
+        )
 
     def __enter__(self):
         super().__enter__()
