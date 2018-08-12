@@ -25,7 +25,7 @@ def scanstring(s, end, strict=True, **kwargs):
 def quote(object, *, quotes="'''"):
     if quotes in object:
         quotes = '"""'
-    return quotes + object + quotes
+    return quotes + object + "\n" + quotes
 
 
 def object_pairs_hook(object) -> (slice, str):
