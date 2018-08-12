@@ -3,11 +3,12 @@
 
 The fuzzy importer could be confusing and perhaps a completer could help.
 
-    >>> ip = get_ipython(); load_ipython_extension(ip)
-    >>> assert ip.complete('importnb.__ture', 'import importnb.__ture')[1]
+    
+    >>> ip = __import__("IPython").get_ipython(); load_ipython_extension(ip)
+    >>> assert ip.complete('importnb.__pleter', 'import importnb.__pleter')[1]
     >>> assert ip.complete('__find__', 'import __find__')[1]
     >>> assert ip.complete('req', '\timport req')[1]
-    >>> assert ip.complete('__________capt__', 'from importnb import __________capt__')[1]
+    >>> assert ip.complete('_______________plet__', 'from importnb import _______________plet__')[1]\
 """
 
 from .finder import fuzzy_file_search
@@ -102,5 +103,5 @@ if __name__ == "__main__":
 
     export("completer.ipynb", "../completer.py")
     ip = get_ipython()
-    m = Notebook().from_filename("completer.ipynb")
+    m = Notebook.load("completer.ipynb")
     print(__import__("doctest").testmod(m, verbose=2))
