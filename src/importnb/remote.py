@@ -36,8 +36,9 @@
 """
 
 from .loader import Notebook
-from .decoder import decoder
+from .decoder import LineCacheNotebookDecoder
 from importlib.util import decode_source
+import sys
 
 try:
     from importlib._bootstrap import _init_module_attrs
@@ -51,7 +52,7 @@ except:
 
 import importlib.util, importlib.machinery, inspect, sys, types, urllib.error, urllib.request
 
-_REMOTE_IMPORT_CACHE = {}
+cache = {}
 
 
 def urlopen(path):
@@ -63,11 +64,9 @@ def urlopen(path):
 
 class RemoteMixin:
     def get_data(self, path):
-        global _REMOTE_IMPORT_CACHE
-        return decoder.decode(
-            decode_source(_REMOTE_IMPORT_CACHE.pop(path, urlopen(path)).read()),
-            self.path,
-            self.format,
+        global cache
+        return LineCacheNotebookDecoder(code=self.format).decode(
+            decode_source(cache.pop(path, urlopen(path)).read()), self.path
         )
 
     def __enter__(self):
@@ -80,14 +79,16 @@ class RemoteMixin:
         super().__exit__(*args)
 
     def find_spec(self, fullname, path=None, *args, **kwargs):
-        global _REMOTE_IMPORT_CACHE
-        if "." in fullname and fullname.split(".", 1)[0] in sys.modules:
-            return
+        global cache
+        # if '.' in fullname and fullname.split('.', 1)[0] in sys.modules:
+        #    return
 
         url = self.path.replace("*", fullname)
-        if url not in _REMOTE_IMPORT_CACHE or fullname in sys.modules:
-            _REMOTE_IMPORT_CACHE[url] = urlopen(url)
-            if _REMOTE_IMPORT_CACHE[url]:
+        if fullname in sys.modules:
+            return sys.modules[fullname].__spec__
+        if url not in cache:
+            cache[url] = urlopen(url)
+            if cache[url]:
                 spec = importlib.machinery.ModuleSpec(
                     fullname, type(self)(fullname, url), origin=url
                 )
@@ -95,11 +96,11 @@ class RemoteMixin:
                 return spec
 
 
-class Remote(RemoteMixin, Notebook):
+class RemoteBase(RemoteMixin, Notebook):
     ...
 
 
-def remote(path, loader=Notebook):
+def Remote(path, loader=Notebook, **globals):
     """A remote notebook finder.  Place a `*` into a url
     to generalize the finder.  It returns a context manager
     """
@@ -107,7 +108,7 @@ def remote(path, loader=Notebook):
     class Remote(RemoteMixin, loader):
         ...
 
-    return Remote(path=path)
+    return Remote(path=path, **globals)
 
 
 if __name__ == "__main__":
