@@ -77,12 +77,14 @@ class Parameterize(Notebook):
         _fuzzy=True,
         _markdown_docstring=True,
         _position=0,
-        **globals
+        globals=None,
+        **_globals
     ):
         super().__init__(
             fullname, path, _lazy=_lazy, _fuzzy=_fuzzy, _shell=_shell, _position=_position
         )
         self.globals = globals or {}
+        self.globals.update(**_globals)
         self._visitor = FindReplace(self.globals, argparse.ArgumentParser(prog=self.name))
 
     def exec_module(self, module):
@@ -93,8 +95,9 @@ class Parameterize(Notebook):
     def visit(self, node):
         return super().visit(self._visitor.visit(node))
 
-    def loader_cls(self):
-        return partial(super().loader_cls(), **self.globals)
+    @classmethod
+    def load(cls, object, **globals):
+        return parameterize(super().load(object), **globals)
 
 
 """    with Parameterize(): 
