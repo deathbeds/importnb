@@ -4,7 +4,7 @@
 Combine the __import__ finder with the loader.
 
     >>> with Notebook():
-    ...      import finder
+    ...      from importnb.notebooks import loader
 """
 
 from .finder import get_loader_details, FuzzySpec, FuzzyFinder
@@ -16,8 +16,7 @@ import sys, ast, json, inspect, os
 from importlib import reload
 from importlib.machinery import SourceFileLoader, ModuleSpec
 from importlib.util import spec_from_loader
-from importlib._bootstrap import _new_module
-from importlib._bootstrap import _installed_safely
+from importlib._bootstrap import _new_module, _installed_safely
 
 from functools import partial
 
@@ -299,7 +298,9 @@ class Notebook(ShellMixin, FromFileMixin, NotebookBaseLoader):
         )
 
     def loader_cls(self):
-        return partial(super().loader_cls(), _shell=self._shell)
+        return partial(
+            super().loader_cls(), **{object: getattr(self, object) for object in self.__slots__}
+        )
 
 
 class Main(Notebook):
