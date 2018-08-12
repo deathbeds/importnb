@@ -1,4 +1,7 @@
 # coding: utf-8
+"""# Special handling of markdown cells as docstrings.
+"""
+
 import ast
 
 
@@ -30,8 +33,3 @@ if __name__ == "__main__":
     except:
         from .utils.export import export
     export("docstrings.ipynb", "../docstrings.py")
-
-"""# More Information
-
-The `importnb.loader` module recreates basic Python importing abilities.  Have a look at [`execute.ipynb`](execute.ipynb) for more advanced usages.
-"""
