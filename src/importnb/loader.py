@@ -168,15 +168,14 @@ class NotebookBaseLoader(ImportLibMixin, SourceFileLoader, FinderContextManager)
 @contextmanager
 def cd(dir):
     """A context manager to change the current working directory."""
-    next, dir = Path().absolute(), Path(dir or ".")
+    next, dir = os.getcwd(), Path(dir or ".")
     if dir.is_file():
         dir = dir.parent
     if dir.absolute() != next:
-
         yield os.chdir(str(dir))
-        os.chdir(str(next))
     else:
         yield None
+    os.chdir(str(next))
 
 
 class FileModuleSpec(ModuleSpec):
@@ -204,7 +203,7 @@ class FromFileMixin:
         > assert Notebook.load('loader.ipynb')
         """
         name = main and "__main__" or Path(filename).stem
-        loader = cls(name, filename, _shell=shell, **kwargs)
+        loader = cls(name, str(filename), _shell=shell, **kwargs)
         module = module_from_spec(FileModuleSpec(name, loader, origin=loader.path))
         with ExitStack() as stack:
             stack.enter_context(cd(dir))
@@ -268,7 +267,6 @@ class Notebook(ShellMixin, FromFileMixin, NotebookBaseLoader):
         self,
         fullname=None,
         path=None,
-        *,
         _lazy=False,
         _position=0,
         _shell=False,

@@ -100,7 +100,7 @@ class RemoteBase(RemoteMixin, Notebook):
     ...
 
 
-def Remote(path, loader=Notebook, **globals):
+def Remote(path=None, loader=Notebook, **globals):
     """A remote notebook finder.  Place a `*` into a url
     to generalize the finder.  It returns a context manager
     """
