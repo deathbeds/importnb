@@ -141,7 +141,7 @@ class NotebookBaseLoader(ImportLibMixin, SourceFileLoader, FinderContextManager)
         _lazy=False,
         _fuzzy=True,
         _position=0,
-        _markdown_docstring=True,
+        _markdown_docstring=True
     ):
         super().__init__(fullname, path)
         self._lazy = _lazy
