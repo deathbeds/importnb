@@ -35,21 +35,10 @@
     
 """
 
-from .loader import Notebook
+from .loader import Notebook, FileModuleSpec
 from .decoder import LineCacheNotebookDecoder
 from importlib.util import decode_source
 import sys
-
-try:
-    from importlib._bootstrap import _init_module_attrs
-except:
-    # python 3.4
-    from importlib._bootstrap import _SpecMethods
-
-    def _init_module_attrs(spec, module):
-        return _SpecMethods(spec).init_module_attrs(module)
-
-
 import importlib.util, importlib.machinery, inspect, sys, types, urllib.error, urllib.request
 
 cache = {}
@@ -89,9 +78,7 @@ class RemoteMixin:
         if url not in cache:
             cache[url] = urlopen(url)
             if cache[url]:
-                spec = importlib.machinery.ModuleSpec(
-                    fullname, type(self)(fullname, url), origin=url
-                )
+                spec = FileModuleSpec(fullname, type(self)(fullname, url), origin=url)
                 spec._set_fileattr = True
                 return spec
 

@@ -253,7 +253,7 @@ To package notebooks add `recursive-include package_name *.ipynb`
             print(foo, __import__('sys').argv)
         else:
             from subprocess import call
-            !ipython -m pytest -- --doctest-modules
+            !ipython -m pytest
             """Formatting"""
             from pathlib import Path
             from importnb.utils.export import export
@@ -270,40 +270,34 @@ To package notebooks add `recursive-include package_name *.ipynb`
     cachedir: .pytest_cache
     rootdir: C:\Users\deathbeds\importnb, inifile: tox.ini
     plugins: testmon-0.9.12, remotedata-0.2.1, openfiles-0.3.0, localserver-0.4.1, doctestplus-0.1.3, arraydiff-0.2, hypothesis-3.66.16, importnb-0.5.0
-    collecting ... collected 25 items
+    collecting ... collected 24 items
     
     src/importnb/completer.py::importnb.completer PASSED                     [  4%]
     src/importnb/foobar.py::importnb.foobar PASSED                           [  8%]
     src/importnb/loader.py::importnb.loader PASSED                           [ 12%]
     src/importnb/loader.py::importnb.loader.FinderContextManager PASSED      [ 16%]
     src/importnb/loader.py::importnb.loader.NotebookBaseLoader PASSED        [ 20%]
-    src/importnb/utils/export.py::importnb.utils.export PASSED               [ 24%]
-    src/importnb/utils/relative.py::importnb.utils.relative PASSED           [ 28%]
-    tests/test_importnb.ipynb::test_basic PASSED                             [ 32%]
-    tests/test_importnb.ipynb::test_package PASSED                           [ 36%]
-    tests/test_importnb.ipynb::test_main PASSED                              [ 40%]
-    tests/test_importnb.ipynb::test_reload PASSED                            [ 44%]
-    tests/test_importnb.ipynb::test_docstrings PASSED                        [ 48%]
-    tests/test_importnb.ipynb::test_docstring_opts PASSED                    [ 52%]
-    tests/test_importnb.ipynb::test_from_file PASSED                         [ 56%]
-    tests/test_importnb.ipynb::test_lazy PASSED                              [ 60%]
-    tests/test_importnb.ipynb::test_module_source PASSED                     [ 64%]
-    tests/test_importnb.ipynb::test_object_source PASSED                     [ 68%]
-    tests/test_importnb.ipynb::test_with_shell PASSED                        [ 72%]
-    tests/test_importnb.ipynb::test_python_file PASSED                       [ 76%]
-    tests/test_importnb.ipynb::test_cli PASSED                               [ 80%]
-    tests/test_importnb.ipynb::test_parameterize PASSED                      [ 84%]
-    tests/test_importnb.ipynb::test_minified_json PASSED                     [ 88%]
-    tests/test_importnb.ipynb::test_fuzzy_finder PASSED                      [ 92%]
-    tests/test_importnb.ipynb::test_remote PASSED                            [ 96%]
+    src/importnb/utils/export.py::importnb.utils.export PASSED               [ 25%]
+    src/importnb/utils/relative.py::importnb.utils.relative PASSED           [ 29%]
+    tests/test_importnb.ipynb::test_basic PASSED                             [ 33%]
+    tests/test_importnb.ipynb::test_package PASSED                           [ 37%]
+    tests/test_importnb.ipynb::test_reload PASSED                            [ 41%]
+    tests/test_importnb.ipynb::test_docstrings PASSED                        [ 45%]
+    tests/test_importnb.ipynb::test_docstring_opts PASSED                    [ 50%]
+    tests/test_importnb.ipynb::test_from_file PASSED                         [ 54%]
+    tests/test_importnb.ipynb::test_lazy PASSED                              [ 58%]
+    tests/test_importnb.ipynb::test_module_source PASSED                     [ 62%]
+    tests/test_importnb.ipynb::test_object_source PASSED                     [ 66%]
+    tests/test_importnb.ipynb::test_with_shell PASSED                        [ 70%]
+    tests/test_importnb.ipynb::test_python_file PASSED                       [ 75%]
+    tests/test_importnb.ipynb::test_cli PASSED                               [ 79%]
+    tests/test_importnb.ipynb::test_parameterize PASSED                      [ 83%]
+    tests/test_importnb.ipynb::test_minified_json PASSED                     [ 87%]
+    tests/test_importnb.ipynb::test_fuzzy_finder PASSED                      [ 91%]
+    tests/test_importnb.ipynb::test_remote PASSED                            [ 95%]
     tests/test_importnb.ipynb::test_helpers PASSED                           [100%]
     
-    ============================== warnings summary ===============================
-    None
-      Module already imported so cannot be rewritten: importnb
-    
-    -- Docs: http://doc.pytest.org/en/latest/warnings.html
-    ==================== 25 passed, 1 warnings in 5.06 seconds ====================
+    ========================= 24 passed in 10.36 seconds ==========================
     
 
 
@@ -315,6 +309,10 @@ To package notebooks add `recursive-include package_name *.ipynb`
             from IPython import get_ipython
             with capture_output(): 
                 get_ipython().system("cd docs && pyreverse importnb -opng -pimportnb")
-            # display(Image(url='docs/classes_importnb.png', ))
+            display(Image(url='docs/classes_importnb.png', ))
         except: ...
 ```
+
+
+<img src="docs/classes_importnb.png"/>
+

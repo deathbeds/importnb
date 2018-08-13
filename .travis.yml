@@ -13,8 +13,9 @@ install:
 - python -m pip install dist/importnb-*.tar.gz --ignore-installed --no-deps
 script:
 - tox
+- ipython -m readme
 deploy:
-  provider: pypi
+- provider: pypi
   user: docfast
   skip_cleanup: true
   password:
