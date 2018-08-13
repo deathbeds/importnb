@@ -4,7 +4,7 @@
 The parameterize loader allows notebooks to be used as functions and command line tools.  A `Parameterize` loader will convert an literal ast assigments to keyword arguments for the module.
 """
 
-from .loader import Notebook
+from .loader import Notebook, module_from_spec
 import argparse, ast, inspect
 from functools import partial
 from copy import deepcopy
@@ -13,7 +13,7 @@ from pathlib import Path
 from functools import partialmethod
 from inspect import signature
 import sys
-from importlib.util import find_spec, module_from_spec, spec_from_loader
+from importlib.util import find_spec, spec_from_loader
 from importlib._bootstrap import _installed_safely
 
 
