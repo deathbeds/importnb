@@ -38,11 +38,6 @@ except:
         return _SpecMethods(spec).init_module_attrs(module)
 
 
-try:
-    from importlib.resources import path
-except:
-    from importlib_resources import path
-
 from pathlib import Path
 from inspect import signature
 from contextlib import contextmanager, ExitStack
