@@ -1,5 +1,4 @@
 # coding: utf-8
-from IPython import get_ipython
 from doctest import OPTIONFLAGS_BY_NAME, testfile, testmod, FAIL_FAST
 import os, argparse
 
@@ -72,8 +71,6 @@ if __name__ == "__main__":
     _test()
 
 if __name__ == "__main__":
-    try:
-        from ..loader import export
-    except:
-        from importnb.loader import export
+    from .export import export
+
     export("nbdoctest.ipynb", "../../utils/nbdoctest.py")
