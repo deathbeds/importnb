@@ -124,10 +124,10 @@ def parameterize(object, **globals):
     def call(**parameters):
         nonlocal object, globals
         object = copy_(object)
+        keywords = {}
+        keywords.update(**globals), keywords.update(**parameter)
         with _installed_safely(object):
-            Parameterize(object.__name__, object.__file__, **{**globals, **parameters}).exec_module(
-                object
-            )
+            Parameterize(object.__name__, object.__file__, **keywords).exec_module(object)
         return object
 
     object.__loader__.get_code(object.__name__)
