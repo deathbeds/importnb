@@ -3,5 +3,6 @@ try:
     assert get_ipython()
 except:
     collect_ignore = [
-        "src/importnb/utils/ipython.py"
+        "src/importnb/utils/ipython.py",
+        "src/importnb/completer.py"
     ]
