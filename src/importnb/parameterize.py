@@ -1,4 +1,9 @@
 # coding: utf-8
+"""# Parameterize
+
+The parameterize loader allows notebooks to be used as functions and command line tools.  A `Parameterize` loader will convert an literal ast assigments to keyword arguments for the module.
+"""
+
 from .loader import Notebook
 import argparse, ast, inspect
 from functools import partial
@@ -125,7 +130,7 @@ def parameterize(object, **globals):
         nonlocal object, globals
         object = copy_(object)
         keywords = {}
-        keywords.update(**globals), keywords.update(**parameter)
+        keywords.update(**globals), keywords.update(**parameters)
         with _installed_safely(object):
             Parameterize(object.__name__, object.__file__, **keywords).exec_module(object)
         return object
@@ -139,32 +144,12 @@ def parameterize(object, **globals):
 """    f = parameterize('foo', a=20)
 """
 
+"""# Developer
+"""
+
 if __name__ == "__main__":
     f = Parameterize().load("parameterize.ipynb")
     from importnb.utils.export import export
 
     export("parameterize.ipynb", "../parameterize.py")
     # m = f.__loader__(a_variable_to_parameterize=10)
-
-"""# Developer
-"""
-
-"""    class Main(Parameterize):
-        __init__ = partialmethod(Parameterize.__init__, '__main__')
-        def exec_module(self, module, **globals):
-            globals.update(vars(self.parser.parse_args()))
-            super().exec_module(module, **globals)
-"""
-
-"""    def main(): Main().from_filename(sys.argv.pop(1))()
-"""
-
-"""    if __name__ == '__main__':
-        if sys.argv[0] == globals().get('__file__', None):
-            main()
-        else:
-            from importnb.utils.export import export
-            export('parameterize.ipynb', '../parameterize.py')
-            module = Execute(shell=True).from_filename('parameterize.ipynb')
-            __import__('doctest').testmod(module, verbose=2)
-"""
