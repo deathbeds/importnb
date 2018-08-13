@@ -13,6 +13,7 @@ install:
 - python -m pip install dist/importnb-*.tar.gz --ignore-installed --no-deps
 script:
 - tox
+- importnb-install
 - ipython -m readme
 deploy:
 - provider: pypi
