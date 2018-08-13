@@ -207,7 +207,7 @@ class FromFileMixin:
         module = module_from_spec(FileModuleSpec(name, loader, origin=loader.path))
         with ExitStack() as stack:
             stack.enter_context(cd(dir))
-            main or stack.enter_context(_installed_safely(module))
+            loader.name != "__main__" and stack.enter_context(_installed_safely(module))
             loader.exec_module(module)
         return module
 
