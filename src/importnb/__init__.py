@@ -1,13 +1,9 @@
 
 # coding: utf-8
 
-__all__ = "Notebook", "reload", "Main", "MAIN", "CLI", "INTERACTIVE", "IMPORTED", "Remote"
+__all__ = "Notebook", "reload", "MAIN", "CLI", "INTERACTIVE", "IMPORTED", "Remote"
 
-from .loader import (
-    Notebook, Main,
-    unload_ipython_extension,
-    reload,
-)
+from .loader import Notebook, reload, unload_ipython_extension
 from .parameterize import parameterize, Parameterize
 from .remote import Remote
 from .extensions import load_ipython_extension

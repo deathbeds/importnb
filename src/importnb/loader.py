@@ -157,7 +157,7 @@ class NotebookBaseLoader(ImportLibMixin, SourceFileLoader, FinderContextManager)
         loader = super().loader_cls()
         if self._lazy:
             loader = LazyLoader.factory(loader)
-        return partial(loader, _markdown_docstring=self._markdown_docstring)
+        return partial(loader, **{object: getattr(self, object) for object in self.__slots__})
 
     @property
     def finder_cls(self):
@@ -294,18 +294,6 @@ class Notebook(ShellMixin, FromFileMixin, NotebookBaseLoader):
         return super().source_to_code(
             ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
         )
-
-    def loader_cls(self):
-        return partial(
-            super().loader_cls(), **{object: getattr(self, object) for object in self.__slots__}
-        )
-
-
-class Main(Notebook):
-    def __init__(self, name, path, **kwargs):
-        super().__init__("__main__", path, **kwargs)
-
-    __signature__ = signature(Notebook)
 
 
 """# Developer
