@@ -69,7 +69,12 @@ class LineCacheNotebookDecoder(JSONDecoder):
 
         linecache.updatecache(filename)
         if filename in linecache.cache:
-            linecache.cache[filename] = *linecache.cache[filename][:2], lines, filename
+            linecache.cache[filename] = (
+                linecache.cache[filename][0],
+                linecache.cache[filename][1],
+                lines,
+                filename,
+            )
         last, new, old = slice(0, 0), 0, 0
         for current, cell, source in super().decode(object):
             if cell:
