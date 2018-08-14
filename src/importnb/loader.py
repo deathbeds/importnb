@@ -160,19 +160,6 @@ class NotebookBaseLoader(ImportLibMixin, SourceFileLoader, FinderContextManager)
         return self._fuzzy and FuzzyFinder or super().finder_cls
 
 
-@contextmanager
-def cd(dir):
-    """A context manager to change the current working directory."""
-    next, dir = os.getcwd(), Path(dir or ".")
-    if dir.is_file():
-        dir = dir.parent
-    if dir.absolute() != next:
-        yield os.chdir(str(dir))
-    else:
-        yield None
-    os.chdir(str(next))
-
-
 class FileModuleSpec(ModuleSpec):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -200,10 +187,15 @@ class FromFileMixin:
         name = main and "__main__" or Path(filename).stem
         loader = cls(name, str(filename), _shell=shell, **kwargs)
         module = module_from_spec(FileModuleSpec(name, loader, origin=loader.path))
-        with ExitStack() as stack:
-            stack.enter_context(cd(dir))
-            loader.name != "__main__" and stack.enter_context(_installed_safely(module))
-            loader.exec_module(module)
+        cwd = str(Path(loader.path).parent)
+        try:
+            with ExitStack() as stack:
+                sys.path.append(cwd)
+                loader.name != "__main__" and stack.enter_context(_installed_safely(module))
+                loader.exec_module(module)
+        finally:
+            sys.path.pop()
+
         return module
 
 
@@ -256,7 +248,7 @@ class Notebook(ShellMixin, FromFileMixin, NotebookBaseLoader):
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
 
-    __slots__ = NotebookBaseLoader.__slots__ + ("_shell",)
+    __slots__ = NotebookBaseLoader.__slots__ + ("_shell", "_main")
 
     def __init__(
         self,
@@ -267,16 +259,18 @@ class Notebook(ShellMixin, FromFileMixin, NotebookBaseLoader):
         _shell=False,
         _fuzzy=True,
         _markdown_docstring=True,
+        _main=False,
     ):
+        self._main = bool(_main) or fullname == "__main__"
+        self._shell = _shell
         super().__init__(
-            fullname,
+            self._main and "__main__" or fullname,
             path,
             _lazy=_lazy,
             _fuzzy=_fuzzy,
             _position=_position,
             _markdown_docstring=_markdown_docstring,
         )
-        self._shell = _shell
 
     def source_to_code(self, nodes, path, *, _optimize=-1):
         """* Convert the current source to ast 
