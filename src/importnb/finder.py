@@ -72,10 +72,9 @@ class FuzzyFinder(FileFinder):
             if "_" in fullname:
                 files = fuzzy_file_search(self.path, fullname)
                 if files:
-                    files = sorted(files)
+                    file = Path(sorted(files)[0])
                     spec = super().find_spec(
-                        (original + "." + Path(files[0]).stem.split(".", 1)[0]).lstrip("."),
-                        target=target,
+                        (original + "." + file.stem.split(".", 1)[0]).lstrip("."), target=target
                     )
                     fullname = (original + "." + fullname).lstrip(".")
                     if spec and fullname != spec.name:
