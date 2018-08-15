@@ -19,7 +19,7 @@ def pytest_addoption(parser):
 
 
 def pytest_collect_file(parent, path):
-    if "".join(Path(path).suffixes) in (".ipynb",):
+    if "".join(Path(str(path)).suffixes) in (".ipynb",):
         if not parent.session.isinitpath(path):
             for pat in parent.config.getini("python_files"):
                 if path.fnmatch(pat.rstrip(".py") + path.ext):
