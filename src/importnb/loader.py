@@ -150,7 +150,7 @@ class NotebookBaseLoader(ImportLibMixin, SourceFileLoader, FinderContextManager)
     def loader_cls(self):
         """Create a lazy loader source file loader."""
         loader = super().loader_cls()
-        if self._lazy:
+        if self._lazy and (sys.version_info.major, sys.version_info.minor) != (3, 4):
             loader = LazyLoader.factory(loader)
         return partial(loader, **{object: getattr(self, object) for object in self.__slots__})
 
