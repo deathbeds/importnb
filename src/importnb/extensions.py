@@ -85,8 +85,9 @@ def load_ipython_extension(ip=None):
     global manager, module
     from .loader import Notebook
 
+    frame = inspect.getouterframes(inspect.currentframe())[-2]
     if (
-        inspect.getouterframes(inspect.currentframe())[-2].function
+        getattr(frame, "function", frame[3])
         == pkg_resources.load_entry_point("ipython", "console_scripts", "ipython").__name__
     ):
         from .parameterize import Parameterize as Notebook
