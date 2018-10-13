@@ -66,7 +66,7 @@ setup_args = dict(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3 :: Only',],
-    zip_safe=True,
+    zip_safe=False,
     cmdclass={'test': PyTest,},
     entry_points = {
         'pytest11': ['pytest-importnb = importnb.utils.pytest_plugin',],
