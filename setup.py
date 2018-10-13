@@ -46,8 +46,6 @@ setup_args = dict(
     license="BSD-3-Clause",
     setup_requires=[
         'pytest-runner',
-        'twine>=1.11.0',
-        'setuptools>=38.6.',
     ] + ([] if sys.version_info.minor == 4 else ['wheel>=0.31.0']),
     tests_require=['pytest', 'nbformat'],
     install_requires=install_requires,
