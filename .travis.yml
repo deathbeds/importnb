@@ -4,9 +4,11 @@ python:
 - '3.4'
 - '3.5'
 - '3.6'
-- '3.7'
 - 3.6-dev
 - 3.7-dev
+matrix:
+  allow_failures:
+      - python: nightly
 install:
 - python setup.py sdist
 - python setup.py bdist_wheel
