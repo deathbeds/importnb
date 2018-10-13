@@ -54,7 +54,7 @@ setup_args = dict(
     include_package_data=True,
     packages=setuptools.find_packages(where="src"),
     package_dir={"": "src"},
-    classifiers=(
+    classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: IPython",
         "Framework :: Jupyter",
@@ -67,7 +67,7 @@ setup_args = dict(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3 :: Only',),
+        'Programming Language :: Python :: 3 :: Only',],
     zip_safe=False,
     cmdclass={'test': PyTest,},
     entry_points = {
