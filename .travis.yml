@@ -24,6 +24,7 @@ script:
 - tox
 - importnb-install
 - ipython -m readme
+- jupyter nbconvert --to notebook --in-place readme.ipynb
 deploy:
 - provider: pypi
   user: docfast
