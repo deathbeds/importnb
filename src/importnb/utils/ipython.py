@@ -1,13 +1,29 @@
 # coding: utf-8
 from IPython import paths, get_ipython
+from IPython.core.profiledir import ProfileDir, ProfileDirError
 
 from pathlib import Path
 import json, ast
 
 
-def get_config():
+def load_create_profile(profile="default"):
+    try:
+        dir = paths.locate_profile(profile)
+    except ProfileDirError:
+        ip.profile_dir.create_profile_dir_by_name(paths.get_ipython_dir(), profile)
+    return paths.locate_profile(profile)
+
+
+def get_config(profile="default"):
     ip = get_ipython()
-    return Path(ip.profile_dir.location if ip else paths.locate_profile()) / "ipython_config.json"
+    load_create_profile()
+    config = (
+        Path(ip.profile_dir.location if ip else paths.locate_profile(profile))
+        / "ipython_config.json"
+    )
+    if not config.exists():
+        config.write_text("{}")
+    return config
 
 
 def load_config():
