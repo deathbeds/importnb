@@ -12,7 +12,7 @@ def get_config(profile="default"):
         profile = profile_dir.find_profile_dir_by_name(paths.get_ipython_dir(), profile)
     except profiledir.ProfileDirError:
         profile = profile_dir.create_profile_dir_by_name(paths.get_ipython_dir(), profile)
-    return Path(profile.location)
+    return Path(profile.location, "ipython_config.json")
 
 
 def load_config():
