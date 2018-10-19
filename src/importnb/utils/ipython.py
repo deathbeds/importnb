@@ -1,7 +1,6 @@
 # coding: utf-8
 from IPython import paths, get_ipython
 from IPython.core.profiledir import ProfileDir, ProfileDirError
-
 from pathlib import Path
 import json, ast
 
@@ -9,7 +8,7 @@ import json, ast
 def load_create_profile(profile="default"):
     try:
         dir = paths.locate_profile(profile)
-    except ProfileDirError:
+    except OSError:
         ip.profile_dir.create_profile_dir_by_name(paths.get_ipython_dir(), profile)
     return paths.locate_profile(profile)
 
