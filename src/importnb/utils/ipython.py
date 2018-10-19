@@ -13,15 +13,18 @@ def load_create_profile(profile="default"):
     return paths.locate_profile(profile)
 
 
+import os
+
+
 def get_config(profile="default"):
     ip = get_ipython()
     load_create_profile()
-    config = (
-        Path(ip.profile_dir.location if ip else paths.locate_profile(profile))
-        / "ipython_config.json"
+    path = os.pathsep.join(
+        (ip.profile_dir.location if ip else paths.locate_profile(profile), "ipython_config.json")
     )
-    if not config.exists():
-        config.write_text("{}")
+    if not os.path.exists(path):
+        with open(path, "w") as f:
+            f.write("{}")
     return config
 
 
