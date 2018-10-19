@@ -25,7 +25,7 @@ def get_config(profile="default"):
     if not os.path.exists(path):
         with open(path, "w") as f:
             f.write("{}")
-    return config
+    return path
 
 
 def load_config():
