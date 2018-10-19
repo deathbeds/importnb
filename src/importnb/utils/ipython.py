@@ -11,6 +11,7 @@ def get_config(profile="default"):
     try:
         profile = profile_dir.find_profile_dir_by_name(paths.get_ipython_dir(), profile)
     except profiledir.ProfileDirError:
+        os.makedirs(paths.get_ipython_dir(), exist_ok=True)
         profile = profile_dir.create_profile_dir_by_name(paths.get_ipython_dir(), profile)
     return Path(profile.location, "ipython_config.json")
 
