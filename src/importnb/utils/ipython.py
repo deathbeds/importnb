@@ -3,6 +3,7 @@ from IPython import paths, get_ipython
 from IPython.core.profiledir import ProfileDir, ProfileDirError
 from pathlib import Path
 import json, ast
+import os
 
 
 def load_create_profile(profile="default"):
@@ -13,19 +14,19 @@ def load_create_profile(profile="default"):
     return paths.locate_profile(profile)
 
 
-import os
-
-
 def get_config(profile="default"):
     ip = get_ipython()
     load_create_profile()
     path = os.pathsep.join(
-        (ip.profile_dir.location if ip else paths.locate_profile(profile), "ipython_config.json")
+        (
+            get_ipython().profile_dir.location if ip else paths.locate_profile(profile),
+            "ipython_config.json",
+        )
     )
     if not os.path.exists(path):
         with open(path, "w") as f:
             f.write("{}")
-    return path
+    return Path(path)
 
 
 def load_config():
