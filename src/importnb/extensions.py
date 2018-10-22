@@ -107,9 +107,6 @@ def load_ipython_extension(ip=None):
         from .completer import load_ipython_extension
 
         load_ipython_extension(ip)
-        from .helpers import load_ipython_extension
-
-        load_ipython_extension(ip)
 
         ip.user_ns["reload"] = __import__("importlib").reload
 
