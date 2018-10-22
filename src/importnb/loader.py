@@ -106,7 +106,7 @@ The loader uses the import systems `get_source`, `get_data`, and `create_module`
 """
 
 
-class ImportLibMixin:
+class ImportLibMixin(SourceFileLoader):
     def create_module(self, spec):
         module = _new_module(spec.name)
         _init_module_attrs(spec, module)
@@ -118,14 +118,13 @@ class ImportLibMixin:
 
     def get_data(self, path):
         """Needs to return the string source for the module."""
-        return LineCacheNotebookDecoder(code=self.format).decode(
-            decode_source(super().get_data(self.path)), self.path
-        )
+        self.source = decode_source(super().get_data(self.path))
+        return LineCacheNotebookDecoder(code=self.format).decode(self.source, self.path)
 
     get_source = get_data
 
 
-class NotebookBaseLoader(ImportLibMixin, SourceFileLoader, FinderContextManager):
+class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
     """The simplest implementation of a Notebook Source File Loader.
     >>> with NotebookBaseLoader():
     ...    from importnb.notebooks import loader
