@@ -9,12 +9,12 @@ Combine the __import__ finder with the loader.
 
 try:
     from .finder import get_loader_details, FuzzySpec, FuzzyFinder
-    from .extensions import load_ipython_extension, unload_ipython_extension
+    from .ipython_extension import load_ipython_extension, unload_ipython_extension
     from .decoder import LineCacheNotebookDecoder
     from .docstrings import update_docstring
 except:
     from finder import get_loader_details, FuzzySpec, FuzzyFinder
-    from extensions import load_ipython_extension, unload_ipython_extension
+    from ipython_extension import load_ipython_extension, unload_ipython_extension
     from decoder import LineCacheNotebookDecoder
     from docstrings import update_docstring
 
