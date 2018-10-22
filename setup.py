@@ -71,10 +71,9 @@ setup_args = dict(
     entry_points = {
         'pytest11': ['pytest-importnb = importnb.utils.pytest_plugin',],
         'console_scripts': [
-            'importnb-install = importnb.utils.ipython:install',
-            'importnb-uninstall = importnb.utils.ipython:uninstall',
-            'importnb-run = importnb.loader:main',
-            'nbdoctest = importnb.utils.nbdoctest:_test',
+            'importnb-install = importnb.app:install',
+            'importnb-uninstall = importnb.app:uninstall',
+            'importnb = importnb.app:main',
         ]
     },
 )
