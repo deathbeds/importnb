@@ -127,6 +127,6 @@ def unload_ipython_extension(ip=None):
 if __name__ == "__main__":
     from importnb.utils.export import export
 
-    export("defaults.ipynb", "../defaults.py")
+    export("ipython_extension.ipynb", "../ipython_extension.py")
     # m = Notebook(shell=True).from_filename('extensions.ipynb')
     # print(__import__('doctest').testmod(m, verbose=2))
