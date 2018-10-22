@@ -54,7 +54,7 @@ def urlopen(path):
 class RemoteMixin:
     def decode(self):
         global cache
-        return decode_source(cache.pop(path, urlopen(path)).read())
+        return decode_source(cache.pop(path, urlopen(self.path)).read())
 
     def __enter__(self):
         super().__enter__()
