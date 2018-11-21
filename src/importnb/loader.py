@@ -103,9 +103,14 @@ The loader uses the import systems `get_source`, `get_data`, and `create_module`
 """
 
 
+class Module(type(sys), os.PathLike):
+    def __fspath__(self):
+        return self.__file__
+
+
 class ImportLibMixin(SourceFileLoader):
     def create_module(self, spec):
-        module = _new_module(spec.name)
+        module = Module(spec.name)
         _init_module_attrs(spec, module)
         if isinstance(spec, FuzzySpec):
             sys.modules[spec.alias] = module
