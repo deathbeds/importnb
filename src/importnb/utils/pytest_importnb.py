@@ -20,18 +20,23 @@ def pytest_addoption(parser):
     group.addoption("--main", action="store_true", help="Run in the main context.")
 
 
+import _pytest.doctest
+
+
 class AlternativeModule(pytest.Module):
     def _getobj(self):
         return self.loader(self.parent.config.option.main and "__main__" or None).load(
             str(self.fspath)
         )
 
+    def collect(self):
+        yield from super().collect()
+        if self.parent.config.option.doctestmodules:
+            yield from _pytest.doctest.DoctestModule.collect(self)
+
 
 class NotebookModule(AlternativeModule):
     loader = Notebook
-
-
-import _pytest.doctest
 
 
 class AlternativeSourceText(abc.ABCMeta):
@@ -44,12 +49,6 @@ class AlternativeSourceText(abc.ABCMeta):
                             break
                     else:
                         return
-                if parent.config.option.doctestmodules:
-                    classes = list(module.__mro__)
-                    classes.insert(
-                        classes.index(_pytest.python.Module), _pytest.doctest.DoctestModule
-                    )
-                    module = type("DocTest" + module.__name__, tuple(classes), {})
                 return module(path, parent)
 
 
