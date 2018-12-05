@@ -23,19 +23,18 @@ def assert_execution_order(nb, file=None):
         id += shift
         source = "".join(object["source"])
         if object["execution_count"] is None:
-            if source.strip():
-                raise UnexecutedCell(f"""{file} has an unexecuted with the source:\n{source}.""")
+            assert not source.strip(), f"""{file} has an unexecuted with the source:\n{source}."""
             shift -= 1
         else:
-            if object["execution_count"] != id:
-                raise OutOfOrder(f"""{file} has been executed out of order.""")
+            assert object["execution_count"] == id, f"""{file} has been executed out of order."""
 
     return True
 
 
 def assert_markdown_docstring(nb, name=None):
-    if nb["cells"][0]["cell_type"] != "markdown":
-        raise MissingMarkdownDocstring(f"""{name} is a missing a Markdown doc cell.""")
+    assert (
+        nb["cells"][0]["cell_type"] == "markdown"
+    ), f"""{name} should begin a Markdown cell that describes the purpose of the source."""
     return True
 
 

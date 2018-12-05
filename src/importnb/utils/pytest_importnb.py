@@ -44,7 +44,7 @@ class AlternativeSourceText(abc.ABCMeta):
                             break
                     else:
                         return
-                if self.parent.config.option.doctestmodules:
+                if parent.config.option.doctestmodules:
                     classes = list(module.__mro__)
                     classes.insert(
                         classes.index(_pytest.python.Module), _pytest.doctest.DoctestModule
