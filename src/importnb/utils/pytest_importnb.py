@@ -1,4 +1,15 @@
 # coding: utf-8
+"""A `pytest` plugin for importing notebooks as modules and using standard test discovered.
+
+The `AlternativeModule` is reusable.  See `pidgin` for an example.
+"""
+
+with __import__("importnb").Notebook():
+    try:
+        from . import testing
+    except:
+        from importnb.utils import testing
+
 import importlib, pytest, abc, pathlib
 
 from importnb import Notebook
@@ -20,6 +31,9 @@ class NotebookModule(AlternativeModule):
     loader = Notebook
 
 
+import _pytest.doctest
+
+
 class AlternativeSourceText(abc.ABCMeta):
     def __call__(self, parent, path):
         for module in self.modules:
@@ -30,6 +44,12 @@ class AlternativeSourceText(abc.ABCMeta):
                             break
                     else:
                         return
+                if self.parent.config.option.doctestmodules:
+                    classes = list(module.__mro__)
+                    classes.insert(
+                        classes.index(_pytest.python.Module), _pytest.doctest.DoctestModule
+                    )
+                    module = type("DocTest" + module.__name__, tuple(classes), {})
                 return module(path, parent)
 
 
@@ -42,4 +62,4 @@ pytest_collect_file = NotebookTests.__call__
 if __name__ == "__main__":
     from importnb.utils.export import export
 
-    export("pytest_plugin.ipynb", "../../utils/pytest_plugin.py")
+    export("pytest_importnb.ipynb", "../../utils/pytest_importnb.py")
