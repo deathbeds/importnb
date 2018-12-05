@@ -23,10 +23,16 @@ def assert_execution_order(nb, file=None):
         id += shift
         source = "".join(object["source"])
         if object["execution_count"] is None:
-            assert not source.strip(), f"""{file} has an unexecuted with the source:\n{source}."""
+            assert (
+                not source.strip()
+            ), """{file} has an unexecuted with the source:\n{source}.""".format(
+                **locals()
+            )
             shift -= 1
         else:
-            assert object["execution_count"] == id, f"""{file} has been executed out of order."""
+            assert (
+                object["execution_count"] == id
+            ), """{file} has been executed out of order.""".format(**locals())
 
     return True
 
@@ -34,7 +40,9 @@ def assert_execution_order(nb, file=None):
 def assert_markdown_docstring(nb, name=None):
     assert (
         nb["cells"][0]["cell_type"] == "markdown"
-    ), f"""{name} should begin a Markdown cell that describes the purpose of the source."""
+    ), """{name} should begin a Markdown cell that describes the purpose of the source.""".format(
+        **locals()
+    )
     return True
 
 
