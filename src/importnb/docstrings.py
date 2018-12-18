@@ -14,7 +14,12 @@ import ast
 
 create_test = ast.parse("""__test__ = globals().get('__test__', {})""", mode="single").body[0]
 test_update = ast.parse("""__test__.update""", mode="single").body[0].value
-str_nodes = ast.Str, ast.JoinedStr
+str_nodes = (ast.Str,)
+
+try:
+    str_nodes += (ast.JoinedStr,)
+except:
+    ...
 
 """`TestStrings` is an `ast.NodeTransformer` that captures `str_nodes` in the `TestStrings.strings` object.
 
