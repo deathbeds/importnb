@@ -42,7 +42,11 @@ class TestStrings(ast.NodeTransformer):
                     ast.Expr(
                         ast.Call(
                             func=test_update,
-                            args=[ast.Dict(keys=[ast.Str(f"string-{node.lineno}")], values=[node])],
+                            args=[
+                                ast.Dict(
+                                    keys=[ast.Str("string-{}".format(node.lineno))], values=[node]
+                                )
+                            ],
                             keywords=[],
                         )
                     ),
