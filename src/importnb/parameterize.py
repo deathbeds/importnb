@@ -154,17 +154,3 @@ def parameterize(object, **globals):
     call.__doc__ = object.__doc__ or object.__loader__._visitor.parser.format_help()
     call.__signature__ = object.__loader__._visitor.signature
     return call
-
-
-"""    f = parameterize('foo', a=20)
-"""
-
-"""# Developer
-"""
-
-if __name__ == "__main__":
-    f = Parameterize().load("parameterize.ipynb")
-    from importnb.utils.export import export
-
-    export("parameterize.ipynb", "../parameterize.py")
-    # m = f.__loader__(a_variable_to_parameterize=10)
