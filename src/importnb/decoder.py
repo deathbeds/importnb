@@ -6,18 +6,15 @@
 We consider three kinds of cells.
 """
 
-from json.decoder import JSONObject, JSONDecoder, WHITESPACE, WHITESPACE_STR
-from json import load as _load, loads as _loads
+import linecache
+import textwrap
 from functools import partial
+from json import load as _load
+from json import loads as _loads
+from json.decoder import (WHITESPACE, WHITESPACE_STR, JSONDecoder, JSONObject,
+                          py_scanstring)
 from json.scanner import py_make_scanner
-from json.decoder import (
-    JSONDecoder,
-    WHITESPACE,
-    WHITESPACE_STR,
-    JSONObject,
-    py_scanstring,
-)
-import linecache, textwrap
+
 
 """Output the strings slice that the source came from.
 """

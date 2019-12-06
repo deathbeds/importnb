@@ -6,9 +6,11 @@
 """
 
 import argparse
-from importlib import import_module
+import inspect
 from functools import partial
-import pkg_resources, inspect
+from importlib import import_module
+
+import pkg_resources
 
 
 def get_module_object(str):

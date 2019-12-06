@@ -4,7 +4,13 @@
 Many suggestions for importing notebooks use `sys.meta_paths`, but `importnb` relies on the `sys.path_hooks` to load any notebook in the path. `PathHooksContext` is a base class for the `importnb.Notebook` `SourceFileLoader`.
 """
 
-import inspect, sys, ast, os
+import ast
+import inspect
+import os
+import sys
+from contextlib import ExitStack, contextmanager
+from importlib.machinery import ModuleSpec, SourceFileLoader
+from itertools import chain
 from pathlib import Path
 
 try:
@@ -13,11 +19,8 @@ except:
     # python 3.4
     from importlib.machinery import FileFinder
 
-from contextlib import contextmanager, ExitStack
 
-from itertools import chain
 
-from importlib.machinery import SourceFileLoader, ModuleSpec
 
 
 class FileModuleSpec(ModuleSpec):

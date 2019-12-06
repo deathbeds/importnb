@@ -15,12 +15,23 @@ except:
     from decoder import LineCacheNotebookDecoder, quote
     from docstrings import update_docstring
 
-import sys, ast, json, inspect, os, types
+import ast
+import importlib
+import inspect
+import json
+import os
+import sys
+import textwrap
+import types
+from contextlib import ExitStack, contextmanager
+from functools import partial, partialmethod
+from importlib import reload
+from importlib.machinery import ModuleSpec, SourceFileLoader
+from importlib.util import spec_from_loader
+from inspect import signature
+from pathlib import Path
 
 _38 = sys.version_info.major == 3 and sys.version_info.minor == 8
-from importlib import reload
-from importlib.machinery import SourceFileLoader, ModuleSpec
-from importlib.util import spec_from_loader
 
 if _38:
     from importlib._bootstrap import _load_unlocked, _requires_builtin
@@ -28,7 +39,6 @@ else:
     from importlib._bootstrap import _installed_safely, _requires_builtin
 
 
-from functools import partial
 
 try:
     from importlib._bootstrap_external import decode_source, FileFinder
@@ -48,11 +58,6 @@ except:
         return _SpecMethods(spec).init_module_attrs(module)
 
 
-from pathlib import Path
-from inspect import signature
-from contextlib import contextmanager, ExitStack
-from functools import partialmethod
-import textwrap
 
 try:
     import IPython
@@ -71,7 +76,6 @@ except:
 
 __all__ = "Notebook", "reload"
 
-import importlib
 
 
 class FinderContextManager:

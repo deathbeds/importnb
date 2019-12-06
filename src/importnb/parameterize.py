@@ -8,15 +8,15 @@ try:
     from .loader import Notebook, module_from_spec
 except:
     from loader import Notebook, module_from_spec
-import argparse, ast, inspect
-from functools import partial
-from copy import deepcopy
-from inspect import Signature, Parameter
-from pathlib import Path
-from functools import partialmethod
-from inspect import signature
+import argparse
+import ast
+import inspect
 import sys
+from copy import deepcopy
+from functools import partial, partialmethod
 from importlib.util import find_spec, spec_from_loader
+from inspect import Parameter, Signature, signature
+from pathlib import Path
 
 _38 = sys.version_info.major == 3 and sys.version_info.minor == 8
 

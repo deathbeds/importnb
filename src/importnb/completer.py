@@ -11,10 +11,12 @@ The fuzzy importer could be confusing and perhaps a completer could help.
     >>> assert ip.complete('_______________plet__', 'from importnb import _______________plet__')[1]
 """
 
-from .finder import fuzzy_file_search
+import string
 from fnmatch import fnmatch
 from pathlib import Path
-import string
+
+from .finder import fuzzy_file_search
+
 
 """To provide the most reliable fuzzy imports `fuzzify_string` replaces the imported with one that complies with the fuzzy finder.
 """
