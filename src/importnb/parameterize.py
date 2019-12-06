@@ -17,7 +17,12 @@ from functools import partialmethod
 from inspect import signature
 import sys
 from importlib.util import find_spec, spec_from_loader
-from importlib._bootstrap import _installed_safely
+_38 = sys.version_info.major == 3 and sys.version_info.minor == 8
+
+if _38:
+    from importlib._bootstrap import _load_unlocked
+else:
+    from importlib._bootstrap import _installed_safely
 
 
 class FindReplace(ast.NodeTransformer):
@@ -138,8 +143,11 @@ def parameterize(object, **globals):
         object = copy_(object)
         keywords = {}
         keywords.update(**globals), keywords.update(**parameters)
-        with _installed_safely(object):
+        if _38:
             Parameterize(object.__name__, object.__file__, **keywords).exec_module(object)
+        else:
+            with _installed_safely(object):
+                Parameterize(object.__name__, object.__file__, **keywords).exec_module(object)
         return object
 
     object.__loader__.get_code(object.__name__)
