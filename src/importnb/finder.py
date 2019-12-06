@@ -28,10 +28,21 @@ class FileModuleSpec(ModuleSpec):
 
 class FuzzySpec(FileModuleSpec):
     def __init__(
-        self, name, loader, *, alias=None, origin=None, loader_state=None, is_package=None
+        self,
+        name,
+        loader,
+        *,
+        alias=None,
+        origin=None,
+        loader_state=None,
+        is_package=None
     ):
         super().__init__(
-            name, loader, origin=origin, loader_state=loader_state, is_package=is_package
+            name,
+            loader,
+            origin=origin,
+            loader_state=loader_state,
+            is_package=is_package,
         )
         self.alias = alias
 
@@ -74,7 +85,8 @@ class FuzzyFinder(FileFinder):
                 if files:
                     file = Path(sorted(files)[0])
                     spec = super().find_spec(
-                        (original + "." + file.stem.split(".", 1)[0]).lstrip("."), target=target
+                        (original + "." + file.stem.split(".", 1)[0]).lstrip("."),
+                        target=target,
                     )
                     fullname = (original + "." + fullname).lstrip(".")
                     if spec and fullname != spec.name:
@@ -92,7 +104,10 @@ class FuzzyFinder(FileFinder):
 def get_loader_details():
     for id, path_hook in enumerate(sys.path_hooks):
         try:
-            return id, list(inspect.getclosurevars(path_hook).nonlocals["loader_details"])
+            return (
+                id,
+                list(inspect.getclosurevars(path_hook).nonlocals["loader_details"]),
+            )
         except:
             continue
 

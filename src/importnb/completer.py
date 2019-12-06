@@ -80,7 +80,9 @@ def fuzzy_complete_event(self, event):
         package = event.line.split(" import ", 1)[0].lstrip().lstrip("from").lstrip()
         if " import" in event.line:
             symbol = (package + "." + symbol).lstrip(".")
-            return [object.lstrip(package).lstrip(".") for object in predict_fuzzy(symbol)]
+            return [
+                object.lstrip(package).lstrip(".") for object in predict_fuzzy(symbol)
+            ]
 
     return predict_fuzzy(symbol)
 
@@ -90,10 +92,16 @@ def fuzzy_complete_event(self, event):
 
 
 def load_ipython_extension(ip):
-    ip.set_hook("complete_command", fuzzy_complete_event, str_key="aimport", priority=25)
+    ip.set_hook(
+        "complete_command", fuzzy_complete_event, str_key="aimport", priority=25
+    )
     ip.set_hook("complete_command", fuzzy_complete_event, str_key="import", priority=25)
-    ip.set_hook("complete_command", fuzzy_complete_event, str_key="%reload_ext", priority=25)
-    ip.set_hook("complete_command", fuzzy_complete_event, str_key="%load_ext", priority=25)
+    ip.set_hook(
+        "complete_command", fuzzy_complete_event, str_key="%reload_ext", priority=25
+    )
+    ip.set_hook(
+        "complete_command", fuzzy_complete_event, str_key="%load_ext", priority=25
+    )
     ip.set_hook("complete_command", fuzzy_complete_event, str_key="from", priority=25)
 
 
