@@ -35,5 +35,5 @@ steps:
     displayName: 'Install dependencies'
 
   - script: |
-      pytest tests
+      tox
     displayName: 'pytest'
