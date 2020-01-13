@@ -1,6 +1,0 @@
-pytest
-tox
-pylint
-nbsphinx
-graphviz
-notebook

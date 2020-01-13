@@ -1,30 +1,28 @@
 language: python
+
 python:
-    - 3.4
-    - 3.6
-    - 3.5
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.8-dev"
+  - "nightly"
+
 sudo: false
 
 cache: pip
 
-matrix:
-  include:
-      - { python: "3.6-dev", dist: xenial, sudo: true }
-      - { python: "3.7", dist: xenial, sudo: true }
-      - { python: "3.7-dev", dist: xenial, sudo: true }
-      - { python: "nightly", dist: xenial, sudo: true }
-  allow_failures:
-      - python: nightly
 install:
-- python setup.py sdist
-- python setup.py bdist_wheel
-- pip install -r requirements.txt
-- python -m pip install dist/importnb-*.tar.gz --ignore-installed --no-deps
+  - python setup.py sdist bdist_wheel
+  - python -m pip install -r requirements-dev.txt
+  - python -m pip install --find-links=. --no-index --ignore-installed --no-deps importnb
+
 script:
-- tox
-- importnb-install
-- ipython -m readme
-- jupyter nbconvert --to notebook --inplace readme.ipynb
+  - tox
+  - importnb-install
+  - ipython -m readme
+  - jupyter nbconvert --to notebook --inplace readme.ipynb
+
 deploy:
 - provider: pypi
   user: docfast
