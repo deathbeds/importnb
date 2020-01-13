@@ -39,7 +39,6 @@ else:
     from importlib._bootstrap import _installed_safely, _requires_builtin
 
 
-
 try:
     from importlib._bootstrap_external import decode_source, FileFinder
     from importlib.util import module_from_spec
@@ -58,7 +57,6 @@ except:
         return _SpecMethods(spec).init_module_attrs(module)
 
 
-
 try:
     import IPython
     from IPython.core.inputsplitter import IPythonInputSplitter
@@ -75,7 +73,6 @@ except:
     from textwrap import dedent
 
 __all__ = "Notebook", "reload"
-
 
 
 class FinderContextManager:

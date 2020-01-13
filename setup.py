@@ -1,6 +1,16 @@
+import sys
 import json
+import re
 from pathlib import Path
+from setuptools.command.test import test as TestCommand
 import setuptools
+
+try:
+    from importlib import resources
+
+    install_requires = []
+except:
+    install_requires = ["importlib_resources"]
 
 name = "importnb"
 
@@ -8,30 +18,22 @@ __version__ = None
 
 here = Path(__file__).parent
 
-# This should be replaced with proper pathlib business
+__version__ = re.findall(
+    '''__version__ = "([^"]+)"''',
+    (here / "src" / "importnb" / "_version.py").read_text(),
+)[0]
 
-with (here/ 'src' / 'importnb'/ '_version.py').open('r') as file:
-    exec(file.read())
+description = (here / "readme.md").read_text()
 
-with open(str(here/'readme.md'),'r') as f:
-    description = f.read()
+for cell in json.loads((here / "changelog.ipynb").read_text())["cells"]:
+    if cell["cell_type"] == "markdown":
+        description += "\n\n" + "".join(cell["source"])
 
-with open(str(here/'changelog.ipynb'), 'r') as f:
-    description += '\n'+ '\n'.join(
-        ''.join(cell['source']) for cell in json.load(f)['cells'] if cell['cell_type'] == 'markdown'
-    )
 
-import sys
-
-from setuptools.command.test import test as TestCommand
 class PyTest(TestCommand):
-    def run_tests(self): sys.exit(__import__('pytest').main([]))
+    def run_tests(self):
+        sys.exit(__import__("pytest").main(["tests"]))
 
-install_requires = []
-try:
-    from importlib import resources
-except:
-    install_requires += ['importlib_resources']
 
 setup_args = dict(
     name=name,
@@ -40,14 +42,12 @@ setup_args = dict(
     author_email="tony.fast@gmail.com",
     description="Import Jupyter (ne IPython) notebooks into tests and scripts.",
     long_description=description,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     url="https://github.com/deathbeds/importnb",
     python_requires=">=3.4",
     license="BSD-3-Clause",
-    setup_requires=[
-        'pytest-runner',
-    ] + ([] if sys.version_info.minor == 4 else ['wheel>=0.31.0']),
-    tests_require=['pytest', 'nbformat'],
+    setup_requires=[],
+    tests_require=["pytest", "nbformat"],
     install_requires=install_requires,
     include_package_data=True,
     packages=setuptools.find_packages(where="src"),
@@ -59,24 +59,23 @@ setup_args = dict(
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: OSI Approved :: BSD License",
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3 :: Only',],
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3 :: Only",
+    ],
     zip_safe=False,
-    cmdclass={'test': PyTest,},
-    entry_points = {
-        'pytest11': [
-            'importnb = importnb.utils.pytest_importnb',
+    cmdclass={"test": PyTest},
+    entry_points={
+        "pytest11": ["importnb = importnb.utils.pytest_importnb"],
+        "console_scripts": [
+            "importnb-install = importnb.utils.ipython:install",
+            "importnb-uninstall = importnb.utils.ipython:uninstall",
+            "nbdoctest = importnb.utils.nbdoctest:_test",
         ],
-        'console_scripts': [
-            'importnb-install = importnb.utils.ipython:install',
-            'importnb-uninstall = importnb.utils.ipython:uninstall',
-            'nbdoctest = importnb.utils.nbdoctest:_test',
-        ]
     },
 )
 

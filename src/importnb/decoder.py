@@ -11,8 +11,13 @@ import textwrap
 from functools import partial
 from json import load as _load
 from json import loads as _loads
-from json.decoder import (WHITESPACE, WHITESPACE_STR, JSONDecoder, JSONObject,
-                          py_scanstring)
+from json.decoder import (
+    WHITESPACE,
+    WHITESPACE_STR,
+    JSONDecoder,
+    JSONObject,
+    py_scanstring,
+)
 from json.scanner import py_make_scanner
 
 

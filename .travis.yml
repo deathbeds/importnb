@@ -13,9 +13,10 @@ sudo: false
 cache: pip
 
 install:
+  - pip install --upgrade pip setuptools
   - python setup.py sdist bdist_wheel
+  - python -m pip install --find-links=dist --no-index --ignore-installed --no-deps importnb
   - python -m pip install -r requirements-dev.txt
-  - python -m pip install --find-links=. --no-index --ignore-installed --no-deps importnb
 
 script:
   - tox
