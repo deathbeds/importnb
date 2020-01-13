@@ -8,19 +8,47 @@ trigger:
 pr:
   - master
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 strategy:
   matrix:
-    Python35:
+    ubuntu_3.5:
       python.version: '3.5'
-    Python36:
+      vmImage: ubuntu-16.04
+    macos_3.5:
+      python.version: '3.5'
+      vmImage: macos-10.13
+    vs2017_3.5:
+      python.version: '3.5'
+      vmImage: vs2017-win2016
+    ubuntu_3.6:
       python.version: '3.6'
-    Python37:
+      vmImage: ubuntu-16.04
+    macos_3.6:
+      python.version: '3.6'
+      vmImage: macos-10.13
+    vs2017_3.6:
+      python.version: '3.6'
+      vmImage: vs2017-win2016
+    ubuntu_3.7:
       python.version: '3.7'
-    Python38:
+      vmImage: ubuntu-16.04
+    macos_3.7:
+      python.version: '3.7'
+      vmImage: macos-10.13
+    vs2017_3.7:
+      python.version: '3.7'
+      vmImage: vs2017-win2016
+    ubuntu_3.8:
       python.version: '3.8'
+      vmImage: ubuntu-16.04
+    macos_3.8:
+      python.version: '3.8'
+      vmImage: macos-10.13
+    vs2017_3.8:
+      python.version: '3.8'
+      vmImage: vs2017-win2016
+
+pool:
+  vmImage: '$(vmImage)'
 
 steps:
   - task: UsePythonVersion@0
@@ -36,4 +64,4 @@ steps:
 
   - script: |
       tox
-    displayName: 'pytest'
+    displayName: 'tox'
