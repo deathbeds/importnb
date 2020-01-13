@@ -18,7 +18,7 @@ from importlib.util import find_spec, spec_from_loader
 from inspect import Parameter, Signature, signature
 from pathlib import Path
 
-_38 = sys.version_info.major == 3 and sys.version_info.minor == 8
+_38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
 
 if _38:
     from importlib._bootstrap import _load_unlocked
@@ -128,13 +128,13 @@ class Parameterize(Notebook):
         return parameterize(super().load(object), **globals)
 
 
-"""    with Parameterize(): 
+"""    with Parameterize():
         reload(foo)
 
-    with Parameterize(a=1234123): 
+    with Parameterize(a=1234123):
         reload(foo)
 
-    with Parameterize(a="🤘"): 
+    with Parameterize(a="🤘"):
         reload(foo)
 """
 

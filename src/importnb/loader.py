@@ -31,7 +31,7 @@ from importlib.util import spec_from_loader
 from inspect import signature
 from pathlib import Path
 
-_38 = sys.version_info.major == 3 and sys.version_info.minor == 8
+_38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
 
 if _38:
     from importlib._bootstrap import _load_unlocked, _requires_builtin
@@ -78,7 +78,7 @@ __all__ = "Notebook", "reload"
 class FinderContextManager:
     """
     FinderContextManager is the base class for the notebook loader.  It provides
-    a context manager that replaces `FileFinder` in the `sys.path_hooks` to include 
+    a context manager that replaces `FileFinder` in the `sys.path_hooks` to include
     an instance of the class in the python findering system.
 
     >>> with FinderContextManager() as f:
@@ -127,7 +127,7 @@ class ModuleType(types.ModuleType, getattr(os, "PathLike", object)):
 
 class ImportLibMixin(SourceFileLoader):
     """ImportLibMixin is a SourceFileLoader for loading source code from JSON (e.g. notebooks).
-    
+
     `get_data` assures consistent line numbers between the file s representatio and source."""
 
     def create_module(self, spec):
@@ -217,10 +217,10 @@ class FromFileMixin:
     @classmethod
     def load(cls, filename, dir=None, main=False, **kwargs):
         """Import a notebook as a module from a filename.
-        
+
         dir: The directory to load the file from.
         main: Load the module in the __main__ context.
-        
+
         > assert Notebook.load('loader.ipynb')
         """
         name = main and "__main__" or Path(filename).stem
@@ -272,11 +272,11 @@ class TransformerMixin:
 
 class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
     """Notebook is a user friendly file finder and module loader for notebook source code.
-    
+
     > Remember, restart and run all or it didn't happen.
-    
+
     Notebook provides several useful options.
-    
+
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
 
@@ -306,7 +306,7 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
         return ast.parse(nodes, self.path)
 
     def source_to_code(self, nodes, path, *, _optimize=-1):
-        """* Convert the current source to ast 
+        """* Convert the current source to ast
         * Apply ast transformers.
         * Compile the code."""
         if not isinstance(nodes, ast.Module):
@@ -322,7 +322,7 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
 """
 
 """    Notebook.load('loader.ipynb')
-    
+
 """
 
 if __name__ == "__main__":
