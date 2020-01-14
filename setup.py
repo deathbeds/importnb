@@ -1,15 +1,16 @@
-import sys
 import json
 import re
+import sys
 from pathlib import Path
-from setuptools.command.test import test as TestCommand
+
 import setuptools
+from setuptools.command.test import test as TestCommand
 
 try:
     from importlib import resources
 
     install_requires = []
-except:
+except ImportError:
     install_requires = ["importlib_resources"]
 
 name = "importnb"

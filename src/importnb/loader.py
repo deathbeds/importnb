@@ -4,16 +4,6 @@
 Combine the __import__ finder with the loader.
 """
 
-try:
-    from .finder import get_loader_details, FuzzySpec, FuzzyFinder
-    from .ipython_extension import load_ipython_extension, unload_ipython_extension
-    from .decoder import LineCacheNotebookDecoder, quote
-    from .docstrings import update_docstring
-except:
-    from finder import get_loader_details, FuzzySpec, FuzzyFinder
-    from ipython_extension import load_ipython_extension, unload_ipython_extension
-    from decoder import LineCacheNotebookDecoder, quote
-    from docstrings import update_docstring
 
 import ast
 import importlib
@@ -31,9 +21,14 @@ from importlib.util import spec_from_loader
 from inspect import signature
 from pathlib import Path
 
-_38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
+from .decoder import LineCacheNotebookDecoder, quote
+from .docstrings import update_docstring
+from .finder import FuzzyFinder, FuzzySpec, get_loader_details
+from .ipython_extension import load_ipython_extension, unload_ipython_extension
 
-if _38:
+_GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
+
+if _GTE38:
     from importlib._bootstrap import _load_unlocked, _requires_builtin
 else:
     from importlib._bootstrap import _installed_safely, _requires_builtin
@@ -44,7 +39,7 @@ try:
     from importlib.util import module_from_spec
     from importlib._bootstrap import _init_module_attrs
     from importlib.util import LazyLoader
-except:
+except ImportError:
     # python 3.4
     from importlib._bootstrap import _SpecMethods
     from importlib.util import decode_source
@@ -230,7 +225,7 @@ class FromFileMixin:
         cwd = str(Path(loader.path).parent)
         try:
 
-            if _38:
+            if _GTE38:
                 sys.path.append(cwd)
                 module = _load_unlocked(spec)
             else:

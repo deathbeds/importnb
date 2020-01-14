@@ -3,7 +3,7 @@
 
 The fuzzy importer could be confusing and perhaps a completer could help.
 
-    
+
     >>> ip = __import__("IPython").get_ipython(); load_ipython_extension(ip)
     >>> assert ip.complete('importnb.__pleter', 'import importnb.__pleter')[1]
     >>> assert ip.complete('__find__', 'import __find__')[1]
@@ -105,13 +105,3 @@ def load_ipython_extension(ip):
         "complete_command", fuzzy_complete_event, str_key="%load_ext", priority=25
     )
     ip.set_hook("complete_command", fuzzy_complete_event, str_key="from", priority=25)
-
-
-if __name__ == "__main__":
-    from .utils.export import export
-    from importnb import Notebook
-
-    export("completer.ipynb", "../completer.py")
-    ip = get_ipython()
-    m = Notebook.load("completer.ipynb")
-    print(__import__("doctest").testmod(m, verbose=2))

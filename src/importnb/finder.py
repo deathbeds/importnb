@@ -15,7 +15,7 @@ from pathlib import Path
 
 try:
     from importlib._bootstrap_external import FileFinder
-except:
+except ImportError:
     # python 3.4
     from importlib.machinery import FileFinder
 
@@ -110,14 +110,3 @@ def get_loader_details():
             )
         except:
             continue
-
-
-"""# Developer
-"""
-
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("finder.ipynb", "../finder.py")

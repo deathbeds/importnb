@@ -101,11 +101,3 @@ class LineCacheNotebookDecoder(JSONDecoder):
                 last = current
 
         return "".join(lines)
-
-
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("decoder.ipynb", "../decoder.py")
