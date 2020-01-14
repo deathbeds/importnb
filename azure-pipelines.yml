@@ -10,6 +10,15 @@ pr:
 
 strategy:
   matrix:
+    ubuntu_3.4:
+      python.version: '3.4'
+      vmImage: ubuntu-16.04
+    macos_3.4:
+      python.version: '3.4'
+      vmImage: macos-10.13
+    vs2017_3.4:
+      python.version: '3.4'
+      vmImage: vs2017-win2016
     ubuntu_3.5:
       python.version: '3.5'
       vmImage: ubuntu-16.04
