@@ -23,6 +23,7 @@ import os
 import sys
 import textwrap
 import types
+import runpy
 from contextlib import ExitStack, contextmanager
 from functools import partial, partialmethod
 from importlib import reload
@@ -133,13 +134,21 @@ class ImportLibMixin(SourceFileLoader):
     
     `get_data` assures consistent line numbers between the file s representatio and source."""
 
-    def create_module(self, spec):
+    def create_module(self, spec=None):
+        if spec is None:
+            spec = importlib.util.spec_from_loader(self.name, self)
         module = ModuleType(spec.name)
         _init_module_attrs(spec, module)
         if isinstance(spec, FuzzySpec):
             sys.modules[spec.alias] = module
         if self.name:
             module.__name__ = self.name
+        return module
+
+    def exec_module(self, module=None):
+        if module is None:
+            module = self.create_module()
+        super().exec_module(module)
         return module
 
     def decode(self):
@@ -226,26 +235,7 @@ class FromFileMixin:
         
         > assert Notebook.load('loader.ipynb')
         """
-        name = main and "__main__" or Path(filename).stem
-        loader = cls(name, str(filename), **kwargs)
-        spec = FileModuleSpec(name, loader, origin=loader.path)
-        module = module_from_spec(spec)
-        cwd = str(Path(loader.path).parent)
-        try:
-
-            if _38:
-                sys.path.append(cwd)
-                module = _load_unlocked(spec)
-            else:
-                with ExitStack() as stack:
-                    loader.name != "__main__" and stack.enter_context(
-                        _installed_safely(module)
-                    )
-                    loader.exec_module(module)
-        finally:
-            sys.path.pop()
-
-        return module
+        return cls(filename, filename).exec_module()
 
 
 """* Sometimes folks may want to use the current IPython shell to manage the code and input transformations.
@@ -319,19 +309,3 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
         return super().source_to_code(
             ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
         )
-
-
-"""# Developer
-"""
-
-"""    Notebook.load('loader.ipynb')
-    
-"""
-
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("loader.ipynb", "../loader.py")
-    print(__import__("doctest").testmod(Notebook.load("loader.ipynb"), verbose=2))
