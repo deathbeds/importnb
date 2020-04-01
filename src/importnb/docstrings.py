@@ -115,11 +115,3 @@ def markdown_docstring(nodes, node):
 
 def str_expr(node):
     return isinstance(node, ast.Expr) and isinstance(node.value, ast.Str)
-
-
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("docstrings.ipynb", "../docstrings.py")

@@ -11,8 +11,13 @@ import textwrap
 from functools import partial
 from json import load as _load
 from json import loads as _loads
-from json.decoder import (WHITESPACE, WHITESPACE_STR, JSONDecoder, JSONObject,
-                          py_scanstring)
+from json.decoder import (
+    WHITESPACE,
+    WHITESPACE_STR,
+    JSONDecoder,
+    JSONObject,
+    py_scanstring,
+)
 from json.scanner import py_make_scanner
 
 
@@ -96,11 +101,3 @@ class LineCacheNotebookDecoder(JSONDecoder):
                 last = current
 
         return "".join(lines)
-
-
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("decoder.ipynb", "../decoder.py")

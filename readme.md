@@ -1,10 +1,10 @@
-
 __importnb__ imports notebooks as modules.  Notebooks are reusable as tests, source code, importable modules, and command line utilities.
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/deathbeds/importnb/master?urlpath=lab/tree/readme.ipynb)[![Documentation Status](https://readthedocs.org/projects/importnb/badge/?version=latest)](https://importnb.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/deathbeds/importnb.svg?branch=master)](https://travis-ci.org/deathbeds/importnb)[![PyPI version](https://badge.fury.io/py/importnb.svg)](https://badge.fury.io/py/importnb)![PyPI - Python Version](https://img.shields.io/pypi/pyversions/importnb.svg)![PyPI - Format](https://img.shields.io/pypi/format/importnb.svg)![PyPI - Format](https://img.shields.io/pypi/l/importnb.svg)[
 ![Conda](https://img.shields.io/conda/pn/conda-forge/importnb.svg)](https://anaconda.org/conda-forge/importnb)[
-![GitHub tag](https://img.shields.io/github/tag/deathbeds/importnb.svg)](https://github.com/deathbeds/importnb/tree/master/src/importnb)
+![GitHub tag](https://img.shields.io/github/tag/deathbeds/importnb.svg)](https://github.com/deathbeds/importnb/tree/master/src/importnb) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 
 ##### Installation
 
@@ -28,9 +28,9 @@ After `importnb` is installed, [pytest](https://pytest.readthedocs.io/) will dis
 
     pytest index.ipynb --doctest-modules
     
-It is recommended to use `importnb` with [__--nbval__](https://github.com/computationalmodelling/nbval).
+It is recommended to use `importnb` with [__--nbval__](https://github.com/computationalmodelling/nbval) and the __--monotonic__ flag that checks if has notebook has be restarted and re-run.
 
-    pytest index.ipynb --nbval
+    pytest index.ipynb --nbval --monotonic
 
 ---
 
@@ -52,7 +52,10 @@ It is suggested to execute `importnb-install` to make sure that notebooks for ea
 
 `importnb` excels in an interactive environment and if a notebook will __Restart and Run All__ then it may reused as python code. The `Notebook` context manager will allow notebooks _with valid names_ to import with Python.
 
-    >>> from importnb import Notebook
+
+```python
+from importnb import Notebook
+```
 
 ### For brevity
 
@@ -76,9 +79,11 @@ It is suggested to execute `importnb-install` to make sure that notebooks for ea
 
 ```python
     foo = 42
-    import readme
-    assert readme.foo is 42
-    assert readme.__file__.endswith('.ipynb')
+    with Notebook():
+        import readme
+    if __name__ == '__main__':
+        assert readme.foo == 42
+        assert readme.__file__.endswith('.ipynb')
 ```
 
 [`importnb` readme](readme.ipynb)
@@ -133,7 +138,7 @@ The first markdown cell will become the module docstring.
 ```
 
     __importnb__ imports notebooks as modules.  Notebooks are reusable as tests, source code, importable modules, and command line utilities.
-    
+
 
 Meaning non-code blocks can be executeb by [doctest]().
 
@@ -147,11 +152,17 @@ Meaning non-code blocks can be executeb by [doctest]().
 
 Notebook names may not be valid Python paths.  In this case, use `Notebook.from_filename`.
 
-       Notebook.from_filename('index.ipynb')
+```python
+>>> Notebook.load('changelog.ipynb')
+<module 'changelog' from 'changelog.ipynb'>
+```
        
 Import under the `__main__` context.
-       
-       Notebook('__main__').from_filename('index.ipynb')
+
+```python
+>>> Notebook('__main__').load('changelog.ipynb')
+<module 'changelog' from 'changelog.ipynb'>
+```
 
 # Parameterize Notebooks
 
@@ -162,7 +173,7 @@ In `readme`, `foo` is a parameter because it may be evaluated with ast.literal_v
 
 ```python
     if __name__ == '__main__':
-        from importnb import Parameterize
+        from importnb.parameterize import Parameterize
         f = Parameterize.load(readme.__file__)
 ```
 
@@ -173,10 +184,10 @@ The parameterized module is a callable that evaluates with different literal sta
     if __name__ == '__main__': 
         assert callable(f)
         f.__signature__
-```
 
-    assert f().foo == 42
-    assert f(foo='importnb').foo == 'importnb'
+        assert f().foo == 42
+        assert f(foo='importnb').foo == 'importnb'
+```
 
 # Run Notebooks from the command line
 
@@ -184,18 +195,22 @@ Run any notebook from the command line with importnb.  Any parameterized express
 
     
 
-    !ipython -m importnb -- index.ipynb --foo "The new value"
+```bash
+ipython -m importnb -- index.ipynb --foo "The new value"
+```
 
 ## Integrations
 
 
 ### IPython
 
-#### [IPython Extension](src/notebooks/loader.ipynb#IPython-Extensions)
+#### [IPython Extension](src/importnb/ipython_extension.py#IPython-Extensions)
 
 Avoid the use of the context manager using loading importnb as IPython extension.
 
-    %load_ext importnb
+```python
+%load_ext importnb
+```
     
 `%unload_ext importnb` will unload the extension.
 
@@ -203,22 +218,25 @@ Avoid the use of the context manager using loading importnb as IPython extension
 
 `importnb` may allow notebooks to import by default with 
 
-    !importnb-install
-    
+```bash
+importnb-install
+```
 
 > If you'd like to play with source code on binder then you must execute the command above.  Toggle the markdown cell to a code cell and run it.
 
 This extension will install a script into the default IPython profile startup that is called each time an IPython session is created.  
 
-Uninstall the extension with `importnb-install`.
+Uninstall the extension with `importnb-uninstall`.
 
 ##### Run a notebook as a module
 
 When the default extension is loaded any notebook can be run from the command line. After the `importnb` extension is created notebooks can be execute from the command line.
 
-    ipython -m readme
+```bash
+ipython -m readme
+```
     
-In the command line context, `__file__ == sys.arv[0] and __name__ == '__main__'` .
+In the command line context, `__file__ == sys.argv[0] and __name__ == '__main__'` .
     
 > See the [deploy step in the travis build](https://github.com/deathbeds/importnb/blob/docs/.travis.yml#L19).
 
@@ -226,13 +244,17 @@ In the command line context, `__file__ == sys.arv[0] and __name__ == '__main__'`
 
 Installing the IPython extension allows notebooks to be computed from the command.  The notebooks are parameterizable from the command line.
 
-    ipython -m readme -- --help
+```bash
+ipython -m readme -- --help
+```
 
 ### py.test
 
 `importnb` installs a pytest plugin when it is setup.  Any notebook obeying the py.test discovery conventions can be used in to pytest.  _This is great because notebooks are generally your first test._
 
-    !ipython -m pytest -- src 
+```bash
+ipython -m pytest -- src
+```
     
 Will find all the test notebooks and configurations as pytest would any Python file.
 
@@ -242,9 +264,8 @@ To package notebooks add `recursive-include package_name *.ipynb`
 
 ## Developer
 
-* [Source Notebooks](src/notebooks/)
-* [Transpiled Python Source](src/importnb/)
-* [Tests](src/importnb/tests)
+* [Python Source](./src/importnb/)
+* [Tests](./tests)
 
 ### Format and test the Source Code
 
@@ -254,18 +275,68 @@ To package notebooks add `recursive-include package_name *.ipynb`
         if globals().get('__file__', None) == __import__('sys').argv[0]:
             print(foo, __import__('sys').argv)
         else:
-            from subprocess import call
-            !ipython -m pytest
-            """Formatting"""
-            from pathlib import Path
-            from importnb.utils.export import export
-            root = 'src/importnb/notebooks/'
-            for path in Path(root).rglob("""*.ipynb"""):                
-                if 'checkpoint' not in str(path):
-                    export(path, Path('src/importnb') / path.with_suffix('.py').relative_to(root))
+            !ipython -m pytest -- --cov=importnb --flake8 --isort --black tests 
             !jupyter nbconvert --to markdown --stdout index.ipynb > readme.md
-            
 ```
+
+    [22;0t]0;IPython: deathbeds/importnb[1m========================================== test session starts ==========================================[0m
+    platform linux -- Python 3.8.1, pytest-5.3.2, py-1.8.1, pluggy-0.13.1 -- /home/weg/projects/deathbeds/importnb/envs/importnb-dev/bin/python
+    cachedir: .pytest_cache
+    rootdir: /home/weg/projects/deathbeds/importnb, inifile: tox.ini
+    plugins: isort-0.3.1, black-0.3.7, flake8-1.0.4, cov-2.8.1, importnb-0.6.0
+    collected 22 items                                                                                      [0m
+    
+    tests/foobar.py::FLAKE8 [33mSKIPPED[0m[33m                                                                   [  4%][0m
+    tests/foobar.py::BLACK [33mSKIPPED[0m[33m                                                                    [  9%][0m
+    tests/foobar.py::ISORT [33mSKIPPED[0m[33m                                                                    [ 13%][0m
+    tests/test_importnb.ipynb::test_basic [32mPASSED[0m[32m                                                      [ 18%][0m
+    tests/test_importnb.ipynb::test_package [32mPASSED[0m[32m                                                    [ 22%][0m
+    tests/test_importnb.ipynb::test_reload [32mPASSED[0m[32m                                                     [ 27%][0m
+    tests/test_importnb.ipynb::test_docstrings [32mPASSED[0m[32m                                                 [ 31%][0m
+    tests/test_importnb.ipynb::test_docstring_opts [32mPASSED[0m[32m                                             [ 36%][0m
+    tests/test_importnb.ipynb::test_from_file [32mPASSED[0m[32m                                                  [ 40%][0m
+    tests/test_importnb.ipynb::test_lazy [32mPASSED[0m[32m                                                       [ 45%][0m
+    tests/test_importnb.ipynb::test_module_source [32mPASSED[0m[32m                                              [ 50%][0m
+    tests/test_importnb.ipynb::test_main [32mPASSED[0m[32m                                                       [ 54%][0m
+    tests/test_importnb.ipynb::test_object_source [32mPASSED[0m[32m                                              [ 59%][0m
+    tests/test_importnb.ipynb::test_python_file [32mPASSED[0m[32m                                                [ 63%][0m
+    tests/test_importnb.ipynb::test_cli [32mPASSED[0m[32m                                                        [ 68%][0m
+    tests/test_importnb.ipynb::test_parameterize [32mPASSED[0m[32m                                               [ 72%][0m
+    tests/test_importnb.ipynb::test_minified_json [32mPASSED[0m[32m                                              [ 77%][0m
+    tests/test_importnb.ipynb::test_fuzzy_finder [32mPASSED[0m[32m                                               [ 81%][0m
+    tests/test_importnb.ipynb::test_remote [32mPASSED[0m[32m                                                     [ 86%][0m
+    tests/foobaz/__init__.py::FLAKE8 [33mSKIPPED[0m[32m                                                          [ 90%][0m
+    tests/foobaz/__init__.py::BLACK [33mSKIPPED[0m[32m                                                           [ 95%][0m
+    tests/foobaz/__init__.py::ISORT [33mSKIPPED[0m[32m                                                           [100%][0mCoverage.py warning: Module importnb was previously imported, but not measured (module-not-measured)
+    
+    
+    ----------- coverage: platform linux, python 3.8.1-final-0 -----------
+    Name                                    Stmts   Miss  Cover
+    -----------------------------------------------------------
+    src/importnb/__init__.py                    5      0   100%
+    src/importnb/__main__.py                    6      2    67%
+    src/importnb/_version.py                    1      0   100%
+    src/importnb/completer.py                  54     54     0%
+    src/importnb/decoder.py                    56      7    88%
+    src/importnb/docstrings.py                 43      7    84%
+    src/importnb/finder.py                     62      8    87%
+    src/importnb/ipython_extension.py          70     39    44%
+    src/importnb/loader.py                    159     31    81%
+    src/importnb/parameterize.py               95     12    87%
+    src/importnb/remote.py                     49      8    84%
+    src/importnb/utils/__init__.py              1      1     0%
+    src/importnb/utils/export.py               33     33     0%
+    src/importnb/utils/ipython.py              47     47     0%
+    src/importnb/utils/nbdoctest.py            32     32     0%
+    src/importnb/utils/pytest_importnb.py      32     19    41%
+    src/importnb/utils/setup.py                52     52     0%
+    -----------------------------------------------------------
+    TOTAL                                     797    352    56%
+    
+    
+    [32m===================================== [32m[1m16 passed[0m, [33m6 skipped[0m[32m in 1.58s[0m[32m =====================================[0m
+    [NbConvertApp] Converting notebook index.ipynb to markdown
+
 
 
 ```python
@@ -283,8 +354,3 @@ To package notebooks add `recursive-include package_name *.ipynb`
 
 <img src="docs/classes_importnb.png"/>
 
-
-
-```python
-
-```

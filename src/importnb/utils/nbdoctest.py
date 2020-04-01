@@ -1,11 +1,9 @@
 # coding: utf-8
-from doctest import OPTIONFLAGS_BY_NAME, testfile, testmod, FAIL_FAST
-import os, argparse
+import argparse
+import os
+from doctest import FAIL_FAST, OPTIONFLAGS_BY_NAME, testfile, testmod
 
-try:
-    from ..loader import Notebook
-except:
-    from importnb import Notebook
+from ..loader import Notebook
 
 
 def _test():

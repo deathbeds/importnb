@@ -4,9 +4,15 @@
 The `AlternativeModule` is reusable.  See `pidgin` for an example.
 """
 
-from importnb import Notebook
+import abc
+import functools
+import importlib
+import pathlib
 
-import importlib, pytest, abc, pathlib, _pytest, functools
+import _pytest
+import pytest
+
+from importnb import Notebook
 
 
 def pytest_addoption(parser):
