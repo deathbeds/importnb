@@ -1,9 +1,12 @@
 # coding: utf-8
-from IPython import paths, get_ipython
-from IPython.core import profiledir
-from pathlib import Path
-import json, ast
+import ast
+import json
 import os
+import sys
+from pathlib import Path
+
+from IPython import get_ipython, paths
+from IPython.core import profiledir
 
 
 def get_config(profile="default"):
@@ -33,9 +36,6 @@ def load_config():
         config["InteractiveShellApp"]["extensions"] = []
 
     return config, location
-
-
-import sys
 
 
 def install(project="importnb"):

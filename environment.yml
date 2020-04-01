@@ -1,0 +1,23 @@
+name: importnb-dev
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - black
+  - isort
+  - jupyterlab >=1.2.4,<1.3.0a0
+  - nbsphinx
+  - nodejs >=11,<12
+  - pip
+  - pylint
+  - pytest
+  - pytest-cov
+  - pytest-flake8
+  - python >=3.8,<3.9.0a0
+  - python-graphviz
+  - tox
+  - pip:
+    - pytest-black
+    - pytest-isort

@@ -4,10 +4,6 @@
 The parameterize loader allows notebooks to be used as functions and command line tools.  A `Parameterize` loader will convert an literal ast assigments to keyword arguments for the module.
 """
 
-try:
-    from .loader import Notebook, module_from_spec
-except:
-    from loader import Notebook, module_from_spec
 import argparse
 import ast
 import inspect
@@ -18,9 +14,9 @@ from importlib.util import find_spec, spec_from_loader
 from inspect import Parameter, Signature, signature
 from pathlib import Path
 
-_38 = sys.version_info.major == 3 and sys.version_info.minor == 8
+from .loader import _GTE38, Notebook, module_from_spec
 
-if _38:
+if _GTE38:
     from importlib._bootstrap import _load_unlocked
 else:
     from importlib._bootstrap import _installed_safely
@@ -128,13 +124,13 @@ class Parameterize(Notebook):
         return parameterize(super().load(object), **globals)
 
 
-"""    with Parameterize(): 
+"""    with Parameterize():
         reload(foo)
 
-    with Parameterize(a=1234123): 
+    with Parameterize(a=1234123):
         reload(foo)
 
-    with Parameterize(a="🤘"): 
+    with Parameterize(a="🤘"):
         reload(foo)
 """
 
@@ -156,7 +152,7 @@ def parameterize(object, **globals):
         object = copy_(object)
         keywords = {}
         keywords.update(**globals), keywords.update(**parameters)
-        if _38:
+        if _GTE38:
             Parameterize(object.__name__, object.__file__, **keywords).exec_module(
                 object
             )

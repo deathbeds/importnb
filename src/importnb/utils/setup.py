@@ -10,10 +10,12 @@
 
 """
 
-from setuptools.command.build_py import build_py
-import sys, os
-from pathlib import Path
 import importlib
+import os
+import sys
+from pathlib import Path
+
+from setuptools.command.build_py import build_py
 
 
 class build_ipynb(build_py):
@@ -80,11 +82,3 @@ class build_ipynb(build_py):
                     modules.append((package, module_base, str(module_file)))
 
         return modules
-
-
-if __name__ == "__main__":
-    try:
-        from ..loader import export
-    except:
-        from importnb.loader import export
-    export("setup.ipynb", "../../utils/setup.py")
