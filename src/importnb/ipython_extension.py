@@ -35,7 +35,7 @@ try:
     )
 
     __IPYTHON__ = True
-except:
+except ImportError:
     __IPYTHON__ = False
 
 

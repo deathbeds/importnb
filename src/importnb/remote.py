@@ -32,7 +32,7 @@
     ...     import Hist
 
     >>> Hist.Figure(marks=[Hist.hist], axes=[Hist.ax_x, Hist.ax_y], padding_y=0)
-    
+
 """
 
 import importlib.machinery
@@ -100,11 +100,3 @@ def Remote(path=None, loader=Notebook, **globals):
         ...
 
     return Remote(path=path, **globals)
-
-
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("remote.ipynb", "../remote.py")

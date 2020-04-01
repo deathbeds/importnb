@@ -1,2 +1,3 @@
-jupyter labextension install jupyterlab-toc
-importnb-install
+#!/usr/bin/env bash
+python -m pip install -e . --no-deps --ignore-installed
+jupyter labextension install @jupyterlab/toc
