@@ -220,7 +220,7 @@ class FromFileMixin:
         > assert Notebook.load('loader.ipynb')
         """
         loader = cls(filename, filename)
-        module = importlib.util.module_from_spec(importlib.util.spec_from_loader(self.name, self))
+        module = importlib.util.module_from_spec(importlib.util.spec_from_loader(loader.name, loader))
         loader.exec_module(module)
         return module 
 
