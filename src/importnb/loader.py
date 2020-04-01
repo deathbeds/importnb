@@ -219,7 +219,10 @@ class FromFileMixin:
 
         > assert Notebook.load('loader.ipynb')
         """
-        return cls(filename, filename).exec_module()
+        loader = cls(filename, filename)
+        module = importlib.util.module_from_spec(importlib.util.spec_from_loader(self.name, self))
+        loader.exec_module(module)
+        return module 
 
 
 """* Sometimes folks may want to use the current IPython shell to manage the code and input transformations.
