@@ -126,21 +126,13 @@ class ImportLibMixin(SourceFileLoader):
 
     `get_data` assures consistent line numbers between the file s representatio and source."""
 
-    def create_module(self, spec=None):
-        if spec is None:
-            spec = importlib.util.spec_from_loader(self.name, self)
+    def create_module(self, spec):
         module = ModuleType(spec.name)
         _init_module_attrs(spec, module)
         if isinstance(spec, FuzzySpec):
             sys.modules[spec.alias] = module
         if self.name:
             module.__name__ = self.name
-        return module
-
-    def exec_module(self, module=None):
-        if module is None:
-            module = self.create_module()
-        super().exec_module(module)
         return module
 
     def decode(self):
