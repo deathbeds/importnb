@@ -223,6 +223,7 @@ class FromFileMixin:
         spec = FileModuleSpec(name, loader, origin=loader.path)
         module = module_from_spec(spec)
         if _GTE38:
+            sys.path.append(cwd)
             module = _load_unlocked(spec)
         else:
             with ExitStack() as stack:
