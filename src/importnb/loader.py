@@ -219,7 +219,7 @@ class FromFileMixin:
         > assert Notebook.load('loader.ipynb')
         """
         name = main and "__main__" or Path(filename).stem
-        loader = cls(name, str(filename), **kwargs)
+        loader = cls(name, str(filename), **kwargs).loader
         spec = FileModuleSpec(name, loader, origin=loader.path)
         module = module_from_spec(spec)
         if _GTE38:
