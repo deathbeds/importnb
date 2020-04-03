@@ -222,21 +222,15 @@ class FromFileMixin:
         loader = cls(name, str(filename), **kwargs)
         spec = FileModuleSpec(name, loader, origin=loader.path)
         module = module_from_spec(spec)
-        cwd = str(Path(loader.path).parent)
-        try:
-
-            if _GTE38:
-                sys.path.append(cwd)
-                module = _load_unlocked(spec)
-            else:
-                with ExitStack() as stack:
-                    loader.name != "__main__" and stack.enter_context(
-                        _installed_safely(module)
-                    )
-                    loader.exec_module(module)
-        finally:
-            sys.path.pop()
-
+        if _GTE38:
+            sys.path.append(cwd)
+            module = _load_unlocked(spec)
+        else:
+            with ExitStack() as stack:
+                loader.name != "__main__" and stack.enter_context(
+                    _installed_safely(module)
+                )
+                loader.exec_module(module)
         return module
 
 
