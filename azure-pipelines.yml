@@ -15,7 +15,7 @@ strategy:
       vmImage: ubuntu-16.04
     macos_3.5:
       python.version: '3.5'
-      vmImage: macos-10.13
+      vmImage: macOS-10.14
     vs2017_3.5:
       python.version: '3.5'
       vmImage: vs2017-win2016
@@ -24,7 +24,7 @@ strategy:
       vmImage: ubuntu-16.04
     macos_3.6:
       python.version: '3.6'
-      vmImage: macos-10.13
+      vmImage: macOS-10.14
     vs2017_3.6:
       python.version: '3.6'
       vmImage: vs2017-win2016
@@ -33,7 +33,7 @@ strategy:
       vmImage: ubuntu-16.04
     macos_3.7:
       python.version: '3.7'
-      vmImage: macos-10.13
+      vmImage: macOS-10.14
     vs2017_3.7:
       python.version: '3.7'
       vmImage: vs2017-win2016
@@ -42,7 +42,7 @@ strategy:
       vmImage: ubuntu-16.04
     macos_3.8:
       python.version: '3.8'
-      vmImage: macos-10.13
+      vmImage: macOS-10.14
     vs2017_3.8:
       python.version: '3.8'
       vmImage: vs2017-win2016
