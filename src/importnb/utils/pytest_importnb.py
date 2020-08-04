@@ -57,6 +57,8 @@ class AlternativeSourceText(abc.ABCMeta):
                             break
                     else:
                         return
+                if hasattr(module, "from_parent"):
+                    return module.from_parent(self, path, parent)
                 return module(path, parent)
 
 
