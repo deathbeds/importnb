@@ -150,7 +150,7 @@ Meaning non-code blocks can be executeb by [doctest]().
 
 # Import notebooks from files
 
-Notebook names may not be valid Python paths.  In this case, use `Notebook.from_filename`.
+Notebook names may not be valid Python paths.  In this case, use `Notebook.load`.
 
 ```python
 >>> Notebook.load('changelog.ipynb')
