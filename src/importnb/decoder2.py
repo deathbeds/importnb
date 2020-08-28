@@ -60,7 +60,7 @@ class LineCacheNotebookDecoder:
         ):
             # The minified case will have a great length than line number
             if len(source) >= node.lineno:
-                source.extend(node.s.splitlines())
+                source += node.s.splitlines(True)
                 continue
             while len(source) < node.lineno:
                 source += [""]

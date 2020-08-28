@@ -304,19 +304,3 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
         return super().source_to_code(
             ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
         )
-
-
-"""# Developer
-"""
-
-"""    Notebook.load('loader.ipynb')
-
-"""
-
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("loader.ipynb", "../loader.py")
-    print(__import__("doctest").testmod(Notebook.load("loader.ipynb"), verbose=2))
