@@ -58,6 +58,10 @@ class LineCacheNotebookDecoder:
             bool,
             [self.find_source(x) for x in find_key(module.body[0].value, "cells").elts],
         ):
+            # The minified case will have a great length than line number
+            if len(source) >= node.lineno:
+                source.extend(node.s.splitlines())
+                continue
             while len(source) < node.lineno:
                 source += [""]
             source += node.s.splitlines()
