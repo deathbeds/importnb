@@ -21,7 +21,7 @@ from importlib.util import spec_from_loader
 from inspect import signature
 from pathlib import Path
 
-from .decoder import LineCacheNotebookDecoder, quote
+from .decoder2 import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FuzzyFinder, FuzzySpec, get_loader_details
 from .ipython_extension import load_ipython_extension, unload_ipython_extension
@@ -304,19 +304,3 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
         return super().source_to_code(
             ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
         )
-
-
-"""# Developer
-"""
-
-"""    Notebook.load('loader.ipynb')
-
-"""
-
-if __name__ == "__main__":
-    try:
-        from utils.export import export
-    except:
-        from .utils.export import export
-    export("loader.ipynb", "../loader.py")
-    print(__import__("doctest").testmod(Notebook.load("loader.ipynb"), verbose=2))
