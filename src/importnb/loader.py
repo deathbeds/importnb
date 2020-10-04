@@ -46,6 +46,8 @@ except ImportError:
         return _SpecMethods(spec).init_module_attrs(module)
 
 
+_GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
+
 try:
     import IPython
     from IPython.core.inputsplitter import IPythonInputSplitter
@@ -120,7 +122,7 @@ class ImportLibMixin(SourceFileLoader):
     `get_data` assures consistent line numbers between the file s representatio and source."""
 
     def create_module(self, spec):
-        module = ModuleType(spec.name)
+        module = ModuleType(str(spec.name))
         _init_module_attrs(spec, module)
         if isinstance(spec, FuzzySpec):
             sys.modules[spec.alias] = module
