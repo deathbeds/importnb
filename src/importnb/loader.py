@@ -27,23 +27,10 @@ from .finder import FuzzyFinder, FuzzySpec, get_loader_details
 from .ipython_extension import load_ipython_extension, unload_ipython_extension
 
 from importlib._bootstrap import _requires_builtin
-
-try:
-    from importlib._bootstrap_external import decode_source, FileFinder
-    from importlib.util import module_from_spec
-    from importlib._bootstrap import _init_module_attrs
-    from importlib.util import LazyLoader
-except ImportError:
-    # python 3.4
-    from importlib._bootstrap import _SpecMethods
-    from importlib.util import decode_source
-    from importlib.machinery import FileFinder
-
-    def module_from_spec(spec):
-        return _SpecMethods(spec).create()
-
-    def _init_module_attrs(spec, module):
-        return _SpecMethods(spec).init_module_attrs(module)
+from importlib._bootstrap_external import decode_source, FileFinder
+from importlib.util import module_from_spec
+from importlib._bootstrap import _init_module_attrs
+from importlib.util import LazyLoader
 
 
 _GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
