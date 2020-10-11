@@ -6,13 +6,6 @@ from pathlib import Path
 import setuptools
 from setuptools.command.test import test as TestCommand
 
-try:
-    from importlib import resources
-
-    install_requires = []
-except ImportError:
-    install_requires = ["importlib_resources"]
-
 name = "importnb"
 
 __version__ = None
@@ -47,11 +40,13 @@ setup_args = dict(
     long_description=description,
     long_description_content_type="text/markdown",
     url="https://github.com/deathbeds/importnb",
-    python_requires=">=3.4",
+    python_requires=">=3.6",
     license="BSD-3-Clause",
     setup_requires=[],
     tests_require=["pytest", "nbformat"],
-    install_requires=install_requires,
+    install_requires=[
+        "importlib_resources; python_version < '3.7'"
+    ],
     include_package_data=True,
     packages=setuptools.find_packages(where="src"),
     package_dir={"": "src"},
@@ -64,7 +59,6 @@ setup_args = dict(
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
