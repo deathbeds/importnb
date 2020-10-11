@@ -10,15 +10,6 @@ pr:
 
 strategy:
   matrix:
-    ubuntu_3.5:
-      python.version: '3.5'
-      vmImage: ubuntu-16.04
-    macos_3.5:
-      python.version: '3.5'
-      vmImage: macOS-10.14
-    vs2017_3.5:
-      python.version: '3.5'
-      vmImage: vs2017-win2016
     ubuntu_3.6:
       python.version: '3.6'
       vmImage: ubuntu-16.04
@@ -45,6 +36,15 @@ strategy:
       vmImage: macOS-10.14
     vs2017_3.8:
       python.version: '3.8'
+      vmImage: vs2017-win2016
+    ubuntu_3.9:
+      python.version: '3.9'
+      vmImage: ubuntu-16.04
+    macos_3.9:
+      python.version: '3.9'
+      vmImage: macOS-10.14
+    vs2017_3.9:
+      python.version: '3.9'
       vmImage: vs2017-win2016
 
 pool:
