@@ -27,7 +27,9 @@ def pytest_addoption(parser):
 class AlternativeModule(pytest.Module):
     def _getobj(self):
         return self.loader(
-            getattr(self.parent.config.option, "main", None) and "__main__" or None
+            getattr(self.parent.config.option, "main", None)
+            and "__main__"
+            or self.fspath
         ).load(str(self.fspath))
 
     def collect(self):
@@ -36,7 +38,7 @@ class AlternativeModule(pytest.Module):
             self.fspath.pyimport = functools.partial(
                 self.fspath.pyimport, modname=self._obj.__name__
             )
-            yield from _pytest.doctest.DoctestModule.collect(self)
+            # yield from _pytest.doctest.DoctestModule.collect(self)
 
 
 """`NotebookModule` is an `AlternativeModule` to load `Notebook`s.
