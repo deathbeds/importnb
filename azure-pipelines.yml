@@ -1,0 +1,58 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+      - refs/tags/v*
+
+pr:
+  - master
+
+strategy:
+  matrix:
+    ubuntu_3.6:
+      python.version: '3.6'
+      vmImage: ubuntu-16.04
+    macos_3.6:
+      python.version: '3.6'
+      vmImage: macOS-10.14
+    vs2017_3.6:
+      python.version: '3.6'
+      vmImage: vs2017-win2016
+    ubuntu_3.7:
+      python.version: '3.7'
+      vmImage: ubuntu-16.04
+    macos_3.7:
+      python.version: '3.7'
+      vmImage: macOS-10.14
+    vs2017_3.7:
+      python.version: '3.7'
+      vmImage: vs2017-win2016
+    ubuntu_3.8:
+      python.version: '3.8'
+      vmImage: ubuntu-16.04
+    macos_3.8:
+      python.version: '3.8'
+      vmImage: macOS-10.14
+    vs2017_3.8:
+      python.version: '3.8'
+      vmImage: vs2017-win2016
+
+pool:
+  vmImage: '$(vmImage)'
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+
+  - script: |
+      python -m pip install --upgrade pip
+      python -m pip install -r requirements-dev.txt
+      python -m pip install pytest-azurepipelines
+    displayName: 'Install dependencies'
+
+  - script: |
+      tox
+    displayName: 'tox'
