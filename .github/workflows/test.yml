@@ -2,15 +2,13 @@ name: test
 
 on:
   pull_request:
-    branches:
-    - '*'
+    branches: ["*"]
   push:
-    branches:
-    - 'master'
+    branches: [master]
 
 jobs:
   test:
-    name: ${{ runner.os }} ${{ matrix.python-version }}
+    name: ${{ matrix.os }} ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
