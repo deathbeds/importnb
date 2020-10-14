@@ -13,12 +13,7 @@ from importlib.machinery import ModuleSpec, SourceFileLoader
 from itertools import chain
 from pathlib import Path
 
-try:
-    from importlib._bootstrap_external import FileFinder
-except ImportError:
-    # python 3.4
-    from importlib.machinery import FileFinder
-
+from importlib._bootstrap_external import FileFinder
 
 class FileModuleSpec(ModuleSpec):
     def __init__(self, *args, **kwargs):
