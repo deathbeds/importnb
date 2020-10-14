@@ -142,7 +142,10 @@ class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
     """The simplest implementation of a Notebook Source File Loader.
     """
 
-    extensions = (".ipynb",)
+    extensions = (
+        ".ipy",
+        ".ipynb",
+    )
     __slots__ = "_lazy", "_fuzzy", "_markdown_docstring", "_position"
 
     def __init__(
@@ -184,7 +187,7 @@ class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
             return LineCacheNotebookDecoder(
                 code=self.code, raw=self.raw, markdown=self.markdown
             ).decode(self.decode(), self.path)
-        return super().get_data(path)
+        return self.code(super().get_data(path))
 
 
 class FileModuleSpec(ModuleSpec):
