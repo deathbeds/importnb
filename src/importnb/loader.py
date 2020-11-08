@@ -164,6 +164,12 @@ class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
         self._markdown_docstring = markdown_docstring
         self._position = position
 
+    @classmethod
+    def parameterized(cls):
+        from .parameterize import Parameterize
+
+        return type(cls.__name__, (Parameterize, cls), {})
+
     @property
     def loader(self):
         """Create a lazy loader source file loader."""
