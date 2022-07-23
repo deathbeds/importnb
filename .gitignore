@@ -1,3 +1,5 @@
+.doit.db.*
+
 .pytest_cache
 benchmarks/figures
 _site
