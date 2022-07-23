@@ -1,8 +1,11 @@
 import ast
 import builtins
 import linecache
+import json
 import textwrap
 from functools import partial
+
+from numpy import isin
 
 builtins.true, builtins.false, builtins.null = True, False, None
 
@@ -13,35 +16,81 @@ def quote(object, *, quotes="'''"):
     return quotes + object + "\n" + quotes
 
 
-def find_key(object, key):
-    for k, v in zip(object.keys, object.values):
-        if k.s == key:
-            break
-    return v
+from ._json_parser import Lark_StandAlone, Transformer
 
 
-def get_source(lines):
-    if isinstance(lines, ast.List):
-        return ast.copy_location(ast.Str(s="".join(x.s for x in lines.elts)), lines)
-    if isinstance(lines, ast.Str):
-        return lines
-
-
-class LineCacheNotebookDecoder:
+class Transformer(Transformer):
     def __init__(
         self,
         markdown=quote,
         code=textwrap.dedent,
         raw=partial(textwrap.indent, prefix="# "),
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
         for key in ("markdown", "code", "raw"):
             setattr(self, "transform_" + key, locals().get(key))
 
+    def string(self, s):
+        return s[0].line, json.loads(s[0])
+
+    def item(self, s):
+        key = s[0][-1]
+        if key == "cells":
+            return self.render(list(map(dict, s[-1])))
+        elif key in {"source", "text"}:
+            return key, s[-1]
+        elif key == "cell_type":
+            return key, s[-1][-1]
+
+    def array(self, s):
+        if s:
+            return s
+        return []
+
+    def object(self, s):
+        return [x for x in s if x is not None]
+
+    def render_one(self, kind, lines):
+        return getattr(self, f"transform_{kind}")("".join(lines))
+
+    def render(self, x):
+        body = []
+        for token in x:
+            t = token.get("cell_type")
+            try:
+                s = token["source"]
+            except KeyError:
+                s = token.get("text")
+            if s:
+                if not isinstance(s, list):
+                    s = [s]
+                l, lines = s[0][0], [x[1] for x in s]
+                body += [""] * (l - len(body))
+                lines = self.render_one(t, lines)
+                body += lines.splitlines()
+        return "\n".join(body + [""])
+
+
+class LineCacheNotebookDecoder(Transformer):
+    def __init__(
+        self,
+        markdown=quote,
+        code=textwrap.dedent,
+        raw=partial(textwrap.indent, prefix="# "),
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+
+        for key in ("markdown", "code", "raw"):
+            setattr(self, "transform_" + key, locals().get(key))
+
+    def source_from_json_grammar(self, object):
+        return Lark_StandAlone(transformer=self).parse(object)
+
     def decode(self, object, filename):
-        source = self.module_to_source(ast.parse(object))
+        source = self.source_from_json_grammar(object)[0].splitlines()
         linecache.updatecache(filename)
         if filename in linecache.cache:
             linecache.cache[filename] = (
@@ -51,32 +100,3 @@ class LineCacheNotebookDecoder:
                 filename,
             )
         return "\n".join(source)
-
-    def module_to_source(self, module):
-        source = []
-        for node in filter(
-            bool,
-            [self.find_source(x) for x in find_key(module.body[0].value, "cells").elts],
-        ):
-            # The minified case will have a great length than line number
-            if len(source) >= node.lineno:
-                source += node.s.splitlines(True)
-                continue
-            while len(source) < node.lineno:
-                source += [""]
-            source += node.s.splitlines()
-        if not isinstance(source, list):
-            return source.splitlines(True)
-        return source
-
-    def find_source(self, object):
-        type = None
-        for k, v in zip(object.keys, object.values):
-            if k.s == "source":
-                source = get_source(v)
-            if k.s == "cell_type":
-                type = getattr(self, "transform_%s" % v.s)
-
-        source.s = type(source.s)
-        return source
-
