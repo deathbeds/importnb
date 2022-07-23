@@ -5,10 +5,6 @@ import json
 import textwrap
 from functools import partial
 
-from numpy import isin
-
-builtins.true, builtins.false, builtins.null = True, False, None
-
 
 def quote(object, *, quotes="'''"):
     if quotes in object:
