@@ -49,7 +49,10 @@ class Transformer(Transformer):
         return [x for x in s if x is not None]
 
     def render_one(self, kind, lines):
-        return getattr(self, f"transform_{kind}")("".join(lines))
+        s = "".join(lines)
+        if not s.endswith(("\n",)):
+            s += "\n"
+        return getattr(self, f"transform_{kind}")(s)
 
     def render(self, x):
         body = []
@@ -63,9 +66,9 @@ class Transformer(Transformer):
                 if not isinstance(s, list):
                     s = [s]
                 l, lines = s[0][0], [x[1] for x in s]
-                body += [""] * (l - len(body))
+                body.extend([""] * (l - len(body)))
                 lines = self.render_one(t, lines)
-                body += lines.splitlines()
+                body.extend(lines.splitlines())
         return "\n".join(body + [""])
 
 
@@ -86,13 +89,13 @@ class LineCacheNotebookDecoder(Transformer):
         return Lark_StandAlone(transformer=self).parse(object)
 
     def decode(self, object, filename):
-        source = self.source_from_json_grammar(object)[0].splitlines()
+        source = self.source_from_json_grammar(object)[0]
         linecache.updatecache(filename)
         if filename in linecache.cache:
             linecache.cache[filename] = (
                 linecache.cache[filename][0],
                 linecache.cache[filename][1],
-                source,
+                source.splitlines(True),
                 filename,
             )
-        return "\n".join(source)
+        return source
