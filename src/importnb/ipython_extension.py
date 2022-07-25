@@ -129,14 +129,3 @@ def load_ipython_extension(ip=None):
 def unload_ipython_extension(ip=None):
     global manager
     ip and manager and manager.unload()
-
-
-"""# Developer
-"""
-
-if __name__ == "__main__":
-    from importnb.utils.export import export
-
-    export("ipython_extension.ipynb", "../ipython_extension.py")
-    # m = Notebook(shell=True).from_filename('extensions.ipynb')
-    # print(__import__('doctest').testmod(m, verbose=2))

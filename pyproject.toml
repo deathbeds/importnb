@@ -1,0 +1,29 @@
+[tool]
+[tool.setuptools_scm]
+write_to = "src/importnb/_version.py"
+version_scheme = "release-branch-semver"
+local_scheme = "node-and-timestamp"
+
+[tool.doit]
+backend = "json"
+verbosity = 2
+
+[tool.doit.commands.list]
+status = true
+subtasks = true
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line_length = 100
+
+[tool.pytest.ini_options]
+addopts = "-pno:warnings --verbose --doctest-modules"
+
+[tool.coverage.html]
+directory = "docs/coverage"
+
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
