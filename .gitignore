@@ -1,3 +1,4 @@
+settings.json
 .doit.db.*
 
 .pytest_cache
@@ -19,6 +20,8 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+
+
 downloads/
 eggs/
 .eggs/
