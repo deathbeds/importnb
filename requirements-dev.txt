@@ -6,6 +6,7 @@ pytest
 pytest-cov
 pytest-flake8
 setuptools
-tox
+nox
 twine
 wheel
+build
