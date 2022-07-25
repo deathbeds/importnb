@@ -58,7 +58,7 @@ jobs:
 
       - run: python -m pip install .[test]
 
-      - run: pytest # run here for good measure
+      # - run: pytest # run here for good measure
 
       - run: importnb-install
 
