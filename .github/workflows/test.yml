@@ -52,16 +52,4 @@ jobs:
 
       - run: python -m pip install pytest-github-actions-annotate-failures
 
-      - run: python -m build
-
       - run: nox
-
-      - run: pyclean .
-
-      - run: python -m pip install .
-
-      - run: importnb-install
-
-      - run: ipython -m readme
-
-      - run: jupyter nbconvert --to notebook --inplace readme.ipynb
