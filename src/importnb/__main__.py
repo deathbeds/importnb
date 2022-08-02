@@ -23,22 +23,32 @@ def run(ns):
     from importnb import Notebook
 
     sys.path.insert(0, str(Path().absolute()))
-    with Parameterize():
-        for file in ns.file:
-            Parameterize.load(file)
 
+    # run files requested from the cli
+    for file in ns.file:
+        Notebook.load(file, main=True)
+
+    # run modules requests from the cli
+    with Notebook():
         for module in ns.module or []:
-            runpy.run_module(module)
+            runpy.run_module(module, run_name="__main__")
 
 
 def main(argv=None):
     from .utils.ipython import install, uninstall
 
     argv = argv or sys.argv[1:]
+
     if isinstance(argv, str):
         argv = split(argv)
 
+    if not argv:
+        return PARSER.print_help()
+    if argv[0] not in {"install", "uninstall", "run"}:
+        argv.insert(0, "run")
     ns = PARSER.parse_args(argv)
+
+    ns.f = ns.f or "run"
 
     if ns.f == "run":
         return run(ns)
@@ -50,5 +60,5 @@ from .parameterize import Parameterize
 
 file = sys.argv[1] if len(sys.argv) > 1 else None
 
-if file == __file__:
+if __name__ == "__main__":
     main()
