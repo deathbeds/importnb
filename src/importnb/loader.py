@@ -139,8 +139,7 @@ class ImportLibMixin(SourceFileLoader):
 
 
 class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
-    """The simplest implementation of a Notebook Source File Loader.
-    """
+    """The simplest implementation of a Notebook Source File Loader."""
 
     extensions = (
         ".ipy",
@@ -178,8 +177,7 @@ class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
             loader = LazyLoader.factory(loader)
         # Strip the leading underscore from slots
         return partial(
-            loader,
-            **{object.lstrip("_"): getattr(self, object) for object in self.__slots__}
+            loader, **{object.lstrip("_"): getattr(self, object) for object in self.__slots__}
         )
 
     @property
@@ -207,8 +205,7 @@ class FileModuleSpec(ModuleSpec):
 
 
 class FromFileMixin:
-    """FromFileMixin adds a classmethod to load a notebooks from files.
-    """
+    """FromFileMixin adds a classmethod to load a notebooks from files."""
 
     @classmethod
     def load(cls, filename, dir=None, main=False, **kwargs):
@@ -219,7 +216,7 @@ class FromFileMixin:
 
         > assert Notebook.load('loader.ipynb')
         """
-        name = main and "__main__" or Path(filename)
+        name = main and "__main__" or filename
         loader = cls(name, str(filename), **kwargs)
         spec = FileModuleSpec(name, loader, origin=loader.path)
         module = loader.create_module(spec)
