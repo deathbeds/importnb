@@ -1,4 +1,4 @@
-from nox import session
+from nox import session, parametrize
 from os import environ
 
 CI = bool(environ.get("CI"))
@@ -6,12 +6,10 @@ E = ("-e", "")[CI]
 
 
 @session(reuse_venv=True)
-def test_ipython(session):
-    session.install("nbconvert", "ipython", E + ".[test]")
-    session.run("pytest", "tests", *session.posargs)
-
-
-@session(reuse_venv=True)
-def test_python(session):
-    session.install(E + ".[test]")
+@parametrize("env", ["py", "ipy"])
+def test(session, env):
+    e = [E + ".[test]"]
+    if env == "ipy":
+        e.extend(["nbconvert", "ipython"])
+    session.install(*e)
     session.run("pytest", "tests", *session.posargs)
