@@ -53,9 +53,7 @@ def _test():
             # It is a module -- insert its dir into sys.path and try to
             # import it. If it is part of a package, that possibly
             # won't work because of package imports.
-            failures, _ = testmod(
-                Notebook.load(filename), verbose=verbose, optionflags=options
-            )
+            failures, _ = testmod(Notebook.load(filename), verbose=verbose, optionflags=options)
         else:
             failures, _ = testfile(
                 filename, module_relative=False, verbose=verbose, optionflags=options
@@ -67,8 +65,3 @@ def _test():
 
 if __name__ == "__main__":
     _test()
-
-if __name__ == "__main__":
-    from .export import export
-
-    export("nbdoctest.ipynb", "../../utils/nbdoctest.py")

@@ -27,9 +27,7 @@ def pytest_addoption(parser):
 class AlternativeModule(pytest.Module):
     def _getobj(self):
         return self.loader(
-            getattr(self.parent.config.option, "main", None)
-            and "__main__"
-            or self.fspath
+            getattr(self.parent.config.option, "main", None) and "__main__" or self.fspath
         ).load(str(self.fspath))
 
     def collect(self):
@@ -69,8 +67,3 @@ class NotebookTests(metaclass=AlternativeSourceText):
 
 
 pytest_collect_file = NotebookTests.__call__
-
-if __name__ == "__main__":
-    from importnb.utils.export import export
-
-    export("pytest_importnb.ipynb", "../../utils/pytest_importnb.py")

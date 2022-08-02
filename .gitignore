@@ -1,3 +1,4 @@
+src/importnb/_version.py
 settings.json
 .doit.db.*
 
