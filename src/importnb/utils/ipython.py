@@ -37,15 +37,16 @@ def load_config():
 
 
 def install(project="importnb"):
+    """install the importnb extension"""
     config, location = load_config()
-    projects = sys.argv[1:] or [project]
+    projects = [project]
     if not installed(project):
         config["InteractiveShellApp"]["extensions"].extend(projects)
 
     with location.open("w") as file:
         json.dump(config, file)
 
-    print("""<3 {}""".format(projects))
+    print("""✅ {}""".format(projects))
 
 
 def installed(project):
@@ -54,12 +55,13 @@ def installed(project):
 
 
 def uninstall(project="importnb"):
+    """uninstall the importnb extension"""
     config, location = load_config()
-    projects = sys.argv[1:] or [project]
+    projects = [project]
     config["InteractiveShellApp"]["extensions"] = [
         ext for ext in config["InteractiveShellApp"]["extensions"] if ext not in projects
     ]
 
     with location.open("w") as file:
         json.dump(config, file)
-    print("""</3 {}.""".format(projects))
+    print("""❌ {}.""".format(projects))

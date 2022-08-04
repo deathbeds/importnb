@@ -118,3 +118,4 @@ venv.bak/
 
 # test cruft
 foobarmin.ipynb
+src/importnb/_version.py
