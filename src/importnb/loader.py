@@ -6,20 +6,13 @@ Combine the __import__ finder with the loader.
 
 
 import ast
-import importlib
-import inspect
-import json
 import os
 import sys
 import textwrap
 import types
-from contextlib import ExitStack, contextmanager
-from functools import partial, partialmethod
+from functools import partial
 from importlib import reload
 from importlib.machinery import ModuleSpec, SourceFileLoader
-from importlib.util import spec_from_loader
-from inspect import signature
-from pathlib import Path
 
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
@@ -139,8 +132,7 @@ class ImportLibMixin(SourceFileLoader):
 
 
 class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
-    """The simplest implementation of a Notebook Source File Loader.
-    """
+    """The simplest implementation of a Notebook Source File Loader."""
 
     extensions = (
         ".ipy",
@@ -178,8 +170,7 @@ class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
             loader = LazyLoader.factory(loader)
         # Strip the leading underscore from slots
         return partial(
-            loader,
-            **{object.lstrip("_"): getattr(self, object) for object in self.__slots__}
+            loader, **{object.lstrip("_"): getattr(self, object) for object in self.__slots__}
         )
 
     @property
@@ -207,8 +198,7 @@ class FileModuleSpec(ModuleSpec):
 
 
 class FromFileMixin:
-    """FromFileMixin adds a classmethod to load a notebooks from files.
-    """
+    """FromFileMixin adds a classmethod to load a notebooks from files."""
 
     @classmethod
     def load(cls, filename, dir=None, main=False, **kwargs):
@@ -219,7 +209,7 @@ class FromFileMixin:
 
         > assert Notebook.load('loader.ipynb')
         """
-        name = main and "__main__" or Path(filename)
+        name = main and "__main__" or filename
         loader = cls(name, str(filename), **kwargs)
         spec = FileModuleSpec(name, loader, origin=loader.path)
         module = loader.create_module(spec)
@@ -248,6 +238,16 @@ class TransformerMixin:
         return node
 
 
+class DefsOnly(ast.NodeTransformer):
+    INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
+
+    def visit_Module(self, node):
+        return ast.Module(
+            [x for x in node.body if isinstance(x, self.INCLUDE)],
+            node.type_ignores,
+        )
+
+
 """## The `Notebook` finder & loader
 """
 
@@ -262,7 +262,7 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
 
-    __slots__ = NotebookBaseLoader.__slots__ + ("_main",)
+    __slots__ = NotebookBaseLoader.__slots__ + ("_main", "_defs_only")
 
     def __init__(
         self,
@@ -273,8 +273,11 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
         fuzzy=True,
         markdown_docstring=True,
         main=False,
+        defs_only=False,
     ):
         self._main = bool(main) or fullname == "__main__"
+        self._defs_only = defs_only
+
         super().__init__(
             self._main and "__main__" or fullname,
             path,
@@ -286,6 +289,11 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
 
     def parse(self, nodes):
         return ast.parse(nodes, self.path)
+
+    def visit(self, nodes):
+        if self._defs_only:
+            nodes = DefsOnly().visit(nodes)
+        return nodes
 
     def source_to_code(self, nodes, path, *, _optimize=-1):
         """* Convert the current source to ast
