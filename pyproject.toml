@@ -19,7 +19,7 @@ profile = "black"
 line_length = 100
 
 [tool.pytest.ini_options]
-addopts = "-pno:warnings --verbose --doctest-modules"
+addopts = "-pno:warnings --verbose --doctest-modules --current-env --sanitize-with sanitize.cfg"
 
 [tool.coverage.html]
 directory = "docs/coverage"
