@@ -6,20 +6,14 @@ Combine the __import__ finder with the loader.
 
 
 import ast
-import importlib
-import inspect
-import json
 import os
 import sys
+import re
 import textwrap
 import types
-from contextlib import ExitStack, contextmanager
-from functools import partial, partialmethod
+from functools import partial
 from importlib import reload
 from importlib.machinery import ModuleSpec, SourceFileLoader
-from importlib.util import spec_from_loader
-from inspect import signature
-from pathlib import Path
 
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
@@ -51,6 +45,9 @@ except:
     from textwrap import dedent
 
 __all__ = "Notebook", "reload"
+
+
+MAGIC = re.compile("^.*%{2}")
 
 
 class FinderContextManager:
@@ -231,6 +228,10 @@ class FromFileMixin:
 """
 
 
+def comment(str):
+    return textwrap.indent(str, "# ")
+
+
 class TransformerMixin:
     def code(self, str):
         return dedent(str)
@@ -239,10 +240,20 @@ class TransformerMixin:
         return quote(str)
 
     def raw(self, str):
-        return textwrap.indent(str, "# ")
+        return comment(str)
 
     def visit(self, node):
         return node
+
+
+class DefsOnly(ast.NodeTransformer):
+    INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
+
+    def visit_Module(self, node):
+        args = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
+        if _GTE38:
+            args += (node.type_ignores,)
+        return ast.Module(*args)
 
 
 """## The `Notebook` finder & loader
@@ -259,7 +270,7 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
 
-    __slots__ = NotebookBaseLoader.__slots__ + ("_main",)
+    __slots__ = NotebookBaseLoader.__slots__ + ("_main", "_defs_only", "_no_magic")
 
     def __init__(
         self,
@@ -270,8 +281,13 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
         fuzzy=True,
         markdown_docstring=True,
         main=False,
+        defs_only=False,
+        no_magic=False,
     ):
         self._main = bool(main) or fullname == "__main__"
+        self._defs_only = defs_only
+        self._no_magic = no_magic
+
         super().__init__(
             self._main and "__main__" or fullname,
             path,
@@ -283,6 +299,17 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
 
     def parse(self, nodes):
         return ast.parse(nodes, self.path)
+
+    def visit(self, nodes):
+        if self._defs_only:
+            nodes = DefsOnly().visit(nodes)
+        return nodes
+
+    def code(self, str):
+        if self._no_magic:
+            if MAGIC.match(str):
+                return comment(str)
+        return super().code(str)
 
     def source_to_code(self, nodes, path, *, _optimize=-1):
         """* Convert the current source to ast
