@@ -250,10 +250,10 @@ class DefsOnly(ast.NodeTransformer):
     INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
 
     def visit_Module(self, node):
-        return ast.Module(
-            [x for x in node.body if isinstance(x, self.INCLUDE)],
-            node.type_ignores,
-        )
+        args = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
+        if _GTE38:
+            args += (node.type_ignores,)
+        return ast.Module(*args)
 
 
 """## The `Notebook` finder & loader
