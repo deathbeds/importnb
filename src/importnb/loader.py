@@ -76,14 +76,14 @@ class FinderContextManager:
     def __enter__(self):
         id, details = get_loader_details()
         details.insert(self._position, (self.loader, self.extensions))
-        sys.path_hooks[id] = self.finder.path_hook(*details)
+        sys.path_hooks[id] = self.finder[self.extensions].path_hook(*details)
         sys.path_importer_cache.clear()
         return self
 
     def __exit__(self, *excepts):
         id, details = get_loader_details()
         details.pop(self._position)
-        sys.path_hooks[id] = self.finder.path_hook(*details)
+        sys.path_hooks[id] = self.finder[self.extensions].path_hook(*details)
         sys.path_importer_cache.clear()
 
 
