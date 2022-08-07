@@ -7,7 +7,7 @@ The `AlternativeModule` is reusable.  See `pidgin` for an example.
 import abc
 import functools
 import importlib
-import pathlib
+from pathlib import Path
 
 import _pytest
 import pytest
@@ -20,27 +20,11 @@ def pytest_addoption(parser):
     group.addoption("--main", action="store_true", help="Run in the main context.")
 
 
-"""`AlternativeModule` is an alternative `pytest.Module` loader that can enable `pytest.Doctest`.
-"""
-
-
 class AlternativeModule(pytest.Module):
     def _getobj(self):
         return self.loader(
-            getattr(self.parent.config.option, "main", None) and "__main__" or self.fspath
-        ).load(str(self.fspath))
-
-    def collect(self):
-        yield from super().collect()
-        if self.parent.config.option.doctestmodules:
-            self.fspath.pyimport = functools.partial(
-                self.fspath.pyimport, modname=self._obj.__name__
-            )
-            # yield from _pytest.doctest.DoctestModule.collect(self)
-
-
-"""`NotebookModule` is an `AlternativeModule` to load `Notebook`s.
-"""
+            getattr(self.parent.config.option, "main", None) and "__main__" or self.path
+        ).load(str(self.path))
 
 
 class NotebookModule(AlternativeModule):
@@ -50,7 +34,7 @@ class NotebookModule(AlternativeModule):
 class AlternativeSourceText(abc.ABCMeta):
     def __call__(self, parent, path):
         for module in self.modules:
-            if "".join(pathlib.Path(str(path)).suffixes) in module.loader.extensions:
+            if "".join(Path(str(path)).suffixes) in module.loader.extensions:
                 if not parent.session.isinitpath(path):
                     for pat in parent.config.getini("python_files"):
                         if path.fnmatch(pat.rstrip(".py") + path.ext):
@@ -58,7 +42,7 @@ class AlternativeSourceText(abc.ABCMeta):
                     else:
                         return
                 if hasattr(module, "from_parent"):
-                    return module.from_parent(parent, fspath=path)
+                    return module.from_parent(parent, path=Path(path))
                 return module(path, parent)
 
 
