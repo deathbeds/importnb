@@ -56,6 +56,7 @@ Source = "https://github.com/deathbeds/importnb"
 
 [tool.hatch.build]
 include = [
+  "src/importnb/*.py",
   "src/importnb/_version.py",
   "src/importnb/_json_parser.py"
 ]
