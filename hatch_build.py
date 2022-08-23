@@ -21,7 +21,7 @@ class LarkStandAloneBuildHook(BuildHookInterface):
             py = get_standalone()
             python_parser.write_text(py)
         build_data["artifacts"].append(
-            "/" + str(python_parser)
+            "/src/importnb/_json_parser.py"
         )  # its really important to remember the preceeding /
 
 
