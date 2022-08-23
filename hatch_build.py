@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import shlex
 from subprocess import call
+import sys
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
@@ -17,8 +18,9 @@ class LarkStandAloneBuildHook(BuildHookInterface):
         if not python_parser.exists():
             with python_parser.open("w") as file:
                 call(
-                    shlex.split(
-                        "python -m lark.tools.standalone --propagate_positions src/nb.g",
+                    sys.executable, 
+                    *shlex.split(
+                        "-m lark.tools.standalone --propagate_positions src/nb.g",
                         posix=~WIN,
                     ),
                     stdout=file,
