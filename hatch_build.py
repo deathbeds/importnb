@@ -18,13 +18,14 @@ class LarkStandAloneBuildHook(BuildHookInterface):
         if not python_parser.exists():
             with python_parser.open("w") as file:
                 check_call(
-                    [sys.executable]
-                    + shlex.split(
-                        "-m lark.tools.standalone --propagate_positions src/nb.g",
-                        posix=~WIN,
-                    ),
+                    [
+                        sys.executable,
+                        "-m",
+                        "lark.tools.standalone",
+                        "--propogate_positions",
+                        "src/json.g",
+                    ],
                     stdout=file,
-                    shell=WIN,
                 )
         build_data["artifacts"].append(
             "/" + str(python_parser)
