@@ -1,3 +1,4 @@
+src/importnb/_json_parser.py
 src/importnb/_version.py
 settings.json
 .doit.db.*

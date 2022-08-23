@@ -54,6 +54,12 @@ Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
 Source = "https://github.com/deathbeds/importnb"
 
+[tool.hatch.build]
+include = [
+  "src/importnb/_version.py",
+  "src/importnb/_json_parser.py"
+]
+
 [tool.hatch.version]
 source = "vcs"
 
