@@ -10,7 +10,7 @@ name = "importnb"
 description = ''
 readme = "README.md"
 requires-python = ">=3.7"
-license = "MIT"
+license = "BSD-3-Clause"
 keywords = []
 authors = [
   { name = "tonyfast", email = "tony.fast@gmail.com" },
@@ -53,13 +53,6 @@ importnb = "importnb.__main__:main"
 Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
 Source = "https://github.com/deathbeds/importnb"
-
-[tool.hatch.build]
-include = [
-  "src/importnb/*.py",
-  "src/importnb/_version.py",
-  "src/importnb/_json_parser.py"
-]
 
 [tool.hatch.version]
 source = "vcs"
