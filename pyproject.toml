@@ -57,6 +57,9 @@ Source = "https://github.com/deathbeds/importnb"
 [tool.hatch.version]
 source = "vcs"
 
+[tool.hatch.build.hooks.vcs]
+version-file = "src/importnb/_version.py"
+
 [tool.hatch.build.hooks.custom]
 
 [tool.doit]
