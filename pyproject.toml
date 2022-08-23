@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs", "lark"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 # [build-system]# requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
