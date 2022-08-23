@@ -22,7 +22,7 @@ class LarkStandAloneBuildHook(BuildHookInterface):
                         sys.executable,
                         "-m",
                         "lark.tools.standalone",
-                        "--propogate_positions",
+                        "--propagate_positions",
                         "src/json.g",
                     ],
                     stdout=file,
