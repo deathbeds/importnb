@@ -16,7 +16,7 @@ class LarkStandAloneBuildHook(BuildHookInterface):
         L = get_logger()
         WIN = os.name == "nt"
         L.info("converting json grammar to python")
-        python_parser = Path("src/importnb/_json_parser.py")
+        python_parser = Path(self.root, "src/importnb/_json_parser.py")
         if not python_parser.exists():
             py = get_standalone()
             python_parser.write_text(py)
