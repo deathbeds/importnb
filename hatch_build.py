@@ -2,7 +2,7 @@ from logging import shutdown
 from pathlib import Path
 import os
 import shlex
-from subprocess import call
+from subprocess import check_call
 import sys
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
