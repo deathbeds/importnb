@@ -61,6 +61,7 @@ source = "vcs"
 version-file = "src/importnb/_version.py"
 
 [tool.hatch.build.hooks.custom]
+dependencies = ["lark"]
 
 [tool.doit]
 backend = "json"
