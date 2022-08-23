@@ -17,7 +17,7 @@ class LarkStandAloneBuildHook(BuildHookInterface):
         python_parser = Path("src/importnb/_json_parser.py")
         if not python_parser.exists():
             with python_parser.open("w") as file:
-                call(
+                check_call(
                     [sys.executable]
                     + shlex.split(
                         "-m lark.tools.standalone --propagate_positions src/nb.g",
