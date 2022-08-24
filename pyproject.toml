@@ -1,8 +1,67 @@
-[tool]
-[tool.setuptools_scm]
-write_to = "src/importnb/_version.py"
-version_scheme = "release-branch-semver"
-local_scheme = "node-and-timestamp"
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+# [build-system]# requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+# build-backend = "setuptools.build_meta"
+
+[project]
+name = "importnb"
+description = ''
+readme = "README.md"
+requires-python = ">=3.7"
+license = "BSD-3-Clause"
+keywords = []
+authors = [
+  { name = "tonyfast", email = "tony.fast@gmail.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Natural Language :: English",
+  "Framework :: IPython",
+  "Framework :: Jupyter",  
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "License :: OSI Approved :: BSD License"
+]
+dependencies = [] # no dependencies!
+dynamic = ["version"]
+
+[project.optional-dependencies]
+doc = [
+	"jupyter-book"
+]
+test = [
+	"pytest",
+	"nbval",
+	"nbformat"
+]
+
+[project.entry-points.pytest11]
+importnb = "importnb.utils.pytest_importnb"
+
+[project.scripts]
+importnb = "importnb.__main__:main"
+
+[project.urls]
+Documentation = "https://github.com/deathbeds/importnb#readme"
+Issues = "https://github.com/deathbeds/importnb/issues"
+Source = "https://github.com/deathbeds/importnb"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/importnb/_version.py"
+
+[tool.hatch.build.hooks.custom]
+dependencies = ["lark"]
 
 [tool.doit]
 backend = "json"
@@ -24,6 +83,3 @@ addopts = "-pno:warnings --verbose --doctest-modules --current-env --sanitize-wi
 [tool.coverage.html]
 directory = "docs/coverage"
 
-[build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
-build-backend = "setuptools.build_meta"
