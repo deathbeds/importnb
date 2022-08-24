@@ -11,7 +11,7 @@ sessions = ["py"]
 if not PYPY:
     sessions += ["ipy"]
 
-if 
+
 @session(reuse_venv=True)
 @parametrize("env", sessions)
 def test(session, env):
