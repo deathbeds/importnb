@@ -7,6 +7,7 @@ Combine the __import__ finder with the loader.
 
 import ast
 from dataclasses import asdict, dataclass
+from pathlib import Path
 import sys
 import re
 import textwrap
@@ -262,6 +263,8 @@ class Notebook(NotebookBaseLoader):
 
     @classmethod
     def load_argv(cls, argv=None, *, parser=None):
+        from sys import path
+
         if parser is None:
             parser = cls.get_argparser()
 
@@ -278,18 +281,15 @@ class Notebook(NotebookBaseLoader):
         known, unknown = parser.parse_known_args(argv)
         ns = vars(known)
 
-        m, f, wd = ns.pop("module"), ns.pop("file"), ns.pop("dir")
+        m, n, wd = ns.pop("module"), ns.pop("name"), ns.pop("dir") or ""
 
-        if wd:
-            from sys import path
+        path.insert(0, wd)
 
-            path.insert(0, wd)
-
+        sys.argv = [n] + unknown
         if m:
-            return cls.load_module(m, main=True)
-
-        if f:
-            return cls.load_file(f)
+            return cls.load_module(n, main=True)
+        else:
+            return cls.load_file(n)
 
     @staticmethod
     def get_argparser(parser=None):
@@ -297,8 +297,7 @@ class Notebook(NotebookBaseLoader):
 
         if parser is None:
             parser = ArgumentParser()
-        parser.add_argument("file", nargs="?")
-        parser.add_argument("-m", "--module")
+        parser.add_argument("name")
+        parser.add_argument("-m", "--module", action="store_true")
         parser.add_argument("-d", "--dir")
-        parser.add_argument("--", nargs=REMAINDER, dest="extra")
         return parser

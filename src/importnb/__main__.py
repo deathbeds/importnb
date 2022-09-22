@@ -1,5 +1,4 @@
 from pathlib import Path
-import runpy
 from shlex import split
 import sys
 
@@ -20,21 +19,6 @@ def make_parser():
     RUN.add_argument("file", nargs="*")
     RUN.add_argument("-m", "--module", nargs="*")
     return PARSER
-
-def run(ns):
-    from importnb import Notebook
-
-    # add our current directory to the system path
-    sys.path.insert(0, str(Path().absolute()))
-
-    # run files requested from the cli
-    for file in ns.file:
-        Notebook.load(file, main=True)
-
-    # run modules requests from the cli
-    with Notebook():
-        for module in ns.module or []:
-            runpy.run_module(module, run_name="__main__")
 
 
 def main(argv=None):
@@ -60,7 +44,10 @@ def main(argv=None):
 
     if ns.f == "run":
         # execute the run command
-        return run(ns)
+        from .loader import Notebook
+
+        Notebook.load_argv(argv[1:])
+        return
 
     # dispatch the ipython extension installations
     return dict(install=install, uninstall=uninstall)[ns.f]()
