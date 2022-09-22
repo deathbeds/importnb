@@ -6,11 +6,10 @@ Combine the __import__ finder with the loader.
 
 
 import ast
-import os
 import sys
 import re
 import textwrap
-import types
+from types import ModuleType
 from functools import partial
 from importlib import reload
 from importlib.machinery import ModuleSpec, SourceFileLoader
@@ -18,11 +17,9 @@ from importlib.machinery import ModuleSpec, SourceFileLoader
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FuzzyFinder, FuzzySpec, get_loader_details
-from .ipython_extension import load_ipython_extension, unload_ipython_extension
 
 from importlib._bootstrap import _requires_builtin
 from importlib._bootstrap_external import decode_source, FileFinder
-from importlib.util import module_from_spec
 from importlib._bootstrap import _init_module_attrs
 from importlib.util import LazyLoader
 
@@ -87,55 +84,7 @@ class FinderContextManager:
         sys.path_importer_cache.clear()
 
 
-"""## The basic loader
-
-The loader uses the import systems `get_source`, `get_data`, and `create_module` methods to import notebook files.
-"""
-
-
-class ModuleType(types.ModuleType, getattr(os, "PathLike", object)):
-    """ModuleType combines a module with a PathLike access to simplify access."""
-
-    def __fspath__(self):
-        return self.__file__
-
-
-class ImportLibMixin(SourceFileLoader):
-    """ImportLibMixin is a SourceFileLoader for loading source code from JSON (e.g. notebooks).
-
-    `get_data` assures consistent line numbers between the file s representatio and source."""
-
-    def create_module(self, spec):
-        module = ModuleType(str(spec.name))
-        _init_module_attrs(spec, module)
-        if isinstance(spec, FuzzySpec):
-            sys.modules[spec.alias] = module
-        if self.name:
-            module.__name__ = self.name
-        return module
-
-    def decode(self):
-        return decode_source(super().get_data(self.path))
-
-    def code(self, object):
-        return object
-
-    def get_data(self, path):
-        """Needs to return the string source for the module."""
-        return self.code(self.decode())
-
-    @classmethod
-    @_requires_builtin
-    def is_package(cls, fullname):
-        """Return False as built-in modules are never packages."""
-        if "." not in fullname:
-            return True
-        return super().is_package(fullname)
-
-    get_source = get_data
-
-
-class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
+class NotebookBaseLoader(SourceFileLoader, FinderContextManager):
     """The simplest implementation of a Notebook Source File Loader."""
 
     extensions = (
@@ -188,51 +137,20 @@ class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
             return LineCacheNotebookDecoder(
                 code=self.code, raw=self.raw, markdown=self.markdown
             ).decode(self.decode(), self.path)
-        return self.code(super().get_data(path))
+        return self.code(self.decode())
 
-
-class FileModuleSpec(ModuleSpec):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._set_fileattr = True
-
-
-"""## notebooks most be loadable from files.
-"""
-
-
-class FromFileMixin:
-    """FromFileMixin adds a classmethod to load a notebooks from files."""
-
-    @classmethod
-    def load(cls, filename, dir=None, main=False, **kwargs):
-        """Import a notebook as a module from a filename.
-
-        dir: The directory to load the file from.
-        main: Load the module in the __main__ context.
-
-        > assert Notebook.load('loader.ipynb')
-        """
-        name = main and "__main__" or filename
-        loader = cls(name, str(filename), **kwargs)
-        spec = FileModuleSpec(name, loader, origin=loader.path)
-        module = loader.create_module(spec)
-        loader.exec_module(module)
+    def create_module(self, spec):
+        module = ModuleType(str(spec.name))
+        _init_module_attrs(spec, module)
+        if isinstance(spec, FuzzySpec):
+            sys.modules[spec.alias] = module
+        if self.name:
+            module.__name__ = self.name
         return module
 
+    def decode(self):
+        return decode_source(super().get_data(self.path))
 
-"""* Sometimes folks may want to use the current IPython shell to manage the code and input transformations.
-"""
-
-"""Use the `IPythonInputSplitter` to dedent and process magic functions.
-"""
-
-
-def comment(str):
-    return textwrap.indent(str, "# ")
-
-
-class TransformerMixin:
     def code(self, str):
         return dedent(str)
 
@@ -244,6 +162,26 @@ class TransformerMixin:
 
     def visit(self, node):
         return node
+
+    @classmethod
+    @_requires_builtin
+    def is_package(cls, fullname):
+        """Return False as built-in modules are never packages."""
+        if "." not in fullname:
+            return True
+        return super().is_package(fullname)
+
+    get_source = get_data
+
+
+class FileModuleSpec(ModuleSpec):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._set_fileattr = True
+
+
+def comment(str):
+    return textwrap.indent(str, "# ")
 
 
 class DefsOnly(ast.NodeTransformer):
@@ -260,7 +198,7 @@ class DefsOnly(ast.NodeTransformer):
 """
 
 
-class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
+class Notebook(NotebookBaseLoader):
     """Notebook is a user friendly file finder and module loader for notebook source code.
 
     > Remember, restart and run all or it didn't happen.
@@ -322,3 +260,19 @@ class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
         return super().source_to_code(
             ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
         )
+
+    @classmethod
+    def load(cls, filename, dir=None, main=False, **kwargs):
+        """Import a notebook as a module from a filename.
+
+        dir: The directory to load the file from.
+        main: Load the module in the __main__ context.
+
+        > assert Notebook.load('loader.ipynb')
+        """
+        name = main and "__main__" or filename
+        loader = cls(name, str(filename), **kwargs)
+        spec = FileModuleSpec(name, loader, origin=loader.path)
+        module = loader.create_module(spec)
+        loader.exec_module(module)
+        return module
