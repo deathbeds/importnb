@@ -6,6 +6,7 @@ Combine the __import__ finder with the loader.
 
 
 import ast
+from dataclasses import asdict, dataclass
 import sys
 import re
 import textwrap
@@ -84,52 +85,48 @@ class FinderContextManager:
         sys.path_importer_cache.clear()
 
 
-class NotebookBaseLoader(SourceFileLoader, FinderContextManager):
+@dataclass
+class Interface:
+    name: str = None
+    path: str = None
+    lazy: bool = False
+    position: int = 0
+    fuzzy: bool = True
+    markdown_docstring: bool = True
+    defs_only: bool = False
+    no_magic: bool = False
+
+    def __new__(cls, name=None, path=None, **kwargs):
+        kwargs.update(name=name, path=path)
+        self = super().__new__(cls)
+        self.__init__(**kwargs)
+        return self
+
+
+class NotebookBaseLoader(Interface, SourceFileLoader, FinderContextManager):
     """The simplest implementation of a Notebook Source File Loader."""
 
     extensions = (
         ".ipy",
         ".ipynb",
     )
-    __slots__ = "_lazy", "_fuzzy", "_markdown_docstring", "_position"
-
-    def __init__(
-        self,
-        fullname=None,
-        path=None,
-        *,
-        lazy=False,
-        fuzzy=True,
-        position=0,
-        markdown_docstring=True
-    ):
-        super().__init__(fullname, path)
-        self._lazy = lazy
-        self._fuzzy = fuzzy
-        self._markdown_docstring = markdown_docstring
-        self._position = position
-
-    @classmethod
-    def parameterized(cls):
-        from .parameterize import Parameterize
-
-        return type(cls.__name__, (Parameterize, cls), {})
 
     @property
     def loader(self):
         """Create a lazy loader source file loader."""
         loader = super().loader
-        if self._lazy and (sys.version_info.major, sys.version_info.minor) != (3, 4):
+        if self.lazy and (sys.version_info.major, sys.version_info.minor) != (3, 4):
             loader = LazyLoader.factory(loader)
         # Strip the leading underscore from slots
-        return partial(
-            loader, **{object.lstrip("_"): getattr(self, object) for object in self.__slots__}
-        )
+        params = asdict(self)
+        params.pop("name")
+        params.pop("path")
+        return partial(loader, **params)
 
     @property
     def finder(self):
         """Permit fuzzy finding of files with special characters."""
-        return self._fuzzy and FuzzyFinder or super().finder
+        return self.fuzzy and FuzzyFinder or super().finder
 
     def get_data(self, path):
         """Needs to return the string source for the module."""
@@ -194,10 +191,6 @@ class DefsOnly(ast.NodeTransformer):
         return ast.Module(*args)
 
 
-"""## The `Notebook` finder & loader
-"""
-
-
 class Notebook(NotebookBaseLoader):
     """Notebook is a user friendly file finder and module loader for notebook source code.
 
@@ -208,43 +201,16 @@ class Notebook(NotebookBaseLoader):
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
 
-    __slots__ = NotebookBaseLoader.__slots__ + ("_main", "_defs_only", "_no_magic")
-
-    def __init__(
-        self,
-        fullname=None,
-        path=None,
-        lazy=False,
-        position=0,
-        fuzzy=True,
-        markdown_docstring=True,
-        main=False,
-        defs_only=False,
-        no_magic=False,
-    ):
-        self._main = bool(main) or fullname == "__main__"
-        self._defs_only = defs_only
-        self._no_magic = no_magic
-
-        super().__init__(
-            self._main and "__main__" or fullname,
-            path,
-            lazy=lazy,
-            fuzzy=fuzzy,
-            position=position,
-            markdown_docstring=markdown_docstring,
-        )
-
     def parse(self, nodes):
         return ast.parse(nodes, self.path)
 
     def visit(self, nodes):
-        if self._defs_only:
+        if self.defs_only:
             nodes = DefsOnly().visit(nodes)
         return nodes
 
     def code(self, str):
-        if self._no_magic:
+        if self.no_magic:
             if MAGIC.match(str):
                 return comment(str)
         return super().code(str)
@@ -255,14 +221,14 @@ class Notebook(NotebookBaseLoader):
         * Compile the code."""
         if not isinstance(nodes, ast.Module):
             nodes = self.parse(nodes)
-        if self._markdown_docstring:
+        if self.markdown_docstring:
             nodes = update_docstring(nodes)
         return super().source_to_code(
             ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
         )
 
     @classmethod
-    def load(cls, filename, dir=None, main=False, **kwargs):
+    def load_file(cls, filename, main=True, **kwargs):
         """Import a notebook as a module from a filename.
 
         dir: The directory to load the file from.
@@ -276,3 +242,63 @@ class Notebook(NotebookBaseLoader):
         module = loader.create_module(spec)
         loader.exec_module(module)
         return module
+
+    @classmethod
+    def load_module(cls, module, main=False, **kwargs):
+        """Import a notebook as a module.
+
+        dir: The directory to load the file from.
+        main: Load the module in the __main__ context.
+
+        > assert Notebook.load('loader.ipynb')
+        """
+        from runpy import _run_module_as_main, run_module
+
+        with cls():
+            if main:
+                return _run_module_as_main(module)
+            else:
+                return run_module(module, run_name=module)
+
+    @classmethod
+    def load_argv(cls, argv=None, *, parser=None):
+        if parser is None:
+            parser = cls.get_argparser()
+
+        if argv is None:
+            from sys import argv
+
+            argv = argv[1:]
+
+        if isinstance(argv, str):
+            from shlex import split
+
+            argv = split(argv)
+
+        known, unknown = parser.parse_known_args(argv)
+        ns = vars(known)
+
+        m, f, wd = ns.pop("module"), ns.pop("file"), ns.pop("dir")
+
+        if wd:
+            from sys import path
+
+            path.insert(0, wd)
+
+        if m:
+            return cls.load_module(m, main=True)
+
+        if f:
+            return cls.load_file(f)
+
+    @staticmethod
+    def get_argparser(parser=None):
+        from argparse import ArgumentParser, REMAINDER
+
+        if parser is None:
+            parser = ArgumentParser()
+        parser.add_argument("file", nargs="?")
+        parser.add_argument("-m", "--module")
+        parser.add_argument("-d", "--dir")
+        parser.add_argument("--", nargs=REMAINDER, dest="extra")
+        return parser
