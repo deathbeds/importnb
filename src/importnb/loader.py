@@ -107,10 +107,7 @@ class Interface:
 class NotebookBaseLoader(Interface, SourceFileLoader, FinderContextManager):
     """The simplest implementation of a Notebook Source File Loader."""
 
-    extensions = (
-        ".ipy",
-        ".ipynb",
-    )
+    extensions = (".ipy", ".ipynb")
 
     @property
     def loader(self):
@@ -129,13 +126,17 @@ class NotebookBaseLoader(Interface, SourceFileLoader, FinderContextManager):
         """Permit fuzzy finding of files with special characters."""
         return self.fuzzy and FuzzyFinder or super().finder
 
-    def get_data(self, path):
-        """Needs to return the string source for the module."""
-        if path.endswith(".ipynb"):
+    def translate(self, source):
+        if self.path and self.path.endswith(".ipynb"):
             return LineCacheNotebookDecoder(
                 code=self.code, raw=self.raw, markdown=self.markdown
-            ).decode(self.decode(), self.path)
-        return self.code(self.decode())
+            ).decode(source, self.path)
+        return self.code(source)
+
+    def get_data(self, path):
+        """Needs to return the string source for the module."""
+
+        return self.translate(self.decode())
 
     def create_module(self, spec):
         module = ModuleType(str(spec.name))
@@ -281,15 +282,26 @@ class Notebook(NotebookBaseLoader):
         known, unknown = parser.parse_known_args(argv)
         ns = vars(known)
 
-        m, n, wd = ns.pop("module"), ns.pop("name"), ns.pop("dir") or ""
+        m, n, c, wd = ns.pop("module"), ns.pop("name"), ns.pop("code"), ns.pop("dir") or ""
 
         path.insert(0, wd)
 
         sys.argv = [n] + unknown
         if m:
             return cls.load_module(n, main=True)
+        elif c:
+            return cls.load_code(c, n)
         else:
             return cls.load_file(n)
+
+    @classmethod
+    def load_code(cls, code, mod_name=None, script_name=None, main=False):
+        from runpy import _run_module_code
+
+        self = cls()
+        name = main and "__main__" or mod_name or "<markdown code>"
+
+        return _run_module_code(self.translate(code), mod_name=name, script_name=script_name)
 
     @staticmethod
     def get_argparser(parser=None):
@@ -300,4 +312,5 @@ class Notebook(NotebookBaseLoader):
         parser.add_argument("name")
         parser.add_argument("-m", "--module", action="store_true")
         parser.add_argument("-d", "--dir")
+        parser.add_argument("-c", "--code")
         return parser
