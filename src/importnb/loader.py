@@ -23,7 +23,7 @@ from .finder import FuzzyFinder, FuzzySpec, get_loader_details
 from importlib._bootstrap import _requires_builtin
 from importlib._bootstrap_external import decode_source, FileFinder
 from importlib._bootstrap import _init_module_attrs
-from importlib.util import LazyLoader
+from importlib.util import LazyLoader, find_spec
 
 
 _GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
@@ -59,7 +59,7 @@ class FinderContextManager:
     ...      id, ((loader_cls, _), *_) = get_loader_details()
     ...      assert issubclass(loader_cls, FinderContextManager)
     >>> id, ((loader_cls, _), *_) = get_loader_details()
-    >>> loader_cls = inspect.unwrap(loader_cls)
+    >>> loader_cls = __import__("inspect").unwrap(loader_cls)
     >>> assert not (isinstance(loader_cls, type) and issubclass(loader_cls, FinderContextManager))
     """
 
@@ -256,11 +256,14 @@ class Notebook(NotebookBaseLoader):
         """
         from runpy import _run_module_as_main, run_module
 
-        with cls():
+        with cls() as loader:
             if main:
-                return _run_module_as_main(module)
+                return _dict_module(_run_module_as_main(module))
             else:
-                return run_module(module, run_name=module)
+                spec = find_spec(module)
+                m = spec.loader.create_module(spec)
+                spec.loader.exec_module(m)
+                return m
 
     @classmethod
     def load_argv(cls, argv=None, *, parser=None):
@@ -301,7 +304,9 @@ class Notebook(NotebookBaseLoader):
         self = cls()
         name = main and "__main__" or mod_name or "<markdown code>"
 
-        return _run_module_code(self.translate(code), mod_name=name, script_name=script_name)
+        return _dict_module(
+            _run_module_code(self.translate(code), mod_name=name, script_name=script_name)
+        )
 
     @staticmethod
     def get_argparser(parser=None):
@@ -314,3 +319,8 @@ class Notebook(NotebookBaseLoader):
         parser.add_argument("-d", "--dir")
         parser.add_argument("-c", "--code")
         return parser
+
+def _dict_module(ns):
+    m = ModuleType(ns.get("__name__"), ns.get("__doc__"))
+    m.__dict__.update(ns)
+    return m
