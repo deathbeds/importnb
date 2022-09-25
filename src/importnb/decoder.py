@@ -89,13 +89,16 @@ class LineCacheNotebookDecoder(Transformer):
         return Lark_StandAlone(transformer=self).parse(object)
 
     def decode(self, object, filename):
-        source = self.source_from_json_grammar(object)[0]
-        linecache.updatecache(filename)
-        if filename in linecache.cache:
-            linecache.cache[filename] = (
-                linecache.cache[filename][0],
-                linecache.cache[filename][1],
-                source.splitlines(True),
-                filename,
-            )
-        return source
+        s = self.source_from_json_grammar(object)
+        if s:
+            source = s[0]
+            linecache.updatecache(filename)
+            if filename in linecache.cache:
+                linecache.cache[filename] = (
+                    linecache.cache[filename][0],
+                    linecache.cache[filename][1],
+                    source.splitlines(True),
+                    filename,
+                )
+            return source
+        return ""
