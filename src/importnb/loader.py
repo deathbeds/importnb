@@ -53,13 +53,6 @@ class FinderContextManager:
     FinderContextManager is the base class for the notebook loader.  It provides
     a context manager that replaces `FileFinder` in the `sys.path_hooks` to include
     an instance of the class in the python findering system.
-
-    >>> with FinderContextManager() as f:
-    ...      id, ((loader_cls, _), *_) = get_loader_details()
-    ...      assert issubclass(loader_cls, FinderContextManager)
-    >>> id, ((loader_cls, _), *_) = get_loader_details()
-    >>> loader_cls = __import__("inspect").unwrap(loader_cls)
-    >>> assert not (isinstance(loader_cls, type) and issubclass(loader_cls, FinderContextManager))
     """
 
     extensions = tuple()
