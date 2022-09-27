@@ -7,7 +7,6 @@ Combine the __import__ finder with the loader.
 
 import ast
 from dataclasses import asdict, dataclass
-from pathlib import Path
 import sys
 import re
 import textwrap
@@ -18,7 +17,7 @@ from importlib.machinery import ModuleSpec, SourceFileLoader
 
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
-from .finder import FuzzyFinder, FuzzySpec, get_loader_details
+from .finder import FuzzyFinder, FuzzySpec, get_loader_details, get_loader_index
 
 from importlib._bootstrap import _requires_builtin
 from importlib._bootstrap_external import decode_source, FileFinder
@@ -73,16 +72,16 @@ class FinderContextManager:
         return type(self)
 
     def __enter__(self):
-        id, details = get_loader_details()
+        path_id, self._position, details = get_loader_index(".py")
         details.insert(self._position, (self.loader, self.extensions))
-        sys.path_hooks[id] = self.finder.path_hook(*details)
+        sys.path_hooks[path_id] = self.finder.path_hook(*details)
         sys.path_importer_cache.clear()
         return self
 
     def __exit__(self, *excepts):
-        id, details = get_loader_details()
+        path_id, details = get_loader_details()
         details.pop(self._position)
-        sys.path_hooks[id] = self.finder.path_hook(*details)
+        sys.path_hooks[path_id] = self.finder.path_hook(*details)
         sys.path_importer_cache.clear()
 
 
@@ -319,6 +318,7 @@ class Notebook(NotebookBaseLoader):
         parser.add_argument("-d", "--dir")
         parser.add_argument("-c", "--code")
         return parser
+
 
 def _dict_module(ns):
     m = ModuleType(ns.get("__name__"), ns.get("__doc__"))
