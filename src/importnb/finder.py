@@ -4,16 +4,13 @@
 Many suggestions for importing notebooks use `sys.meta_paths`, but `importnb` relies on the `sys.path_hooks` to load any notebook in the path. `PathHooksContext` is a base class for the `importnb.Notebook` `SourceFileLoader`.
 """
 
-import ast
 import inspect
-import os
 import sys
-from contextlib import ExitStack, contextmanager
-from importlib.machinery import ModuleSpec, SourceFileLoader
-from itertools import chain
+from importlib.machinery import ModuleSpec
 from pathlib import Path
 
 from importlib._bootstrap_external import FileFinder
+
 
 class FileModuleSpec(ModuleSpec):
     def __init__(self, *args, **kwargs):
@@ -23,14 +20,7 @@ class FileModuleSpec(ModuleSpec):
 
 class FuzzySpec(FileModuleSpec):
     def __init__(
-        self,
-        name,
-        loader,
-        *,
-        alias=None,
-        origin=None,
-        loader_state=None,
-        is_package=None
+        self, name, loader, *, alias=None, origin=None, loader_state=None, is_package=None
     ):
         super().__init__(
             name,
@@ -105,3 +95,11 @@ def get_loader_details():
             )
         except:
             continue
+
+
+def get_loader_index(ext):
+    found = None
+    path_hook_index, details = get_loader_details()
+    for finder_id, (finder, exts) in enumerate(details):
+        if ext in exts:
+            return path_hook_index, finder_id + 1, details
