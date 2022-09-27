@@ -18,7 +18,7 @@ from importlib.machinery import ModuleSpec, SourceFileLoader
 
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
-from .finder import FuzzyFinder, FuzzySpec, get_loader_details
+from .finder import FuzzyFinder, FuzzySpec, get_loader_details, get_loader_index
 
 from importlib._bootstrap import _requires_builtin
 from importlib._bootstrap_external import decode_source, FileFinder
@@ -73,9 +73,10 @@ class FinderContextManager:
         return type(self)
 
     def __enter__(self):
-        id, details = get_loader_details()
+        path_id, loader_id, details = get_loader_index(".py")
+        self._position = loader_id + 1
         details.insert(self._position, (self.loader, self.extensions))
-        sys.path_hooks[id] = self.finder.path_hook(*details)
+        sys.path_hooks[path_id] = self.finder.path_hook(*details)
         sys.path_importer_cache.clear()
         return self
 
@@ -141,8 +142,6 @@ class NotebookBaseLoader(Interface, SourceFileLoader, FinderContextManager):
     def create_module(self, spec):
         module = ModuleType(str(spec.name))
         _init_module_attrs(spec, module)
-        if isinstance(spec, FuzzySpec):
-            sys.modules[spec.alias] = module
         if self.name:
             module.__name__ = self.name
         return module
@@ -319,6 +318,7 @@ class Notebook(NotebookBaseLoader):
         parser.add_argument("-d", "--dir")
         parser.add_argument("-c", "--code")
         return parser
+
 
 def _dict_module(ns):
     m = ModuleType(ns.get("__name__"), ns.get("__doc__"))
