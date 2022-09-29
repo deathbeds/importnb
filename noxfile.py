@@ -15,6 +15,7 @@ if not PYPY:
 @session(reuse_venv=True)
 @parametrize("env", sessions)
 def test(session, env):
+    session.install("pytest", "pytest-cov")
     e = [E + ".[test]"]
     if env == "ipy":
         e.extend(["nbconvert", "ipython"])
