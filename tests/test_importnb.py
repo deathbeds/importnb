@@ -106,6 +106,9 @@ def test_load_module(clean, ref):
     assert m.__file__ == ref.__file__
     cant_reload(m)
 
+def test_load_module_package(clean, package):
+    m = Notebook.load_module("my_package.my_module")
+
 
 def test_load_file(clean, ref):
     m = Notebook.load_file("tests/Untitled42.ipynb")
