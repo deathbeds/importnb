@@ -9,9 +9,10 @@ from ast import FunctionType, Not
 from pathlib import Path
 from attr import has
 
-from importnb import Notebook
+from importnb import Notebook, is_ipython
 from pytest import fixture, raises, mark
 from importlib import reload
+
 
 CLOBBER = ("Untitled42", "my_package")
 
@@ -20,14 +21,8 @@ HERE = (Path(HERE).parent if HERE else Path()).absolute()
 
 sys.path.insert(0, str(HERE))
 
-try:
-    from IPython import get_ipython, InteractiveShell
-
-    InteractiveShell.instance()
-except:
-    get_ipython = lambda: None
-
-ipy = mark.skipif(not get_ipython(), reason="""Not IPython.""")
+IPY = bool(is_ipython())
+ipy = mark.skipif(not IPY, reason="""Not IPython.""")
 
 
 @fixture(scope="session")
@@ -61,12 +56,14 @@ def minified(ref):
     yield
     minified.unlink()
 
+
 @fixture
 def untitled_py(ref):
     py = Path(ref.__file__).with_suffix(".py")
     py.touch()
     yield
     py.unlink()
+
 
 def cant_reload(m):
     with raises(ImportError):
@@ -144,10 +141,11 @@ def test_no_magic(capsys, clean, magic, ref):
         import Untitled42
 
         stdout = capsys.readouterr()[0]
-        if magic:
-            assert ref.magic_slug in stdout
-        else:
-            assert ref.magic_slug not in stdout
+        if IPY:
+            if magic:
+                assert ref.magic_slug in stdout
+            else:
+                assert ref.magic_slug not in stdout
 
 
 @mark.parametrize("defs", [True, False])
@@ -188,7 +186,10 @@ def test_docstrings(clean, ref):
     assert nb.function_with_a_markdown_docstring.__doc__
 
     assert nb.__doc__ == ref.__doc__
-    assert nb.function_with_a_markdown_docstring.__doc__ == ref.function_with_a_markdown_docstring.__doc__
+    assert (
+        nb.function_with_a_markdown_docstring.__doc__
+        == ref.function_with_a_markdown_docstring.__doc__
+    )
     assert nb.class_with_a_python_docstring.__doc__ == ref.class_with_a_python_docstring.__doc__
     assert nb.class_with_a_markdown_docstring.__doc__ == ref.class_with_a_markdown_docstring.__doc__
 
