@@ -69,10 +69,10 @@ line_length = 100
 dependencies = ["pytest", "pytest-cov"]
 
 [[tool.hatch.envs.test.matrix]]
-feature = ["stdlib", "interactive"]
+version = ["stdlib", "interactive"]
 
 [tool.hatch.envs.test.overrides]
-matrix.feature.dependencies = [{ value = "IPython", if = ["interactive"] }]
+matrix.version.dependencies = [{ value = "IPython", if = ["interactive"] }]
 
 [tool.hatch.envs.test.scripts]
 cov = "pytest"
