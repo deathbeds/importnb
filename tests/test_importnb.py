@@ -5,7 +5,7 @@ from shutil import copyfile, rmtree
 import sys
 import linecache
 import inspect
-from ast import FunctionType, Not
+from types import FunctionType
 from pathlib import Path
 from attr import has
 
