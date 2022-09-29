@@ -7,11 +7,17 @@ def is_ipython():
     
     return "IPython" in modules
     
-def get_ipython():
-    if is_ipython():
-        from IPython import get_ipython
-        
-        return get_ipython()
+def get_ipython(force=True):
+    if force or is_ipython():
+        try:
+            from IPython import get_ipython
+        except ModuleNotFoundError:
+            return
+        shell = get_ipython()
+        if shell is None:
+            from IPython import InteractiveShell
+            shell = InteractiveShell.instance()
+        return shell
     return None
 
 from ._version import *
