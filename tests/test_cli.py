@@ -68,7 +68,7 @@ optional arguments:
 """
 
 
-@cli_test(f"-m importnb {UNTITLED}")
+@cli_test(rf"-m importnb {UNTITLED}")
 def test_file():
     """\
 i was printed from {UNTITLED} and my name is __main__
@@ -77,7 +77,7 @@ the parser namespace is Namespace(args=None)
 """
 
 
-@cli_test(f"-m importnb -d {UNTITLED.parent} -m {UNTITLED.stem}")
+@cli_test(rf"-m importnb -d {UNTITLED.parent} -m {UNTITLED.stem}")
 def test_module():
     """\
 i was printed from {UNTITLED} and my name is __main__
@@ -86,6 +86,6 @@ the parser namespace is Namespace(args=None)
 """
 
 
-@cli_test("-m importnb -c '{}'")
+@cli_test(rf"-m importnb -c '{}'")
 def test_empty_code():
     """"""
