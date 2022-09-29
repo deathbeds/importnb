@@ -41,12 +41,19 @@ if is_ipython():
         ],
     ).transform_cell
 else:
-    from textwrap import dedent
+
+    def dedent(body):
+        from textwrap import dedent, indent
+
+        if MAGIC.match(body):
+            return indent(body, "# ")
+        return dedent(body)
+
 
 __all__ = "Notebook", "reload"
 
 
-MAGIC = re.compile("^.*%{2}")
+MAGIC = re.compile("^\s*%{2}", re.MULTILINE)
 
 
 @dataclass
@@ -97,7 +104,6 @@ class BaseLoader(Interface, SourceFileLoader):
 
     def get_data(self, path):
         """Needs to return the string source for the module."""
-
         return self.translate(self.decode())
 
     def create_module(self, spec):
