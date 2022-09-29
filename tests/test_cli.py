@@ -24,7 +24,7 @@ ref = Notebook.load_file(UNTITLED)
 def get_prepared_string(x):
     r = get_ipython() and (ref.magic_slug + "\n") or ""
     if GTE10:
-        x.replace("optional arguments:","options:")
+        x = x.replace("optional arguments:","options:")
     return x.replace("*\n", r)
 
 
