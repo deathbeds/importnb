@@ -20,5 +20,4 @@ def test(session, env):
         e.extend(["nbconvert", "ipython"])
     session.install(*e, *PIP)
     session.run("pytest", "tests", *session.posargs)
-    if not session.posargs:
-        session.run("pytest", "tests/test_cli.ipynb", "--nbval")
+    
