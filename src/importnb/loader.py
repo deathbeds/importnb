@@ -15,10 +15,12 @@ from functools import partial
 from importlib import reload
 from importlib.machinery import ModuleSpec, SourceFileLoader
 
+from pathlib import Path
+
 from . import is_ipython, get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
-from .finder import FuzzyFinder, FuzzySpec, get_loader_details, get_loader_index
+from .finder import FuzzyFinder, get_loader_details, get_loader_index
 
 from importlib._bootstrap import _requires_builtin
 from importlib._bootstrap_external import decode_source, FileFinder
@@ -244,12 +246,14 @@ class Notebook(BaseLoader):
                 return _dict_module(_run_module_as_main(module))
             else:
                 spec = find_spec(module)
+
                 m = spec.loader.create_module(spec)
                 spec.loader.exec_module(m)
                 return m
 
     @classmethod
     def load_argv(cls, argv=None, *, parser=None):
+        import sys
         from sys import path
 
         if parser is None:
@@ -265,20 +269,27 @@ class Notebook(BaseLoader):
 
             argv = split(argv)
 
-        known, unknown = parser.parse_known_args(argv)
-        ns = vars(known)
+        ns, unknown = parser.parse_known_args(argv)
 
-        m, n, c, wd = ns.pop("module"), ns.pop("name"), ns.pop("code"), ns.pop("dir") or ""
+        if ns.code:
+            return cls.load_code(" ".join(ns.args))
 
-        path.insert(0, wd)
+        n = ns.args and ns.args[0] or sys.argv[0]
 
         sys.argv = [n] + unknown
-        if m:
+        if ns.module:
+            path.insert(0, ns.dir) if ns.dir else ... if "" in path else path.insert(0, "")
             return cls.load_module(n, main=True)
-        elif c:
-            return cls.load_code(c, n)
-        else:
+        elif ns.args:
+            L = len(ns.args)
+            if L > 1:
+                raise ValueError(f"Expected one file to execute, but received {L}.")
+
+            if ns.dir:
+                n = str(Path(ns.dir) / n)
             return cls.load_file(n)
+        else:
+            parser.print_help()
 
     @classmethod
     def load_code(cls, code, mod_name=None, script_name=None, main=False):
@@ -296,11 +307,14 @@ class Notebook(BaseLoader):
         from argparse import ArgumentParser, REMAINDER
 
         if parser is None:
-            parser = ArgumentParser()
-        parser.add_argument("name")
-        parser.add_argument("-m", "--module", action="store_true")
-        parser.add_argument("-d", "--dir")
-        parser.add_argument("-c", "--code")
+            parser = ArgumentParser("importnb", description="run notebooks as python code")
+        parser.add_argument(
+            "args", help="the file [default], module or code to execute", nargs=REMAINDER
+        )
+        parser.add_argument("-f", "--file", action="store_false", help="load a file")
+        parser.add_argument("-m", "--module", action="store_true", help="run args as a module")
+        parser.add_argument("-c", "--code", action="store_true", help="run args as code")
+        parser.add_argument("-d", "--dir", help="the directory path to run in.")
         return parser
 
 
