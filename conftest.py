@@ -1,6 +1,8 @@
 try:
-    from IPython import get_ipython
+    from IPython import InteractiveShell
 
-    assert get_ipython()
+    InteractiveShell.instance()
 except:
     collect_ignore = ["src/importnb/utils/ipython.py", "src/importnb/completer.py", "noxfile.py"]
+
+pytest_plugins = ["pytester"]
