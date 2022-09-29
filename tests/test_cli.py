@@ -1,12 +1,16 @@
 from fnmatch import fnmatch
 import re
+from sys import version_info
 from functools import wraps, partial
 from io import StringIO
 from subprocess import check_call, check_output
 from sys import executable, path
+
 from importnb import Notebook, get_ipython
 
 from pathlib import Path
+
+GTE10 = version_info.major == 3 and version_info.minor >= 10
 
 HERE = Path(__file__).parent
 
@@ -19,12 +23,16 @@ ref = Notebook.load_file(UNTITLED)
 
 def get_prepared_string(x):
     r = get_ipython() and (ref.magic_slug + "\n") or ""
-    return x.replace("*\n", r) 
+    if GTE10:
+        x.replace("options:", "optional arguments:")
+    return x.replace("*\n", r)
+
 
 def cli_test(command):
     def delay(f):
         def wrapper(tmp_path, pytester):
             from shlex import split
+
             path = tmp_path / "tmp"
             try:
                 with path.open("w") as file:
@@ -76,7 +84,6 @@ i was printed from {UNTITLED} and my name is __main__
 *
 the parser namespace is Namespace(args=None)
 """
-
 
 
 @cli_test("-m importnb -c '{}'")
