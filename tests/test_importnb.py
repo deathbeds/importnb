@@ -123,7 +123,7 @@ def test_load_code(clean):
     cant_reload(m)
 
 
-def test_package(clean, pytester, package):
+def test_package(clean, package):
     from shutil import copyfile
 
     with Notebook():

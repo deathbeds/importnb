@@ -15,6 +15,7 @@ from functools import partial
 from importlib import reload
 from importlib.machinery import ModuleSpec, SourceFileLoader
 
+from . import is_ipython, get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FuzzyFinder, FuzzySpec, get_loader_details, get_loader_index
@@ -27,7 +28,7 @@ from importlib.util import LazyLoader, find_spec
 
 _GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
 
-try:
+if is_ipython():
     import IPython
     from IPython.core.inputsplitter import IPythonInputSplitter
 
@@ -39,7 +40,7 @@ try:
             IPython.core.inputsplitter.cellmagic(end_on_blank_line=False),
         ],
     ).transform_cell
-except:
+else:
     from textwrap import dedent
 
 __all__ = "Notebook", "reload"
@@ -48,47 +49,17 @@ __all__ = "Notebook", "reload"
 MAGIC = re.compile("^.*%{2}")
 
 
-class FinderContextManager:
-    """
-    FinderContextManager is the base class for the notebook loader.  It provides
-    a context manager that replaces `FileFinder` in the `sys.path_hooks` to include
-    an instance of the class in the python findering system.
-    """
-
-    extensions = tuple()
-    _position = 0
-
-    finder = FileFinder
-
-    @property
-    def loader(self):
-        return type(self)
-
-    def __enter__(self):
-        path_id, loader_id, details = get_loader_index(".py")
-        self._position = loader_id + 1
-        details.insert(self._position, (self.loader, self.extensions))
-        sys.path_hooks[path_id] = self.finder.path_hook(*details)
-        sys.path_importer_cache.clear()
-        return self
-
-    def __exit__(self, *excepts):
-        path_id, details = get_loader_details()
-        details.pop(self._position)
-        sys.path_hooks[path_id] = self.finder.path_hook(*details)
-        sys.path_importer_cache.clear()
-
-
 @dataclass
 class Interface:
     name: str = None
     path: str = None
     lazy: bool = False
-    position: int = 0
-    fuzzy: bool = True
+    include_fuzzy_finder: bool = True
+
     markdown_docstring: bool = True
     defs_only: bool = False
     no_magic: bool = False
+    _loader_hook_position: int = 0
 
     def __new__(cls, name=None, path=None, **kwargs):
         kwargs.update(name=name, path=path)
@@ -97,15 +68,13 @@ class Interface:
         return self
 
 
-class NotebookBaseLoader(Interface, SourceFileLoader, FinderContextManager):
+class BaseLoader(Interface, SourceFileLoader):
     """The simplest implementation of a Notebook Source File Loader."""
-
-    extensions = (".ipy", ".ipynb")
 
     @property
     def loader(self):
         """Create a lazy loader source file loader."""
-        loader = super().loader
+        loader = type(self)
         if self.lazy and (sys.version_info.major, sys.version_info.minor) != (3, 4):
             loader = LazyLoader.factory(loader)
         # Strip the leading underscore from slots
@@ -117,7 +86,7 @@ class NotebookBaseLoader(Interface, SourceFileLoader, FinderContextManager):
     @property
     def finder(self):
         """Permit fuzzy finding of files with special characters."""
-        return self.fuzzy and FuzzyFinder or super().finder
+        return self.include_fuzzy_finder and FuzzyFinder or FileFinder
 
     def translate(self, source):
         if self.path and self.path.endswith(".ipynb"):
@@ -136,6 +105,7 @@ class NotebookBaseLoader(Interface, SourceFileLoader, FinderContextManager):
         _init_module_attrs(spec, module)
         if self.name:
             module.__name__ = self.name
+        module.get_ipython = get_ipython
         return module
 
     def decode(self):
@@ -163,6 +133,20 @@ class NotebookBaseLoader(Interface, SourceFileLoader, FinderContextManager):
 
     get_source = get_data
 
+    def __enter__(self):
+        path_id, loader_id, details = get_loader_index(".py")
+        self._loader_hook_position = loader_id + 1
+        details.insert(self._loader_hook_position, (self.loader, self.extensions))
+        sys.path_hooks[path_id] = self.finder.path_hook(*details)
+        sys.path_importer_cache.clear()
+        return self
+
+    def __exit__(self, *excepts):
+        path_id, details = get_loader_details()
+        details.pop(self._loader_hook_position)
+        sys.path_hooks[path_id] = self.finder.path_hook(*details)
+        sys.path_importer_cache.clear()
+
 
 class FileModuleSpec(ModuleSpec):
     def __init__(self, *args, **kwargs):
@@ -184,7 +168,7 @@ class DefsOnly(ast.NodeTransformer):
         return ast.Module(*args)
 
 
-class Notebook(NotebookBaseLoader):
+class Notebook(BaseLoader):
     """Notebook is a user friendly file finder and module loader for notebook source code.
 
     > Remember, restart and run all or it didn't happen.
@@ -193,6 +177,8 @@ class Notebook(NotebookBaseLoader):
 
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
+
+    extensions = (".ipy", ".ipynb")
 
     def parse(self, nodes):
         return ast.parse(nodes, self.path)
