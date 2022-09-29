@@ -86,6 +86,6 @@ the parser namespace is Namespace(args=None)
 """
 
 
-@cli_test(rf"-m importnb -c '{}'")
+@cli_test("-m importnb -c '{}'")
 def test_empty_code():
     """"""
