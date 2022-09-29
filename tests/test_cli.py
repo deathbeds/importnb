@@ -1,3 +1,6 @@
+from sys import executable
+
+
 def rm_pytester_prefix(out):
     return "".join(out.splitlines(True)[2:])
 
@@ -14,7 +17,7 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 """
-    pytester.run("importnb")
+    pytester.run(executable, "-m", "importnb")
     cap = capsys.readouterr()
     out, err = cap.out, cap.err
     out = rm_pytester_prefix(out)
