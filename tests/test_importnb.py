@@ -112,7 +112,7 @@ def test_load_module_package(clean, package):
 
 def test_load_file(clean, ref):
     m = Notebook.load_file("tests/Untitled42.ipynb")
-    assert ref.__file__.endswith(m.__file__)
+    assert ref.__file__.endswith(str(Path(m.__file__)))
     cant_reload(m)
 
 
