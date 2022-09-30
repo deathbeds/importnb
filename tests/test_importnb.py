@@ -190,6 +190,25 @@ def test_fuzzy_finder(clean, ref, capsys):
     assert not any([outs[3].out, outs[3].err] + [outs[4].out, outs[4].err])
 
 
+def test_fuzzy_finder_conflict(clean, ref):
+    try:
+        with Notebook():
+            spec = find_spec("__d42")
+            assert find_spec("__d42")
+
+            new = HERE / "d42.ipynb"
+            new.write_text("{}")
+            spec2 = find_spec("__d42")
+
+            assert spec.loader.path != spec2.loader.path
+    finally:
+        with Notebook():
+            new.unlink()
+            spec3 = find_spec("__d42")
+            assert spec.loader.path == spec3.loader.path
+
+
+
 def test_minified_json(ref, minified):
 
     with Notebook():

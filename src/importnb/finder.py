@@ -70,8 +70,11 @@ class FuzzyFinder(FileFinder):
                 files = fuzzy_file_search(self.path, fullname)
                 if files:
                     # sort and create of a path of the chosen file
-                    file = sorted(files)[0]
-                    name = (original + "." + file.stem.split(".", 1)[0]).lstrip(".")
+                    file = sorted(files, key=lambda x: x.stat().st_mtime, reverse=True)[0]
+                    name = file.stem
+                    if original:
+                        name = ".".join((original, name))
+                    name = (original + "." + file.stem).lstrip(".")
                     spec = super().find_spec(name, target=target)
                     spec = spec and FuzzySpec(
                         spec.name,
