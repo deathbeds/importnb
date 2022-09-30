@@ -20,6 +20,8 @@ UNTITLED = HERE / "Untitled42.ipynb"
 
 ref = Notebook.load_file(UNTITLED)
 
+def disp(x):
+    return str(x).replace("\\", "\\\\")
 
 def get_prepared_string(x):
     r = get_ipython() and (ref.magic_slug + "\n") or ""
@@ -68,7 +70,7 @@ optional arguments:
 """
 
 
-@cli_test(rf"-m importnb {UNTITLED}")
+@cli_test(rf"-m importnb {disp(UNTITLED)}")
 def test_file():
     """\
 i was printed from {UNTITLED} and my name is __main__
@@ -77,7 +79,7 @@ the parser namespace is Namespace(args=None)
 """
 
 
-@cli_test(rf"-m importnb -d {UNTITLED.parent} -m {UNTITLED.stem}")
+@cli_test(rf"-m importnb -d {disp(UNTITLED.parent)} -m {UNTITLED.stem}")
 def test_module():
     """\
 i was printed from {UNTITLED} and my name is __main__
