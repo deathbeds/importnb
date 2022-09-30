@@ -37,7 +37,7 @@ def cli_test(command):
                 with path.open("w") as file:
                     check_call([executable] + split(command), stderr=file, stdout=file)
                 out = path.read_text()
-                match = get_prepared_string(f.__doc__.format(UNTITLED=UNTITLED))
+                match = get_prepared_string(f.__doc__.format(UNTITLED=UNTITLED.as_posix()))
                 assert out == match
             except BaseException as e:
                 print(path.read_text())
