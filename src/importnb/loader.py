@@ -65,8 +65,8 @@ class Interface:
     lazy: bool = False
     include_fuzzy_finder: bool = True
 
-    markdown_docstring: bool = True
-    defs_only: bool = False
+    include_markdown_docstring: bool = True
+    only_defs: bool = False
     no_magic: bool = False
     _loader_hook_position: int = 0
 
@@ -192,7 +192,7 @@ class Notebook(BaseLoader):
         return ast.parse(nodes, self.path)
 
     def visit(self, nodes):
-        if self.defs_only:
+        if self.only_defs:
             nodes = DefsOnly().visit(nodes)
         return nodes
 
@@ -208,7 +208,7 @@ class Notebook(BaseLoader):
         * Compile the code."""
         if not isinstance(nodes, ast.Module):
             nodes = self.parse(nodes)
-        if self.markdown_docstring:
+        if self.include_markdown_docstring:
             nodes = update_docstring(nodes)
         return super().source_to_code(
             ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
