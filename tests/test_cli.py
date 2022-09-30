@@ -19,6 +19,7 @@ path.insert(0, str(HERE))
 UNTITLED = HERE / "Untitled42.ipynb"
 
 ref = Notebook.load_file(UNTITLED)
+REF = Path(ref.__file__)
 
 def get_prepared_string(x):
     x = x.replace("*\n", ref.magic_slug + "\n")
@@ -67,7 +68,7 @@ optional arguments:
 """
 
 
-@cli_test(rf"-m importnb {UNTITLED}")
+@cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -m {UNTITLED.stem}")
 def test_file():
     """\
 i was printed from {UNTITLED} and my name is __main__
