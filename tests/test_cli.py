@@ -5,6 +5,7 @@ from functools import wraps, partial
 from io import StringIO
 from subprocess import check_call, check_output
 from sys import executable, path
+import sys
 
 from importnb import Notebook, get_ipython
 
@@ -21,8 +22,12 @@ UNTITLED = HERE / "Untitled42.ipynb"
 ref = Notebook.load_file(UNTITLED)
 REF = Path(ref.__file__)
 
+
 def get_prepared_string(x):
-    x = x.replace("*\n", ref.magic_slug + "\n")
+    slug = ref.magic_slug
+    if sys.platform != "win32":
+        slug += "\n"
+    x = x.replace("*\n", slug)
     if GTE10:
         x = x.replace("optional arguments:", "options:")
     return x
