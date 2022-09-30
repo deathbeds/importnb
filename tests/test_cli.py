@@ -20,14 +20,16 @@ UNTITLED = HERE / "Untitled42.ipynb"
 
 ref = Notebook.load_file(UNTITLED)
 
+
 def disp(x):
     return str(x).replace("\\", "\\\\")
 
+
 def get_prepared_string(x):
-    r = get_ipython() and (ref.magic_slug + "\n") or ""
+    x = x.replace("*\n", ref.magic_slug + "\n")
     if GTE10:
-        x = x.replace("optional arguments:","options:")
-    return x.replace("*\n", r)
+        x = x.replace("optional arguments:", "options:")
+    return x
 
 
 def cli_test(command):
