@@ -14,7 +14,7 @@ from pytest import fixture, raises, mark
 from importlib import reload
 
 
-CLOBBER = ("Untitled42", "my_package")
+CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
 HERE = locals().get("__file__", None)
 HERE = (Path(HERE).parent if HERE else Path()).absolute()
@@ -106,6 +106,7 @@ def test_load_module(clean, ref):
     assert m.__file__ == ref.__file__
     cant_reload(m)
 
+
 def test_load_module_package(clean, package):
     m = Notebook.load_module("my_package.my_module")
 
@@ -166,19 +167,36 @@ def test_defs_only(defs, ref):
             assert not any(hasattr(Untitled42, k) for k in not_defs)
 
 
-def test_fuzzy_finder(clean, ref):
+def test_fuzzy_finder(clean, ref, capsys):
+    outs = []
     with Notebook():
         import __ed42
 
-    assert __ed42.__name__ == Path(ref.__file__).stem
+        outs.append(capsys.readouterr())
+        import __d42
+
+        outs.append(capsys.readouterr())
+        import __42
+
+        outs.append(capsys.readouterr())
+        import __42
+
+        outs.append(capsys.readouterr())
+        import __42 as nb
+
+        outs.append(capsys.readouterr())
+
+    assert outs[0] == outs[1] == outs[2]
+    assert not any([outs[3].out, outs[3].err] + [outs[4].out, outs[4].err])
 
 
 def test_minified_json(ref, minified):
 
     with Notebook():
         import minified as minned
-    example_source = inspect.getsource(minned.function_with_a_markdown_docstring)
-    assert example_source
+
+        example_source = inspect.getsource(minned.function_with_a_markdown_docstring)
+        assert example_source
 
 
 def test_docstrings(clean, ref):
@@ -232,7 +250,7 @@ def test_import_ipy():
 
 
 @ipy
-def test_cli():
+def test_cli(clean):
     with Notebook():
         import Untitled42 as module
     __import__("subprocess").check_call(
