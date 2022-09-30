@@ -6,7 +6,7 @@ Combine the __import__ finder with the loader.
 
 
 import ast
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import sys
 import re
 import textwrap
@@ -68,7 +68,7 @@ class Interface:
     include_markdown_docstring: bool = True
     only_defs: bool = False
     no_magic: bool = False
-    _loader_hook_position: int = 0
+    _loader_hook_position: int = field(default=0, repr=False)
 
     def __new__(cls, name=None, path=None, **kwargs):
         kwargs.update(name=name, path=path)
@@ -113,6 +113,12 @@ class BaseLoader(Interface, SourceFileLoader):
         _init_module_attrs(spec, module)
         if self.name:
             module.__name__ = self.name
+        if getattr(spec, "alias", None):
+            # put a fuzzy spec on the modules to avoid re importing it.
+            # there is a funky trick you do with the fuzzy finder where you
+            # load multiple versions with different finders.
+
+            sys.modules[spec.alias] = module
         module.get_ipython = get_ipython
         return module
 
@@ -143,17 +149,23 @@ class BaseLoader(Interface, SourceFileLoader):
 
     def __enter__(self):
         path_id, loader_id, details = get_loader_index(".py")
-        self._loader_hook_position = loader_id + 1
-        details.insert(self._loader_hook_position, (self.loader, self.extensions))
-        sys.path_hooks[path_id] = self.finder.path_hook(*details)
-        sys.path_importer_cache.clear()
+        for _, e in details:
+            if all(map(e.__contains__, self.extensions)):
+                self._loader_hook_position = None
+                return self
+        else:
+            self._loader_hook_position = loader_id + 1
+            details.insert(self._loader_hook_position, (self.loader, self.extensions))
+            sys.path_hooks[path_id] = self.finder.path_hook(*details)
+            sys.path_importer_cache.clear()
         return self
 
     def __exit__(self, *excepts):
-        path_id, details = get_loader_details()
-        details.pop(self._loader_hook_position)
-        sys.path_hooks[path_id] = self.finder.path_hook(*details)
-        sys.path_importer_cache.clear()
+        if self._loader_hook_position is not None:
+            path_id, details = get_loader_details()
+            details.pop(self._loader_hook_position)
+            sys.path_hooks[path_id] = self.finder.path_hook(*details)
+            sys.path_importer_cache.clear()
 
 
 class FileModuleSpec(ModuleSpec):

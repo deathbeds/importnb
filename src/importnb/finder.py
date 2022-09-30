@@ -56,7 +56,7 @@ class FuzzyFinder(FileFinder):
         to identify potential matches.
         """
         spec = super().find_spec(fullname, target=target)
-
+        raw = fullname
         if spec is None:
             original = fullname
 
@@ -66,23 +66,21 @@ class FuzzyFinder(FileFinder):
                 original, fullname = "", original
 
             if "_" in fullname:
+                # find any files using the fuzzy convention
                 files = fuzzy_file_search(self.path, fullname)
                 if files:
-                    file = Path(sorted(files)[0])
-                    spec = super().find_spec(
-                        (original + "." + file.stem.split(".", 1)[0]).lstrip("."),
-                        target=target,
+                    # sort and create of a path of the chosen file
+                    file = sorted(files)[0]
+                    name = (original + "." + file.stem.split(".", 1)[0]).lstrip(".")
+                    spec = super().find_spec(name, target=target)
+                    spec = spec and FuzzySpec(
+                        spec.name,
+                        spec.loader,
+                        origin=spec.origin,
+                        loader_state=spec.loader_state,
+                        alias=raw,
+                        is_package=bool(spec.submodule_search_locations),
                     )
-                    fullname = (original + "." + fullname).lstrip(".")
-                    if spec and fullname != spec.name:
-                        spec = FuzzySpec(
-                            spec.name,
-                            spec.loader,
-                            origin=spec.origin,
-                            loader_state=spec.loader_state,
-                            alias=fullname,
-                            is_package=bool(spec.submodule_search_locations),
-                        )
         return spec
 
 
