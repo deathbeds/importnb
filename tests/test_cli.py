@@ -24,9 +24,7 @@ REF = Path(ref.__file__)
 
 
 def get_prepared_string(x):
-    slug = ref.magic_slug
-    if sys.platform != "win32":
-        slug += "\n"
+    slug = ref.magic_slug + "\n"
     x = x.replace("*\n", slug)
     if GTE10:
         x = x.replace("optional arguments:", "options:")
