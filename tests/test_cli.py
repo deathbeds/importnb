@@ -20,11 +20,6 @@ UNTITLED = HERE / "Untitled42.ipynb"
 
 ref = Notebook.load_file(UNTITLED)
 
-
-def disp(x):
-    return str(x).replace("\\", "\\\\")
-
-
 def get_prepared_string(x):
     x = x.replace("*\n", ref.magic_slug + "\n")
     if GTE10:
@@ -72,7 +67,7 @@ optional arguments:
 """
 
 
-@cli_test(rf"-m importnb {disp(UNTITLED)}")
+@cli_test(rf"-m importnb {UNTITLED}")
 def test_file():
     """\
 i was printed from {UNTITLED} and my name is __main__
@@ -81,7 +76,7 @@ the parser namespace is Namespace(args=None)
 """
 
 
-@cli_test(rf"-m importnb -d {disp(UNTITLED.parent)} -m {UNTITLED.stem}")
+@cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -m {UNTITLED.stem}")
 def test_module():
     """\
 i was printed from {UNTITLED} and my name is __main__
