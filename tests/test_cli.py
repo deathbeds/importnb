@@ -31,7 +31,7 @@ def get_prepared_string(x):
 
 def cli_test(command):
     def delay(f):
-        def wrapper(tmp_path, pytester):
+        def wrapper(tmp_path):
             from shlex import split
 
             path = tmp_path / "tmp"
