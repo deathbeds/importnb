@@ -24,8 +24,6 @@ REF = Path(ref.__file__)
 
 
 def get_prepared_string(x):
-    slug = ref.magic_slug + "\n"
-    x = x.replace("*\n", slug)
     if GTE10:
         x = x.replace("optional arguments:", "options:")
     return x.replace("\r", "")
@@ -37,15 +35,13 @@ def cli_test(command):
             from shlex import split
 
             path = tmp_path / "tmp"
-            try:
-                with path.open("w") as file:
-                    check_call([executable] + split(command), stderr=file, stdout=file)
-                out = path.read_text()
-                match = get_prepared_string(f.__doc__.format(UNTITLED=UNTITLED.as_posix()))
-                assert out == match
-            except BaseException as e:
-                print(path.read_text())
-                raise e
+            with path.open("w") as file:
+                check_call([executable] + split(command), stderr=file, stdout=file)
+            out = path.read_text()
+            match = get_prepared_string(
+                f.__doc__.format(UNTITLED=UNTITLED.as_posix(), SLUG=ref.magic_slug)
+            )
+            assert out == match
 
         return wrapper
 
@@ -75,7 +71,7 @@ optional arguments:
 def test_file():
     """\
 i was printed from {UNTITLED} and my name is __main__
-*
+{SLUG}
 the parser namespace is Namespace(args=None)
 """
 
@@ -84,7 +80,7 @@ the parser namespace is Namespace(args=None)
 def test_module():
     """\
 i was printed from {UNTITLED} and my name is __main__
-*
+{SLUG}
 the parser namespace is Namespace(args=None)
 """
 
