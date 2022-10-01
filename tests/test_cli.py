@@ -28,7 +28,7 @@ def get_prepared_string(x):
     x = x.replace("*\n", slug)
     if GTE10:
         x = x.replace("optional arguments:", "options:")
-    return x
+    return x.replace("\r", "")
 
 
 def cli_test(command):
