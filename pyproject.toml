@@ -2,9 +2,6 @@
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
-# [build-system]# requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
-# build-backend = "setuptools.build_meta"
-
 [project]
 name = "importnb"
 description = ''
@@ -12,14 +9,12 @@ readme = "README.md"
 requires-python = ">=3.7"
 license = "BSD-3-Clause"
 keywords = []
-authors = [
-  { name = "tonyfast", email = "tony.fast@gmail.com" },
-]
+authors = [{ name = "tonyfast", email = "tony.fast@gmail.com" }]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Natural Language :: English",
   "Framework :: IPython",
-  "Framework :: Jupyter",  
+  "Framework :: Jupyter",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
@@ -28,20 +23,13 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
-  "License :: OSI Approved :: BSD License"
+  "License :: OSI Approved :: BSD License",
 ]
 dependencies = [] # no dependencies!
 dynamic = ["version"]
 
 [project.optional-dependencies]
-doc = [
-	"jupyter-book"
-]
-test = [
-	"pytest",
-	"nbval",
-	"nbformat"
-]
+interactive = ["IPython"]
 
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
@@ -77,9 +65,27 @@ profile = "black"
 [tool.black]
 line_length = 100
 
+[tool.hatch.envs.test]
+dependencies = ["pytest", "pytest-cov"]
+
+[[tool.hatch.envs.test.matrix]]
+version = ["stdlib", "interactive"]
+
+[tool.hatch.envs.test.env-vars]
+PYTHONUTF8 = "1"
+
+
+[tool.hatch.envs.test.overrides]
+matrix.version.dependencies = [{ value = "IPython", if = ["interactive"] }]
+
+[tool.hatch.envs.test.scripts]
+cov = "pytest"
+
 [tool.pytest.ini_options]
-addopts = "-pno:warnings --verbose --doctest-modules --current-env --sanitize-with sanitize.cfg"
+addopts = "-pno:warnings --cov importnb --cov-report html --cov-report term"
+
+[tool.coverage.report]
+omit = ["src/importnb/_json_parser.py", "tests/*"]
 
 [tool.coverage.html]
 directory = "docs/coverage"
-

@@ -4,16 +4,13 @@
 Many suggestions for importing notebooks use `sys.meta_paths`, but `importnb` relies on the `sys.path_hooks` to load any notebook in the path. `PathHooksContext` is a base class for the `importnb.Notebook` `SourceFileLoader`.
 """
 
-import ast
 import inspect
-import os
 import sys
-from contextlib import ExitStack, contextmanager
-from importlib.machinery import ModuleSpec, SourceFileLoader
-from itertools import chain
+from importlib.machinery import ModuleSpec
 from pathlib import Path
 
 from importlib._bootstrap_external import FileFinder
+
 
 class FileModuleSpec(ModuleSpec):
     def __init__(self, *args, **kwargs):
@@ -23,14 +20,7 @@ class FileModuleSpec(ModuleSpec):
 
 class FuzzySpec(FileModuleSpec):
     def __init__(
-        self,
-        name,
-        loader,
-        *,
-        alias=None,
-        origin=None,
-        loader_state=None,
-        is_package=None
+        self, name, loader, *, alias=None, origin=None, loader_state=None, is_package=None
     ):
         super().__init__(
             name,
@@ -66,7 +56,7 @@ class FuzzyFinder(FileFinder):
         to identify potential matches.
         """
         spec = super().find_spec(fullname, target=target)
-
+        raw = fullname
         if spec is None:
             original = fullname
 
@@ -76,23 +66,24 @@ class FuzzyFinder(FileFinder):
                 original, fullname = "", original
 
             if "_" in fullname:
+                # find any files using the fuzzy convention
                 files = fuzzy_file_search(self.path, fullname)
                 if files:
-                    file = Path(sorted(files)[0])
-                    spec = super().find_spec(
-                        (original + "." + file.stem.split(".", 1)[0]).lstrip("."),
-                        target=target,
+                    # sort and create of a path of the chosen file
+                    file = sorted(files, key=lambda x: x.stat().st_mtime, reverse=True)[0]
+                    name = file.stem
+                    if original:
+                        name = ".".join((original, name))
+                    name = (original + "." + file.stem).lstrip(".")
+                    spec = super().find_spec(name, target=target)
+                    spec = spec and FuzzySpec(
+                        spec.name,
+                        spec.loader,
+                        origin=spec.origin,
+                        loader_state=spec.loader_state,
+                        alias=raw,
+                        is_package=bool(spec.submodule_search_locations),
                     )
-                    fullname = (original + "." + fullname).lstrip(".")
-                    if spec and fullname != spec.name:
-                        spec = FuzzySpec(
-                            spec.name,
-                            spec.loader,
-                            origin=spec.origin,
-                            loader_state=spec.loader_state,
-                            alias=fullname,
-                            is_package=bool(spec.submodule_search_locations),
-                        )
         return spec
 
 
@@ -105,3 +96,10 @@ def get_loader_details():
             )
         except:
             continue
+
+
+def get_loader_index(ext):
+    path_id, details = get_loader_details()
+    for i, (loader, exts) in enumerate(details):
+        if ext in exts:
+            return path_id, i, details

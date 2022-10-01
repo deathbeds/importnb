@@ -6,30 +6,31 @@ Combine the __import__ finder with the loader.
 
 
 import ast
-import os
+from dataclasses import asdict, dataclass, field
 import sys
 import re
 import textwrap
-import types
+from types import ModuleType
 from functools import partial
 from importlib import reload
 from importlib.machinery import ModuleSpec, SourceFileLoader
 
+from pathlib import Path
+
+from . import is_ipython, get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
-from .finder import FuzzyFinder, FuzzySpec, get_loader_details
-from .ipython_extension import load_ipython_extension, unload_ipython_extension
+from .finder import FuzzyFinder, get_loader_details, get_loader_index
 
 from importlib._bootstrap import _requires_builtin
 from importlib._bootstrap_external import decode_source, FileFinder
-from importlib.util import module_from_spec
 from importlib._bootstrap import _init_module_attrs
-from importlib.util import LazyLoader
+from importlib.util import LazyLoader, find_spec
 
 
 _GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
 
-try:
+if is_ipython():
     import IPython
     from IPython.core.inputsplitter import IPythonInputSplitter
 
@@ -41,88 +42,100 @@ try:
             IPython.core.inputsplitter.cellmagic(end_on_blank_line=False),
         ],
     ).transform_cell
-except:
-    from textwrap import dedent
+else:
+
+    def dedent(body):
+        from textwrap import dedent, indent
+
+        if MAGIC.match(body):
+            return indent(body, "# ")
+        return dedent(body)
+
 
 __all__ = "Notebook", "reload"
 
 
-MAGIC = re.compile("^.*%{2}")
+MAGIC = re.compile("^\s*%{2}", re.MULTILINE)
 
 
-class FinderContextManager:
-    """
-    FinderContextManager is the base class for the notebook loader.  It provides
-    a context manager that replaces `FileFinder` in the `sys.path_hooks` to include
-    an instance of the class in the python findering system.
+@dataclass
+class Interface:
+    name: str = None
+    path: str = None
+    lazy: bool = False
+    include_fuzzy_finder: bool = True
 
-    >>> with FinderContextManager() as f:
-    ...      id, ((loader_cls, _), *_) = get_loader_details()
-    ...      assert issubclass(loader_cls, FinderContextManager)
-    >>> id, ((loader_cls, _), *_) = get_loader_details()
-    >>> loader_cls = inspect.unwrap(loader_cls)
-    >>> assert not (isinstance(loader_cls, type) and issubclass(loader_cls, FinderContextManager))
-    """
+    include_markdown_docstring: bool = True
+    only_defs: bool = False
+    no_magic: bool = False
+    _loader_hook_position: int = field(default=0, repr=False)
 
-    extensions = tuple()
-    _position = 0
+    def __new__(cls, name=None, path=None, **kwargs):
+        kwargs.update(name=name, path=path)
+        self = super().__new__(cls)
+        self.__init__(**kwargs)
+        return self
 
-    finder = FileFinder
+
+class BaseLoader(Interface, SourceFileLoader):
+    """The simplest implementation of a Notebook Source File Loader."""
 
     @property
     def loader(self):
-        return type(self)
+        """Create a lazy loader source file loader."""
+        loader = type(self)
+        if self.lazy and (sys.version_info.major, sys.version_info.minor) != (3, 4):
+            loader = LazyLoader.factory(loader)
+        # Strip the leading underscore from slots
+        params = asdict(self)
+        params.pop("name")
+        params.pop("path")
+        return partial(loader, **params)
 
-    def __enter__(self):
-        id, details = get_loader_details()
-        details.insert(self._position, (self.loader, self.extensions))
-        sys.path_hooks[id] = self.finder.path_hook(*details)
-        sys.path_importer_cache.clear()
-        return self
+    @property
+    def finder(self):
+        """Permit fuzzy finding of files with special characters."""
+        return self.include_fuzzy_finder and FuzzyFinder or FileFinder
 
-    def __exit__(self, *excepts):
-        id, details = get_loader_details()
-        details.pop(self._position)
-        sys.path_hooks[id] = self.finder.path_hook(*details)
-        sys.path_importer_cache.clear()
+    def translate(self, source):
+        if self.path and self.path.endswith(".ipynb"):
+            return LineCacheNotebookDecoder(
+                code=self.code, raw=self.raw, markdown=self.markdown
+            ).decode(source, self.path)
+        return self.code(source)
 
-
-"""## The basic loader
-
-The loader uses the import systems `get_source`, `get_data`, and `create_module` methods to import notebook files.
-"""
-
-
-class ModuleType(types.ModuleType, getattr(os, "PathLike", object)):
-    """ModuleType combines a module with a PathLike access to simplify access."""
-
-    def __fspath__(self):
-        return self.__file__
-
-
-class ImportLibMixin(SourceFileLoader):
-    """ImportLibMixin is a SourceFileLoader for loading source code from JSON (e.g. notebooks).
-
-    `get_data` assures consistent line numbers between the file s representatio and source."""
+    def get_data(self, path):
+        """Needs to return the string source for the module."""
+        return self.translate(self.decode())
 
     def create_module(self, spec):
         module = ModuleType(str(spec.name))
         _init_module_attrs(spec, module)
-        if isinstance(spec, FuzzySpec):
-            sys.modules[spec.alias] = module
         if self.name:
             module.__name__ = self.name
+        if getattr(spec, "alias", None):
+            # put a fuzzy spec on the modules to avoid re importing it.
+            # there is a funky trick you do with the fuzzy finder where you
+            # load multiple versions with different finders.
+
+            sys.modules[spec.alias] = module
+        module.get_ipython = get_ipython
         return module
 
     def decode(self):
         return decode_source(super().get_data(self.path))
 
-    def code(self, object):
-        return object
+    def code(self, str):
+        return dedent(str)
 
-    def get_data(self, path):
-        """Needs to return the string source for the module."""
-        return self.code(self.decode())
+    def markdown(self, str):
+        return quote(str)
+
+    def raw(self, str):
+        return comment(str)
+
+    def visit(self, node):
+        return node
 
     @classmethod
     @_requires_builtin
@@ -134,61 +147,25 @@ class ImportLibMixin(SourceFileLoader):
 
     get_source = get_data
 
+    def __enter__(self):
+        path_id, loader_id, details = get_loader_index(".py")
+        for _, e in details:
+            if all(map(e.__contains__, self.extensions)):
+                self._loader_hook_position = None
+                return self
+        else:
+            self._loader_hook_position = loader_id + 1
+            details.insert(self._loader_hook_position, (self.loader, self.extensions))
+            sys.path_hooks[path_id] = self.finder.path_hook(*details)
+            sys.path_importer_cache.clear()
+        return self
 
-class NotebookBaseLoader(ImportLibMixin, FinderContextManager):
-    """The simplest implementation of a Notebook Source File Loader."""
-
-    extensions = (
-        ".ipy",
-        ".ipynb",
-    )
-    __slots__ = "_lazy", "_fuzzy", "_markdown_docstring", "_position"
-
-    def __init__(
-        self,
-        fullname=None,
-        path=None,
-        *,
-        lazy=False,
-        fuzzy=True,
-        position=0,
-        markdown_docstring=True
-    ):
-        super().__init__(fullname, path)
-        self._lazy = lazy
-        self._fuzzy = fuzzy
-        self._markdown_docstring = markdown_docstring
-        self._position = position
-
-    @classmethod
-    def parameterized(cls):
-        from .parameterize import Parameterize
-
-        return type(cls.__name__, (Parameterize, cls), {})
-
-    @property
-    def loader(self):
-        """Create a lazy loader source file loader."""
-        loader = super().loader
-        if self._lazy and (sys.version_info.major, sys.version_info.minor) != (3, 4):
-            loader = LazyLoader.factory(loader)
-        # Strip the leading underscore from slots
-        return partial(
-            loader, **{object.lstrip("_"): getattr(self, object) for object in self.__slots__}
-        )
-
-    @property
-    def finder(self):
-        """Permit fuzzy finding of files with special characters."""
-        return self._fuzzy and FuzzyFinder or super().finder
-
-    def get_data(self, path):
-        """Needs to return the string source for the module."""
-        if path.endswith(".ipynb"):
-            return LineCacheNotebookDecoder(
-                code=self.code, raw=self.raw, markdown=self.markdown
-            ).decode(self.decode(), self.path)
-        return self.code(super().get_data(path))
+    def __exit__(self, *excepts):
+        if self._loader_hook_position is not None:
+            path_id, details = get_loader_details()
+            details.pop(self._loader_hook_position)
+            sys.path_hooks[path_id] = self.finder.path_hook(*details)
+            sys.path_importer_cache.clear()
 
 
 class FileModuleSpec(ModuleSpec):
@@ -197,15 +174,60 @@ class FileModuleSpec(ModuleSpec):
         self._set_fileattr = True
 
 
-"""## notebooks most be loadable from files.
-"""
+def comment(str):
+    return textwrap.indent(str, "# ")
 
 
-class FromFileMixin:
-    """FromFileMixin adds a classmethod to load a notebooks from files."""
+class DefsOnly(ast.NodeTransformer):
+    INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
+
+    def visit_Module(self, node):
+        args = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
+        if _GTE38:
+            args += (node.type_ignores,)
+        return ast.Module(*args)
+
+
+class Notebook(BaseLoader):
+    """Notebook is a user friendly file finder and module loader for notebook source code.
+
+    > Remember, restart and run all or it didn't happen.
+
+    Notebook provides several useful options.
+
+    * Lazy module loading.  A module is executed the first time it is used in a script.
+    """
+
+    extensions = (".ipy", ".ipynb")
+
+    def parse(self, nodes):
+        return ast.parse(nodes, self.path)
+
+    def visit(self, nodes):
+        if self.only_defs:
+            nodes = DefsOnly().visit(nodes)
+        return nodes
+
+    def code(self, str):
+        if self.no_magic:
+            if MAGIC.match(str):
+                return comment(str)
+        return super().code(str)
+
+    def source_to_code(self, nodes, path, *, _optimize=-1):
+        """* Convert the current source to ast
+        * Apply ast transformers.
+        * Compile the code."""
+        if not isinstance(nodes, ast.Module):
+            nodes = self.parse(nodes)
+        if self.include_markdown_docstring:
+            nodes = update_docstring(nodes)
+        return super().source_to_code(
+            ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
+        )
 
     @classmethod
-    def load(cls, filename, dir=None, main=False, **kwargs):
+    def load_file(cls, filename, main=True, **kwargs):
         """Import a notebook as a module from a filename.
 
         dir: The directory to load the file from.
@@ -220,105 +242,95 @@ class FromFileMixin:
         loader.exec_module(module)
         return module
 
+    @classmethod
+    def load_module(cls, module, main=False, **kwargs):
+        """Import a notebook as a module.
 
-"""* Sometimes folks may want to use the current IPython shell to manage the code and input transformations.
-"""
+        dir: The directory to load the file from.
+        main: Load the module in the __main__ context.
 
-"""Use the `IPythonInputSplitter` to dedent and process magic functions.
-"""
+        > assert Notebook.load('loader.ipynb')
+        """
+        from runpy import _run_module_as_main, run_module
 
+        with cls() as loader:
+            if main:
+                return _dict_module(_run_module_as_main(module))
+            else:
+                spec = find_spec(module)
 
-def comment(str):
-    return textwrap.indent(str, "# ")
+                m = spec.loader.create_module(spec)
+                spec.loader.exec_module(m)
+                return m
 
+    @classmethod
+    def load_argv(cls, argv=None, *, parser=None):
+        import sys
+        from sys import path
 
-class TransformerMixin:
-    def code(self, str):
-        return dedent(str)
+        if parser is None:
+            parser = cls.get_argparser()
 
-    def markdown(self, str):
-        return quote(str)
+        if argv is None:
+            from sys import argv
 
-    def raw(self, str):
-        return comment(str)
+            argv = argv[1:]
 
-    def visit(self, node):
-        return node
+        if isinstance(argv, str):
+            from shlex import split
 
+            argv = split(argv)
 
-class DefsOnly(ast.NodeTransformer):
-    INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
+        ns, unknown = parser.parse_known_args(argv)
 
-    def visit_Module(self, node):
-        args = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
-        if _GTE38:
-            args += (node.type_ignores,)
-        return ast.Module(*args)
+        if ns.code:
+            return cls.load_code(" ".join(ns.args))
 
+        n = ns.args and ns.args[0] or sys.argv[0]
 
-"""## The `Notebook` finder & loader
-"""
+        sys.argv = [n] + unknown
+        if ns.module:
+            path.insert(0, ns.dir) if ns.dir else ... if "" in path else path.insert(0, "")
+            return cls.load_module(n, main=True)
+        elif ns.args:
+            L = len(ns.args)
+            if L > 1:
+                raise ValueError(f"Expected one file to execute, but received {L}.")
 
+            if ns.dir:
+                n = str(Path(ns.dir) / n)
+            return cls.load_file(n)
+        else:
+            parser.print_help()
 
-class Notebook(TransformerMixin, FromFileMixin, NotebookBaseLoader):
-    """Notebook is a user friendly file finder and module loader for notebook source code.
+    @classmethod
+    def load_code(cls, code, mod_name=None, script_name=None, main=False):
+        from runpy import _run_module_code
 
-    > Remember, restart and run all or it didn't happen.
+        self = cls()
+        name = main and "__main__" or mod_name or "<markdown code>"
 
-    Notebook provides several useful options.
-
-    * Lazy module loading.  A module is executed the first time it is used in a script.
-    """
-
-    __slots__ = NotebookBaseLoader.__slots__ + ("_main", "_defs_only", "_no_magic")
-
-    def __init__(
-        self,
-        fullname=None,
-        path=None,
-        lazy=False,
-        position=0,
-        fuzzy=True,
-        markdown_docstring=True,
-        main=False,
-        defs_only=False,
-        no_magic=False,
-    ):
-        self._main = bool(main) or fullname == "__main__"
-        self._defs_only = defs_only
-        self._no_magic = no_magic
-
-        super().__init__(
-            self._main and "__main__" or fullname,
-            path,
-            lazy=lazy,
-            fuzzy=fuzzy,
-            position=position,
-            markdown_docstring=markdown_docstring,
+        return _dict_module(
+            _run_module_code(self.translate(code), mod_name=name, script_name=script_name)
         )
 
-    def parse(self, nodes):
-        return ast.parse(nodes, self.path)
+    @staticmethod
+    def get_argparser(parser=None):
+        from argparse import ArgumentParser, REMAINDER
 
-    def visit(self, nodes):
-        if self._defs_only:
-            nodes = DefsOnly().visit(nodes)
-        return nodes
-
-    def code(self, str):
-        if self._no_magic:
-            if MAGIC.match(str):
-                return comment(str)
-        return super().code(str)
-
-    def source_to_code(self, nodes, path, *, _optimize=-1):
-        """* Convert the current source to ast
-        * Apply ast transformers.
-        * Compile the code."""
-        if not isinstance(nodes, ast.Module):
-            nodes = self.parse(nodes)
-        if self._markdown_docstring:
-            nodes = update_docstring(nodes)
-        return super().source_to_code(
-            ast.fix_missing_locations(self.visit(nodes)), path, _optimize=_optimize
+        if parser is None:
+            parser = ArgumentParser("importnb", description="run notebooks as python code")
+        parser.add_argument(
+            "args", help="the file [default], module or code to execute", nargs=REMAINDER
         )
+        parser.add_argument("-f", "--file", action="store_false", help="load a file")
+        parser.add_argument("-m", "--module", action="store_true", help="run args as a module")
+        parser.add_argument("-c", "--code", action="store_true", help="run args as code")
+        parser.add_argument("-d", "--dir", help="the directory path to run in.")
+        return parser
+
+
+def _dict_module(ns):
+    m = ModuleType(ns.get("__name__"), ns.get("__doc__"))
+    m.__dict__.update(ns)
+    return m
