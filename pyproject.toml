@@ -71,6 +71,10 @@ dependencies = ["pytest", "pytest-cov"]
 [[tool.hatch.envs.test.matrix]]
 version = ["stdlib", "interactive"]
 
+[tool.hatch.envs.test.env-vars]
+PYTHONUTF8 = "1"
+
+
 [tool.hatch.envs.test.overrides]
 matrix.version.dependencies = [{ value = "IPython", if = ["interactive"] }]
 
