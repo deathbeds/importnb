@@ -1,9 +1,8 @@
-from fnmatch import fnmatch
 import re
 from sys import version_info
 from functools import wraps, partial
 from io import StringIO
-from subprocess import check_call, check_output
+from subprocess import check_call
 from sys import executable, path
 import sys
 
@@ -28,19 +27,24 @@ def get_prepared_string(x):
         x = x.replace("optional arguments:", "options:")
     return x.replace("\r", "")
 
+def system(command, path):
+    if get_ipython():
+        from IPython.utils.process import getoutput
+        return getoutput(F"{executable} {command}")
+    from shlex import split
+
+    with path.open("w") as file:
+        check_call([executable] + split(command), stderr=file, stdout=file)
+    return path.read_text()
 
 def cli_test(command):
     def delay(f):
         def wrapper(tmp_path):
-            from shlex import split
-
-            path = tmp_path / "tmp"
-            with path.open("w") as file:
-                check_call([executable] + split(command), stderr=file, stdout=file)
-            out = path.read_text()
+            out = system(command, tmp_path / "tmp")
             match = get_prepared_string(
                 f.__doc__.format(UNTITLED=UNTITLED.as_posix(), SLUG=ref.magic_slug)
             )
+            out = get_prepared_string(out)
             assert out == match
 
         return wrapper
