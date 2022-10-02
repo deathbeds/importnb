@@ -28,7 +28,7 @@ def get_prepared_string(x):
     return x.replace("\r", "")
 
 def system(command, path):
-    if get_ipython():
+    if get_ipython() and sys.platform == "win32":
         from IPython.utils.process import getoutput
         return getoutput(F"{executable} {command}")
     from shlex import split
