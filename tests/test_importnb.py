@@ -9,9 +9,11 @@ from types import FunctionType
 from pathlib import Path
 from attr import has
 
-from importnb import Notebook, is_ipython
+from importnb import Notebook, get_ipython
 from pytest import fixture, raises, mark
 from importlib import reload
+
+import importnb
 
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
@@ -21,7 +23,7 @@ HERE = (Path(HERE).parent if HERE else Path()).absolute()
 
 sys.path.insert(0, str(HERE))
 
-IPY = bool(is_ipython())
+IPY = bool(get_ipython())
 ipy = mark.skipif(not IPY, reason="""Not IPython.""")
 
 
@@ -88,6 +90,15 @@ def test_finder():
     assert not find_spec("Untitled42")
     with Notebook():
         assert find_spec("Untitled42")
+
+def test_finder_hooks():
+    from importnb import finder
+    N = lambda: sum(".ipynb" in x for w, x in finder.get_loader_details()[1])
+    assert not N()
+    with Notebook():
+        with Notebook():
+            assert N() == 1
+    assert not N()
 
 
 def test_basic(clean, ref):
