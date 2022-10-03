@@ -47,6 +47,7 @@ build-backend = "hatchling.build"
 
 # hatch/hatchling configuration
 [tool.hatch.build.hooks.custom]
+
 # we build a json grammar with each release because we fiend for line numbers
 dependencies = ["lark"]
 
@@ -63,13 +64,12 @@ dependencies = ["pytest", "pytest-cov"]
 
 [[tool.hatch.envs.test.matrix]]
 version = ["interactive", "stdlib"]
-env-vars = ["CI=0", "CI=1"]
 
 [tool.hatch.envs.test.interactive.overrides]
 matrix.version.features = ["interactive"]
 
 [tool.hatch.envs.test.overrides]
-matrix.version.dev-mode = [{ value = false, env = ["CI=1"] }]
+matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
 
 [tool.hatch.envs.test.scripts]
 cov = "pytest"
@@ -85,19 +85,19 @@ directory = "docs/coverage"
 
 
 # test a release on test-pypi
-[tool.hatch.envs.testrelease]
+[tool.hatch.envs.released]
 skip-install = true
-dependencies = ["importnb[interactive]", "pytest", "pytest-cov"]
+dependencies = ["importnb", "IPython", "pytest", "pytest-cov"]
 
-[tool.hatch.envs.testrelease.scripts]
+[tool.hatch.envs.released.scripts]
 test = "pytest"
 
-[tool.hatch.envs.testrelease.env-vars]
+[tool.hatch.envs.released.env-vars]
 PIP_INDEX_URL = "https://test.pypi.org/simple/"
 PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
 PIP_PRE = "1"
 
-[[tool.hatch.envs.testrelease.matrix]]
+[[tool.hatch.envs.released.matrix]]
 version = ["interactive", "stdlib"]
 
 # documentation
