@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - '*'
+  release:
+    types: [published]      
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,3 +27,6 @@ jobs:
       run: hatch publish -r test --user ${{secrets.HATCH_INDEX_USER}} --auth ${{secrets.HATCH_TEST_INDEX_AUTH}}
     - name: Test the released packaged
       run: hatch run released:test
+    - name: Publish to mainline
+      run: hatch publish
+      if: github.event_name == 'release'
