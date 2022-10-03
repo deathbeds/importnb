@@ -1,18 +1,17 @@
-from importlib.util import find_spec
-import json
 import ast
-from shutil import copyfile, rmtree
-import sys
-import linecache
 import inspect
-from types import FunctionType
+import json
+import linecache
+import sys
+from importlib import reload
+from importlib.util import find_spec
 from pathlib import Path
-from attr import has
+from shutil import copyfile, rmtree
+from types import FunctionType
+
+from pytest import fixture, mark, raises
 
 from importnb import Notebook, get_ipython
-from pytest import fixture, raises, mark
-from importlib import reload
-
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
@@ -206,7 +205,6 @@ def test_fuzzy_finder_conflict(clean, ref):
             new.unlink()
             spec3 = find_spec("__d42")
             assert spec.loader.path == spec3.loader.path
-
 
 
 def test_minified_json(ref, minified):

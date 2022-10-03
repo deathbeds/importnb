@@ -6,27 +6,22 @@ Combine the __import__ finder with the loader.
 
 
 import ast
-from dataclasses import asdict, dataclass, field
 import sys
-import re
 import textwrap
-from types import ModuleType
+from dataclasses import asdict, dataclass, field
 from functools import partial
 from importlib import reload
+from importlib._bootstrap import _init_module_attrs, _requires_builtin
+from importlib._bootstrap_external import FileFinder, decode_source
 from importlib.machinery import ModuleSpec, SourceFileLoader
-
+from importlib.util import LazyLoader, find_spec
 from pathlib import Path
+from types import ModuleType
 
-from . import is_ipython, get_ipython
+from . import get_ipython, is_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FuzzyFinder, get_loader_details, get_loader_index
-
-from importlib._bootstrap import _requires_builtin
-from importlib._bootstrap_external import decode_source, FileFinder
-from importlib._bootstrap import _init_module_attrs
-from importlib.util import LazyLoader, find_spec
-
 
 _GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
 
@@ -316,7 +311,7 @@ class Notebook(BaseLoader):
 
     @staticmethod
     def get_argparser(parser=None):
-        from argparse import ArgumentParser, REMAINDER
+        from argparse import REMAINDER, ArgumentParser
 
         if parser is None:
             parser = ArgumentParser("importnb", description="run notebooks as python code")

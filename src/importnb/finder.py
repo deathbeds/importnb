@@ -6,10 +6,9 @@ Many suggestions for importing notebooks use `sys.meta_paths`, but `importnb` re
 
 import inspect
 import sys
+from importlib._bootstrap_external import FileFinder
 from importlib.machinery import ModuleSpec
 from pathlib import Path
-
-from importlib._bootstrap_external import FileFinder
 
 
 class FileModuleSpec(ModuleSpec):

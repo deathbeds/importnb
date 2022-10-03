@@ -1,11 +1,10 @@
-from functools import partial
-from io import StringIO
-from logging import shutdown
-from pathlib import Path
 import os
 import shlex
-from subprocess import call
 import sys
+from functools import partial
+from io import StringIO
+from pathlib import Path
+
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
@@ -35,7 +34,7 @@ def get_logger():
 
 
 def get_lark():
-    from lark.tools.standalone import lalr_argparser, build_lalr
+    from lark.tools.standalone import build_lalr, lalr_argparser
 
     return build_lalr(lalr_argparser.parse_args(["--propagate_positions", "src/json.g"]))[0]
 
