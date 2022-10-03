@@ -19,14 +19,14 @@ from importlib.util import LazyLoader, find_spec
 from pathlib import Path
 from types import ModuleType
 
-from . import get_ipython, is_ipython
+from . import get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FuzzyFinder, get_loader_details, get_loader_index
 
 _GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
 
-if is_ipython():
+try:
     import IPython
     from IPython.core.inputsplitter import IPythonInputSplitter
 
@@ -38,7 +38,7 @@ if is_ipython():
             IPython.core.inputsplitter.cellmagic(end_on_blank_line=False),
         ],
     ).transform_cell
-else:
+except ModuleNotFoundError:
 
     def dedent(body):
         from textwrap import dedent, indent
