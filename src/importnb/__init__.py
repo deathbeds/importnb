@@ -27,7 +27,6 @@ def get_ipython(force=True):
 import builtins
 
 from ._version import *
-from .ipython_extension import load_ipython_extension, unload_ipython_extension
 from .loader import Notebook, reload
 
 builtins.true, builtins.false, builtins.null = True, False, None
