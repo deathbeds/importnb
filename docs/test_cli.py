@@ -1,15 +1,8 @@
-from fnmatch import fnmatch
-import re
-from sys import version_info
-from functools import wraps, partial
-from io import StringIO
-from subprocess import check_call, check_output
-from sys import executable, path
-import sys
-
-from importnb import Notebook, get_ipython
-
 from pathlib import Path
+from subprocess import check_call
+from sys import executable, path, version_info
+
+from importnb import Notebook
 
 GTE10 = version_info.major == 3 and version_info.minor >= 10
 
@@ -41,6 +34,9 @@ def cli_test(command):
             match = get_prepared_string(
                 f.__doc__.format(UNTITLED=UNTITLED.as_posix(), SLUG=ref.magic_slug)
             )
+
+            if "UserWarning: Attempting to work in a virtualenv." in out:
+                out = "".join(out.splitlines(True)[2:])
             assert out == match
 
         return wrapper

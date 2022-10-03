@@ -1,10 +1,8 @@
-[build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
+# hatch is our build and development tool.
 
 [project]
 name = "importnb"
-description = ''
+description = "import jupyter notebooks as python modules and scripts."
 readme = "README.md"
 requires-python = ">=3.7"
 license = "BSD-3-Clause"
@@ -26,7 +24,7 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
 ]
 dependencies = [] # no dependencies!
-dynamic = ["version"]
+dynamic = ["version"] # uses hatch-vcs
 
 [project.optional-dependencies]
 interactive = ["IPython"]
@@ -43,29 +41,24 @@ Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
 Source = "https://github.com/deathbeds/importnb"
 
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+# hatch/hatchling configuration
+[tool.hatch.build.hooks.custom]
+
+# we build a json grammar with each release because we fiend for line numbers
+dependencies = ["lark"]
+
+# versioning
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/importnb/_version.py"
 
-[tool.hatch.build.hooks.custom]
-dependencies = ["lark"]
-
-[tool.doit]
-backend = "json"
-verbosity = 2
-
-[tool.doit.commands.list]
-status = true
-subtasks = true
-
-[tool.isort]
-profile = "black"
-
-[tool.black]
-line_length = 100
-
+# test matrix
 [tool.hatch.envs.test]
 dependencies = ["pytest", "pytest-cov"]
 
@@ -74,6 +67,9 @@ version = ["interactive", "stdlib"]
 
 [tool.hatch.envs.test.interactive.overrides]
 matrix.version.features = ["interactive"]
+
+[tool.hatch.envs.test.overrides]
+matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
 
 [tool.hatch.envs.test.scripts]
 cov = "pytest"
@@ -87,9 +83,44 @@ omit = ["src/importnb/_json_parser.py", "docs/*"]
 [tool.coverage.html]
 directory = "docs/coverage"
 
+
+# test a release on test-pypi
+[tool.hatch.envs.released]
+skip-install = true
+dependencies = ["importnb", "IPython", "pytest", "pytest-cov"]
+
+[tool.hatch.envs.released.scripts]
+test = "pytest"
+
+[tool.hatch.envs.released.env-vars]
+PIP_INDEX_URL = "https://test.pypi.org/simple/"
+PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
+PIP_PRE = "1"
+
+[[tool.hatch.envs.released.matrix]]
+version = ["interactive", "stdlib"]
+
+# documentation
 [tool.hatch.envs.docs]
 features = ["docs"]
 
 [tool.hatch.envs.docs.scripts]
 build = "mkdocs build"
 serve = "mkdocs serve"
+
+# formatting cause linting sucks
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line_length = 100
+
+[tool.hatch.envs.format]
+skip-install = true
+dependencies = ["black", "isort"]
+
+[tool.hatch.envs.format.scripts]
+run = """
+isort .
+black .
+"""

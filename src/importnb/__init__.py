@@ -2,11 +2,13 @@
 
 __all__ = "Notebook", "reload"
 
+
 def is_ipython():
     from sys import modules
-    
+
     return "IPython" in modules
-    
+
+
 def get_ipython(force=True):
     if force or is_ipython():
         try:
@@ -16,15 +18,15 @@ def get_ipython(force=True):
         shell = get_ipython()
         if shell is None:
             from IPython import InteractiveShell
+
             shell = InteractiveShell.instance()
         return shell
     return None
 
-from ._version import *
-from .ipython_extension import load_ipython_extension, unload_ipython_extension
-from .loader import Notebook, reload
 
 import builtins
-builtins.true, builtins.false, builtins.null = True, False, None
 
-    
+from ._version import *
+from .loader import Notebook, reload
+
+builtins.true, builtins.false, builtins.null = True, False, None
