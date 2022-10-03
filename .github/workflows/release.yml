@@ -22,6 +22,6 @@ jobs:
     - name: Build
       run: hatch build
     - name: Publish package
-      run: hatch publish -r test --auth ${{secrets.HATCH_TEST_INDEX_AUTH}}
+      run: hatch publish -r test --user ${{secrets.HATCH_INDEX_USER}} --auth ${{secrets.HATCH_TEST_INDEX_AUTH}}
     - name: Publish package
       run: hatch run testrelease:test
