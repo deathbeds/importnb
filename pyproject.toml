@@ -30,6 +30,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 interactive = ["IPython"]
+docs = ["mkdocs-material", "mkdocs-jupyter", "ruamel.yaml"]
 
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
@@ -69,14 +70,10 @@ line_length = 100
 dependencies = ["pytest", "pytest-cov"]
 
 [[tool.hatch.envs.test.matrix]]
-version = ["stdlib", "interactive"]
+version = ["interactive", "stdlib"]
 
-[tool.hatch.envs.test.env-vars]
-PYTHONUTF8 = "1"
-
-
-[tool.hatch.envs.test.overrides]
-matrix.version.dependencies = [{ value = "IPython", if = ["interactive"] }]
+[tool.hatch.envs.test.interactive.overrides]
+matrix.version.features = ["interactive"]
 
 [tool.hatch.envs.test.scripts]
 cov = "pytest"
@@ -85,7 +82,14 @@ cov = "pytest"
 addopts = "-pno:warnings --cov importnb --cov-report html --cov-report term"
 
 [tool.coverage.report]
-omit = ["src/importnb/_json_parser.py", "tests/*"]
+omit = ["src/importnb/_json_parser.py", "docs/*"]
 
 [tool.coverage.html]
 directory = "docs/coverage"
+
+[tool.hatch.envs.docs]
+features = ["docs"]
+
+[tool.hatch.envs.docs.scripts]
+build = "mkdocs build"
+serve = "mkdocs serve"

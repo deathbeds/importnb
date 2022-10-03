@@ -1,1 +1,1 @@
-.. include:: ../readme.ipynb
+---8<--- README.md

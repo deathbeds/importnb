@@ -13,8 +13,6 @@ from importnb import Notebook, get_ipython
 from pytest import fixture, raises, mark
 from importlib import reload
 
-import importnb
-
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
@@ -91,15 +89,6 @@ def test_finder():
     with Notebook():
         assert find_spec("Untitled42")
 
-def test_finder_hooks():
-    from importnb import finder
-    N = lambda: sum(".ipynb" in x for w, x in finder.get_loader_details()[1])
-    assert not N()
-    with Notebook():
-        with Notebook():
-            assert N() == 1
-    assert not N()
-
 
 def test_basic(clean, ref):
     with Notebook():
@@ -123,14 +112,14 @@ def test_load_module_package(clean, package):
 
 
 def test_load_file(clean, ref):
-    m = Notebook.load_file("tests/Untitled42.ipynb")
+    m = Notebook.load_file("docs/Untitled42.ipynb")
     assert ref.__file__.endswith(str(Path(m.__file__)))
     cant_reload(m)
 
 
 def test_load_code(clean):
     assert Notebook.load_code(""), "can't load an empty notebook"
-    body = Path("tests/Untitled42.ipynb").read_text()
+    body = Path("docs/Untitled42.ipynb").read_text()
     m = Notebook.load_code(body)
     cant_reload(m)
 
