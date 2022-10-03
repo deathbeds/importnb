@@ -6,6 +6,7 @@ Combine the __import__ finder with the loader.
 
 
 import ast
+import re
 import sys
 import textwrap
 from dataclasses import asdict, dataclass, field
