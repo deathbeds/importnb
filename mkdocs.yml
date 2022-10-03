@@ -14,11 +14,15 @@ plugins:
   
 nav:
   - importing notebooks: README.md
-  - tests:
+  - testing with notebooks: pytest.md
+  - extending importnb: extending.md
+  - importnb test examples:
     - importnb test notebook: Untitled42.ipynb
     - unit tests: test_importnb.py
     - command line tests: test_cli.py
-
+  - appendix: 
+    - appendix: appendix.md
+  - developer: dev.md
 
 markdown_extensions:
   - admonition

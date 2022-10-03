@@ -119,58 +119,9 @@ an outcome of resolving the most recently changed is that you can import your mo
 
         import __                        # **.ipynb
 
-### integrations
-
-#### `pytest`
-
-since `importnb` transforms notebooks to python documents we can use these as source for tests.
-`importnb`s `pytest` extension is not fancy, it only allows for conventional pytest test discovery. 
-
-`nbval` is alternative testing tools that validates notebook outputs. this style is near to using notebooks as `doctest` while `importnb` primarily adds the ability to write `unittest`s in notebooks. adding tests to notebooks help preserve them over time.
-
-#### extensible
-
-the `importnb.Notebook` machinery is extensible. it allows other file formats to be used. for example, `pidgy` uses `importnb` to import `markdown` files as compiled python code.
-
-    class MyLoader(importnb.Notebook): pass
 
     
 ---
-
-## developer
-
-```bash
-pip install -e.      # install in development mode
-hatch run test:cov   # test 
-```
-
-* `importnb` uses `hatch` for testing in python and `IPython`
-
----
-
-## appendix
-### line-for-line translation and natural error messages
-
-a challenge with Jupyter notebooks is that they are `json` data. this poses problems:
-
-1. every valid line of code in a Jupyter notebook is a quoted `json` string
-2. `json` parsers don't have a reason to return line numbers.
-
-#### the problem with quoted code
-
-#### line-for-line `json` parser
-
-python's `json` module is not pluggable in the way we need to find line numbers. since `importnb` is meant to be dependency free on installation we couldn't look to any other packages like `ujson` or `json5`. 
-
-the need for line numbers is enough that we ship a standalone `json` grammar parser. to do this without extra dependencies we use the `lark` grammar package at build time:
-* we've defined a `json.g`ramar
-* we use `hatch` hooks to invoke `lark-standalone` that generates a standalone parser for the grammar. the generated file is shipped with the package.
-
-the result of `importnb` is `json` data translated into vertically sparse, valid python code.
-
-#### reproducibility caution with the fuzzy finder 
-
-⚠️ fuzzy finding is not reproducible as your system will change over time. in python, "explicit is better than implicit" so defining strong fuzzy strings is best practice if you MUST use esotric names. an alternative option is to use the `importlib.import_module` machinery
 
 
 [pip]: #
