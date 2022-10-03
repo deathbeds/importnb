@@ -85,7 +85,14 @@ cov = "pytest"
 addopts = "-pno:warnings --cov importnb --cov-report html --cov-report term"
 
 [tool.coverage.report]
-omit = ["src/importnb/_json_parser.py", "tests/*"]
+omit = ["src/importnb/_json_parser.py", "docs/*"]
 
 [tool.coverage.html]
 directory = "docs/coverage"
+
+[tool.hatch.envs.docs]
+dependencies = ["mkdocs", "mkdocs-material", "mkdocs-jupyter", "ruamel.yaml"]
+
+[tool.hatch.envs.docs.scripts]
+build = "mkdocs build"
+serve = "mkdocs serve"
