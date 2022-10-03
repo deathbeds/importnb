@@ -25,10 +25,10 @@ jobs:
       run: hatch build
     - name: Publish package
       run: hatch publish -r test --user ${{secrets.HATCH_INDEX_USER}} --auth ${{secrets.HATCH_TEST_INDEX_AUTH}}
-      if: github.event_name == 'tags'
+      if: github.event_name != 'release'
     - name: Test the released packaged
       run: hatch run released:test
-      if: github.event_name == 'tags'
+      if: github.event_name != 'release'
     - name: Publish to mainline
       run: hatch publish --user ${{secrets.HATCH_INDEX_USER}} --auth ${{secrets.HATCH_INDEX_AUTH}}
-      if: github.event_name == 'release'
+      if: github.event_name != 'release'
