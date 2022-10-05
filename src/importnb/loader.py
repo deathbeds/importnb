@@ -282,20 +282,18 @@ class Notebook(BaseLoader):
         if ns.code:
             return cls.load_code(" ".join(ns.args))
 
-        n = ns.args and ns.args[0] or sys.argv[0]
+        n = ns.file or ns.module or sys.argv[0]
 
         sys.argv = [n] + unknown
         if ns.module:
             path.insert(0, ns.dir) if ns.dir else ... if "" in path else path.insert(0, "")
-            return cls.load_module(n, main=True)
-        elif ns.args:
-            L = len(ns.args)
-            if L > 1:
-                raise ValueError(f"Expected one file to execute, but received {L}.")
-
+            return cls.load_module(ns.module, main=True)
+        elif ns.file:
             if ns.dir:
-                n = str(Path(ns.dir) / n)
+                n = str(Path(ns.dir) / ns.file)
             return cls.load_file(n)
+        elif ns.code:
+            return cls.load_code(ns.code)
         else:
             parser.print_help()
 
@@ -316,11 +314,8 @@ class Notebook(BaseLoader):
 
         if parser is None:
             parser = ArgumentParser("importnb", description="run notebooks as python code")
-        parser.add_argument(
-            "args", help="the file [default], module or code to execute", nargs=REMAINDER
-        )
-        parser.add_argument("-f", "--file", action="store_false", help="load a file")
-        parser.add_argument("-m", "--module", action="store_true", help="run args as a module")
+        parser.add_argument("-f", "--file", help="load a file")
+        parser.add_argument("-m", "--module", help="run args as a module")
         parser.add_argument("-c", "--code", action="store_true", help="run args as code")
         parser.add_argument("-d", "--dir", help="the directory path to run in.")
         return parser
