@@ -47,19 +47,20 @@ def cli_test(command):
 @cli_test("-m importnb")
 def test_usage():
     """\
-usage: importnb [-h] [-f] [-m] [-c] [-d DIR] ...
+usage: importnb [-h] [-f FILE] [-m MODULE] [-c CODE] [-d DIR] ...
 
 run notebooks as python code
 
 positional arguments:
-  args               the file [default], module or code to execute
+  args                  command line arguments for program
 
 optional arguments:
-  -h, --help         show this help message and exit
-  -f, --file         load a file
-  -m, --module       run args as a module
-  -c, --code         run args as code
-  -d DIR, --dir DIR  the directory path to run in.
+  -h, --help            show this help message and exit
+  -f FILE, --file FILE  load a file
+  -m MODULE, --module MODULE
+                        run args as a module
+  -c CODE, --code CODE  run args as code
+  -d DIR, --dir DIR     the directory path to run in.
 """
 
 

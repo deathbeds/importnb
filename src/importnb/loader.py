@@ -27,17 +27,9 @@ from .finder import FuzzyFinder, get_loader_details, get_loader_index
 _GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
 
 try:
-    import IPython
-    from IPython.core.inputsplitter import IPythonInputSplitter
+    from IPython.core.inputtransformer2 import TransformerManager
 
-    dedent = IPythonInputSplitter(
-        line_input_checker=False,
-        physical_line_transforms=[
-            IPython.core.inputsplitter.leading_indent(),
-            IPython.core.inputsplitter.ipy_prompt(),
-            IPython.core.inputsplitter.cellmagic(end_on_blank_line=False),
-        ],
-    ).transform_cell
+    dedent = TransformerManager().transform_cell
 except ModuleNotFoundError:
 
     def dedent(body):
@@ -277,14 +269,13 @@ class Notebook(BaseLoader):
 
             argv = split(argv)
 
-        ns, unknown = parser.parse_known_args(argv)
+        ns = parser.parse_args(argv)
 
         if ns.code:
             return cls.load_code(" ".join(ns.args))
 
         n = ns.file or ns.module or sys.argv[0]
-
-        sys.argv = [n] + unknown
+        sys.argv = [n] + ns.args
         if ns.module:
             path.insert(0, ns.dir) if ns.dir else ... if "" in path else path.insert(0, "")
             return cls.load_module(ns.module, main=True)
@@ -314,9 +305,10 @@ class Notebook(BaseLoader):
 
         if parser is None:
             parser = ArgumentParser("importnb", description="run notebooks as python code")
+        parser.add_argument("args", nargs=REMAINDER, help="command line arguments for program")
         parser.add_argument("-f", "--file", help="load a file")
         parser.add_argument("-m", "--module", help="run args as a module")
-        parser.add_argument("-c", "--code", action="store_true", help="run args as code")
+        parser.add_argument("-c", "--code", help="run args as code")
         parser.add_argument("-d", "--dir", help="the directory path to run in.")
         return parser
 
