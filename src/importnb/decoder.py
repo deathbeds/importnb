@@ -10,7 +10,7 @@ def quote(object, *, quotes="'''"):
     return quotes + object + "\n" + quotes
 
 
-from ._json_parser import Lark_StandAlone, Transformer
+from ._json_parser import Lark_StandAlone, Transformer, Tree
 
 
 class Transformer(Transformer):
@@ -32,11 +32,13 @@ class Transformer(Transformer):
     def item(self, s):
         key = s[0][-1]
         if key == "cells":
-            return self.render(list(map(dict, s[-1])))
+            if not isinstance(s[-1], Tree):
+                return self.render(list(map(dict, s[-1])))
         elif key in {"source", "text"}:
             return key, s[-1]
         elif key == "cell_type":
-            return key, s[-1][-1]
+            if isinstance(s[-1], tuple):
+                return key, s[-1][-1]
 
     def array(self, s):
         if s:

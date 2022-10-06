@@ -120,7 +120,7 @@ skip-install = true
 dependencies = ["black", "isort"]
 
 [tool.hatch.envs.format.scripts]
-run = """
+code = """
 isort .
 black .
 """
