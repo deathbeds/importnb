@@ -6,8 +6,6 @@ settings.json
 .pytest_cache
 benchmarks/figures
 _site
-docs/*.md
-docs/*.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -5,7 +5,11 @@ site_dir: site
 
 theme:
   name: material
-
+  features:
+  # - navigation.tabs
+  - navigation.tracking
+  - navigation.expand  
+  - toc.follow  
 plugins:
   - search
   - mkdocs-jupyter
@@ -16,7 +20,6 @@ nav:
     - importnb test notebook: Untitled42.ipynb
     - unit tests: test_importnb.py
     - command line tests: test_cli.py
-
 
 markdown_extensions:
   - admonition
