@@ -1,8 +1,6 @@
-site_name: midgy literate programming
-site_description: midgy literate programming
-site_url: https://deathbeds.github.io/midgy
-repo_url: https://deathbeds.github.io/midgy
-repo_name: deathbeds/midgy
+site_name: importnb
+site_description: from notebooks to source code
+repo_name: deathbeds/importnb
 site_dir: site
 
 theme:
