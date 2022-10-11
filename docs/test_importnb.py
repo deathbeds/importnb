@@ -11,6 +11,7 @@ from types import FunctionType
 
 from pytest import fixture, mark, raises
 
+import importnb
 from importnb import Notebook, get_ipython
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
@@ -77,6 +78,10 @@ def unimport(ns):
         del modules[module]
 
     path_importer_cache.clear()
+
+
+def test_version():
+    assert importnb.__version__
 
 
 def test_ref(ref):
