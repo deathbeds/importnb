@@ -61,6 +61,7 @@ class Interface:
     name: str = None
     path: str = None
     lazy: bool = False
+    extensions: tuple = field(default_factory=[".ipy", ".ipynb"].copy)
     include_fuzzy_finder: bool = True
 
     include_markdown_docstring: bool = True
@@ -195,8 +196,6 @@ class Notebook(BaseLoader):
 
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
-
-    extensions = (".ipy", ".ipynb")
 
     def parse(self, nodes):
         return ast.parse(nodes, self.path)
