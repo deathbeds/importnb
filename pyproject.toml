@@ -29,7 +29,7 @@ dynamic = ["version"] # uses hatch-vcs
 [project.optional-dependencies]
 interactive = ["IPython"]
 docs = ["mkdocs-material", "mkdocs-jupyter", "ruamel.yaml"]
-tasks = ["doit"]
+tasks = ["doit", "toml"]
 
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
@@ -61,7 +61,7 @@ version-file = "src/importnb/_version.py"
 
 # test matrix
 [tool.hatch.envs.test]
-dependencies = ["pytest", "pytest-cov", "doit"]
+dependencies = ["pytest", "pytest-cov", "doit", "toml"]
 
 [[tool.hatch.envs.test.matrix]]
 version = ["interactive", "stdlib"]
