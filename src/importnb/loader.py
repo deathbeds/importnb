@@ -264,7 +264,6 @@ class Notebook(BaseLoader):
     @classmethod
     def load_argv(cls, argv=None, *, parser=None):
         import sys
-        from sys import path
 
         if parser is None:
             parser = cls.get_argparser()
@@ -279,7 +278,15 @@ class Notebook(BaseLoader):
 
             argv = split(argv)
 
-        ns = parser.parse_args(argv)
+        module = cls.load_ns(parser.parse_args(argv))
+        if module is None:
+            return parser.print_help()
+
+        return module
+
+    @classmethod
+    def load_ns(cls, ns):
+        from sys import path
 
         if ns.tasks:
             from doit.doit_cmd import DoitMain
@@ -297,8 +304,7 @@ class Notebook(BaseLoader):
             with main_argv(str(where), ns.args):
                 result = cls.load_file(ns.file)
         else:
-            return parser.print_help()
-            
+            return
 
         if ns.tasks:
             DoitMain(ModuleTaskLoader(result)).run(ns.args)
