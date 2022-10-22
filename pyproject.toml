@@ -29,6 +29,7 @@ dynamic = ["version"] # uses hatch-vcs
 [project.optional-dependencies]
 interactive = ["IPython"]
 docs = ["mkdocs-material", "mkdocs-jupyter", "ruamel.yaml"]
+tasks = ["doit"]
 
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
@@ -66,7 +67,7 @@ dependencies = ["pytest", "pytest-cov"]
 version = ["interactive", "stdlib"]
 
 [tool.hatch.envs.test.interactive.overrides]
-matrix.version.features = ["interactive"]
+matrix.version.features = ["interactive", "tasks"]
 
 [tool.hatch.envs.test.overrides]
 matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]

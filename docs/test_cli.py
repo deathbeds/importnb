@@ -1,7 +1,7 @@
 from pathlib import Path
 from subprocess import check_call
 from sys import executable, path, version_info
-
+from pytest import importorskip
 from importnb import Notebook
 
 GTE10 = version_info.major == 3 and version_info.minor >= 10
@@ -47,23 +47,25 @@ def cli_test(command):
 @cli_test("-m importnb")
 def test_usage():
     """\
-usage: importnb [-h] [-f] [-m] [-c] [-d DIR] ...
+usage: importnb [-h] [-m MODULE] [-c CODE] [-d DIR] [-t] [file] ...
 
 run notebooks as python code
 
 positional arguments:
-  args               the file [default], module or code to execute
+  file                  run a file
+  args                  arguments to pass to script
 
 optional arguments:
-  -h, --help         show this help message and exit
-  -f, --file         load a file
-  -m, --module       run args as a module
-  -c, --code         run args as code
-  -d DIR, --dir DIR  the directory path to run in.
+  -h, --help            show this help message and exit
+  -m MODULE, --module MODULE
+                        run a module
+  -c CODE, --code CODE  run raw code
+  -d DIR, --dir DIR     path to run script in
+  -t, --tasks           run doit tasks
 """
 
 
-@cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -m {UNTITLED.stem}")
+@cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} {UNTITLED.as_posix()}")
 def test_file():
     """\
 i was printed from {UNTITLED} and my name is __main__
@@ -84,3 +86,12 @@ the parser namespace is Namespace(args=None)
 @cli_test("-m importnb -c '{}'")
 def test_empty_code():
     """"""
+
+@cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -t {UNTITLED.as_posix()} list")
+def test_doit():
+    """\
+i was printed from {UNTITLED} and my name is __main__
+{SLUG}
+echo   this the docstring for the `echo` task that echos hello.
+"""
+    importorskip("doit")
