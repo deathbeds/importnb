@@ -88,7 +88,7 @@ directory = "docs/coverage"
 # test a release on test-pypi
 [tool.hatch.envs.released]
 skip-install = true
-dependencies = ["importnb", "IPython", "pytest", "pytest-cov"]
+dependencies = ["importnb", "IPython", "pytest", "pytest-cov", "doit"]
 
 [tool.hatch.envs.released.scripts]
 test = "pytest"
