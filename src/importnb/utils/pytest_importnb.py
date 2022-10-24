@@ -13,7 +13,7 @@ from importnb import Notebook
 
 def get_file_patterns(cls, parent):
     for pat in parent.config.getini("python_files"):
-        for e in cls.loader.extensions:
+        for e in cls.loader().extensions:
             yield "*" + pat.rstrip(".py") + e
 
 

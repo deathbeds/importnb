@@ -6,8 +6,10 @@ Combine the __import__ finder with the loader.
 
 
 import ast
+from contextlib import contextmanager
 import re
 import sys
+from telnetlib import DO
 import textwrap
 from dataclasses import asdict, dataclass, field
 from functools import partial
@@ -59,6 +61,7 @@ class Interface:
     name: str = None
     path: str = None
     lazy: bool = False
+    extensions: tuple = field(default_factory=[".ipy", ".ipynb"].copy)
     include_fuzzy_finder: bool = True
 
     include_markdown_docstring: bool = True
@@ -194,8 +197,6 @@ class Notebook(BaseLoader):
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
 
-    extensions = (".ipy", ".ipynb")
-
     def parse(self, nodes):
         return ast.parse(nodes, self.path)
 
@@ -262,7 +263,6 @@ class Notebook(BaseLoader):
     @classmethod
     def load_argv(cls, argv=None, *, parser=None):
         import sys
-        from sys import path
 
         if parser is None:
             parser = cls.get_argparser()
@@ -277,30 +277,40 @@ class Notebook(BaseLoader):
 
             argv = split(argv)
 
-        ns, unknown = parser.parse_known_args(argv)
+        module = cls.load_ns(parser.parse_args(argv))
+        if module is None:
+            return parser.print_help()
 
-        if ns.code:
-            return cls.load_code(" ".join(ns.args))
-
-        n = ns.args and ns.args[0] or sys.argv[0]
-
-        sys.argv = [n] + unknown
-        if ns.module:
-            path.insert(0, ns.dir) if ns.dir else ... if "" in path else path.insert(0, "")
-            return cls.load_module(n, main=True)
-        elif ns.args:
-            L = len(ns.args)
-            if L > 1:
-                raise ValueError(f"Expected one file to execute, but received {L}.")
-
-            if ns.dir:
-                n = str(Path(ns.dir) / n)
-            return cls.load_file(n)
-        else:
-            parser.print_help()
+        return module
 
     @classmethod
-    def load_code(cls, code, mod_name=None, script_name=None, main=False):
+    def load_ns(cls, ns):
+        from sys import path
+
+        if ns.tasks:
+            from doit.doit_cmd import DoitMain
+            from doit.cmd_base import ModuleTaskLoader
+
+        if ns.code:
+            with main_argv(sys.argv[0], ns.args):
+                result = cls.load_code(ns.code)
+        elif ns.module:
+            path.insert(0, ns.dir) if ns.dir else ... if "" in path else path.insert(0, "")
+            with main_argv(ns.module, ns.args):
+                result = cls.load_module(ns.module, main=True)
+        elif ns.file:
+            where = Path(ns.dir, ns.file) if ns.dir else Path(ns.file)
+            with main_argv(str(where), ns.args):
+                result = cls.load_file(ns.file)
+        else:
+            return
+
+        if ns.tasks:
+            DoitMain(ModuleTaskLoader(result)).run(ns.args)
+        return result
+
+    @classmethod
+    def load_code(cls, code, argv=None, mod_name=None, script_name=None, main=False):
         from runpy import _run_module_code
 
         self = cls()
@@ -316,13 +326,12 @@ class Notebook(BaseLoader):
 
         if parser is None:
             parser = ArgumentParser("importnb", description="run notebooks as python code")
-        parser.add_argument(
-            "args", help="the file [default], module or code to execute", nargs=REMAINDER
-        )
-        parser.add_argument("-f", "--file", action="store_false", help="load a file")
-        parser.add_argument("-m", "--module", action="store_true", help="run args as a module")
-        parser.add_argument("-c", "--code", action="store_true", help="run args as code")
-        parser.add_argument("-d", "--dir", help="the directory path to run in.")
+        parser.add_argument("file", nargs="?", help="run a file")
+        parser.add_argument("args", nargs=REMAINDER, help="arguments to pass to script")
+        parser.add_argument("-m", "--module", help="run a module")
+        parser.add_argument("-c", "--code", help="run raw code")
+        parser.add_argument("-d", "--dir", help="path to run script in")
+        parser.add_argument("-t", "--tasks", action="store_true", help="run doit tasks")
         return parser
 
 
@@ -330,3 +339,17 @@ def _dict_module(ns):
     m = ModuleType(ns.get("__name__"), ns.get("__doc__"))
     m.__dict__.update(ns)
     return m
+
+
+@contextmanager
+def main_argv(prog, args=None):
+    if args is not None:
+        if isinstance(args, str):
+            from shlex import split
+
+            args = split(args)
+        args = [prog] + args
+        prior, sys.argv = sys.argv, args
+    yield
+    if args is not None:
+        sys.argv = prior
