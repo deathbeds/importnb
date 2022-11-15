@@ -162,12 +162,12 @@ def test_defs_only(defs, ref):
         k for k, v in vars(ref).items() if not k[0] == "_" and isinstance(v, (type, FunctionType))
     ]
     not_defs = [k for k, v in vars(ref).items() if not k[0] == "_" and isinstance(v, (str,))]
-    with Notebook(only_defs=defs):
+    with Notebook(include_non_defs=not defs):
         import Untitled42
 
         assert all(hasattr(Untitled42, k) for k in known_defs)
 
-        if not defs:
+        if defs:
             assert not any(hasattr(Untitled42, k) for k in not_defs)
 
 
