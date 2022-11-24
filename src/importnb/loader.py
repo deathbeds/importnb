@@ -41,7 +41,7 @@ MAGIC = re.compile("^\s*%{2}", re.MULTILINE)
 def _get_co_flags_set(co_flags):
     """return a deconstructed set of code flags from a code object."""
     flags = set()
-    for i in range(8):
+    for i in range(12):
         flag = 1 << i
         if co_flags & flag:
             flags.add(flag)
