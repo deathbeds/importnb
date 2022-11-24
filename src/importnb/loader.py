@@ -42,7 +42,8 @@ def _get_co_flags_set(co_flags):
     """return a deconstructed set of code flags from a code object."""
     flags = set()
     for i in range(8):
-        if co_flags & (flag := 1 << i):
+        flag = 1 << i
+        if co_flags & flag:
             flags.add(flag)
             co_flags ^= flag
             if not co_flags:
