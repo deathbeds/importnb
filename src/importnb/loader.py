@@ -13,6 +13,7 @@ import re
 import shlex
 import sys
 import textwrap
+import inspect
 from dataclasses import asdict, dataclass, field
 from functools import partial
 from importlib import reload
@@ -23,7 +24,6 @@ from importlib.util import LazyLoader, find_spec
 from pathlib import Path
 from types import ModuleType
 from importlib import _bootstrap as bootstrap
-
 from . import get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
@@ -38,18 +38,34 @@ __all__ = "Notebook", "reload"
 MAGIC = re.compile("^\s*%{2}", re.MULTILINE)
 
 
+def _get_co_flags_set(co_flags):
+    """return a deconstructed set of code flags from a code object."""
+    flags = set()
+    for i in range(8):
+        if co_flags & (flag := 1 << i):
+            flags.add(flag)
+            co_flags ^= flag
+            if not co_flags:
+                break
+    else:
+        flags.intersection_update(flags)
+    return flags
+
+
 @dataclass
 class Interface:
-    """a configurable loader interface"""
+    """a configuration python importing interface"""
+
     name: str = None
     path: str = None
     lazy: bool = False
     extensions: tuple = field(default_factory=[".ipy", ".ipynb"].copy)
     include_fuzzy_finder: bool = True
-
     include_markdown_docstring: bool = True
     include_non_defs: bool = True
+    include_await: bool = True
     no_magic: bool = False
+
     _loader_hook_position: int = field(default=0, repr=False)
 
     def __new__(cls, name=None, path=None, **kwargs):
@@ -60,7 +76,8 @@ class Interface:
 
 
 class BaseLoader(Interface, SourceFileLoader):
-    """The simplest implementation of a Notebook Source File Loader."""
+    """The simplest implementation of a Notebook Source File Loader.
+    This class breaks down the loading process into finer steps."""
 
     @property
     def loader(self):
@@ -90,23 +107,105 @@ class BaseLoader(Interface, SourceFileLoader):
         # for a normal file we just apply the code transformer.
         return self.code(source)
 
+    def source_to_nodes(self, source, path="<unknown>", *, _optimize=-1):
+        """parse source string as python ast"""
+        flags = ast.PyCF_ONLY_AST
+        return bootstrap._call_with_frames_removed(
+            compile, source, path, "exec", flags=flags, dont_inherit=True, optimize=_optimize
+        )
+
+    def nodes_to_code(self, nodes, path="<unknown>", *, _optimize=-1):
+        """compile ast nodes to python code object"""
+        flags = inspect.CO_COROUTINE and ast.PyCF_ALLOW_TOP_LEVEL_AWAIT
+        return bootstrap._call_with_frames_removed(
+            compile, nodes, path, "exec", flags=flags, dont_inherit=True, optimize=_optimize
+        )
+
+    def source_to_code(self, source, path="<unknown>", *, _optimize=-1):
+        """tangle python source to compiled code by:
+        1. parsing the source as ast nodes
+        2. compiling the ast nodes as python code"""
+        nodes = self.source_to_nodes(source, path, _optimize=_optimize)
+        return self.nodes_to_code(nodes, path, _optimize=_optimize)
+
     def get_data(self, path):
-        """Needs to return the string source for the module."""
+        """get_data injects an input transformation before the raw text.
+
+        this method allows notebook json to be transformed line for line into vertically sparse python code."""
         return self.raw_to_source(decode_source(super().get_data(self.path)))
 
     def create_module(self, spec):
+        """an overloaded create_module method injecting fuzzy finder setup up logic."""
         module = ModuleType(str(spec.name))
         _init_module_attrs(spec, module)
         if self.name:
             module.__name__ = self.name
+
         if getattr(spec, "alias", None):
             # put a fuzzy spec on the modules to avoid re importing it.
             # there is a funky trick you do with the fuzzy finder where you
             # load multiple versions with different finders.
 
             sys.modules[spec.alias] = module
-        module.get_ipython = get_ipython
         return module
+
+    def exec_module(self, module):
+        """Execute the module."""
+        # importlib uses module.__name__, but when running modules as __main__ name will change.
+        # this approach uses the original name on the spec.
+        try:
+            code = self.get_code(module.__spec__.name)
+
+            # from importlib
+            if code is None:
+                raise ImportError(
+                    f"cannot load module {module.__name__!r} when " "get_code() returns None"
+                )
+
+            if inspect.CO_COROUTINE not in _get_co_flags_set(code.co_flags):
+                # if there isn't any async non sense then we proceed with convention.
+                return bootstrap._call_with_frames_removed(exec, code, module.__dict__)
+
+            # otherwise we gotta handle the async case
+            from asyncio import get_event_loop
+
+            loop = get_event_loop()
+            loop.run_until_complete(self.aexec_module(module))
+
+        except BaseException:
+            alias = getattr(module.__spec__, "alias", None)
+            if alias:
+                sys.modules.pop(alias, None)
+
+    async def aexec_module(self, module):
+        """an async exec_module method permitting top-level await."""
+        # there is so redudancy in this approach, but it starts getting asynchier.
+        nodes = self.source_to_nodes(self.get_data(self.path))
+
+        # iterate through the nodes and compile individual statements
+        for node in nodes.body:
+            co = bootstrap._call_with_frames_removed(
+                compile,
+                ast.Module([node], []),
+                module.__file__,
+                "exec",
+                flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT,
+            )
+            if inspect.CO_COROUTINE in _get_co_flags_set(co.co_flags):
+                # when something async is encountered we compile it with the single flag
+                # this lets us use eval to retreive our coroutine.
+                co = bootstrap._call_with_frames_removed(
+                    compile,
+                    ast.Interactive([node]),
+                    module.__file__,
+                    "single",
+                    flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT,
+                )
+                await bootstrap._call_with_frames_removed(
+                    eval, co, module.__dict__, module.__dict__
+                )
+            else:
+                bootstrap._call_with_frames_removed(exec, co, module.__dict__, module.__dict__)
 
     def code(self, str):
         return dedent(str)
@@ -190,24 +289,12 @@ class Notebook(BaseLoader):
                 return comment(str)
         return super().code(str)
 
-    def source_to_nodes(self, source, path="<unknown>"):
-        nodes = bootstrap._call_with_frames_removed(ast.parse, source, path)
+    def source_to_nodes(self, source, path="<unknown>", *, _optimize=-1):
+        nodes = super().source_to_nodes(source, path)
         if self.include_markdown_docstring:
             nodes = update_docstring(nodes)
         nodes = self.visit(nodes)
         return ast.fix_missing_locations(nodes)
-
-    def nodes_to_code(self, nodes, path="<unknown>", *, _optimize=-1):
-        return bootstrap._call_with_frames_removed(
-            compile, nodes, path, "exec", dont_inherit=True, optimize=_optimize
-        )
-
-    def source_to_code(self, source, path="<unknown>", *, _optimize=-1):
-        """* Convert the current source to ast
-        * Apply ast transformers.
-        * Compile the code."""
-        nodes = self.source_to_nodes(source, path)
-        return self.nodes_to_code(nodes, path, _optimize=_optimize)
 
     @classmethod
     def load_file(cls, filename, main=True, **kwargs):
@@ -236,14 +323,13 @@ class Notebook(BaseLoader):
         from runpy import _run_module_as_main, run_module
 
         with cls() as loader:
+            spec = find_spec(module)
+            module = spec.loader.create_module(spec)
             if main:
-                return _dict_module(_run_module_as_main(module))
-            else:
-                spec = find_spec(module)
-
-                module = spec.loader.create_module(spec)
-                spec.loader.exec_module(module)
-                return module
+                sys.modules["__main__"] = module
+                module.__name__ = "__main__"
+            spec.loader.exec_module(module)
+            return module
 
     @classmethod
     def load_argv(cls, argv=None, *, parser=None):
