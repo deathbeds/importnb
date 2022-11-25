@@ -9,10 +9,12 @@ from pathlib import Path
 from shutil import copyfile, rmtree
 from types import FunctionType
 
-from pytest import fixture, mark, raises
+from pytest import fixture, mark, raises, skip
 
 import importnb
 from importnb import Notebook, get_ipython
+from importnb.loader import VERSION
+
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
@@ -282,3 +284,9 @@ def test_cli(clean):
         "ipython -m importnb -- {}".format(module.__file__).split(),
         cwd=str(Path(module.__file__).parent),
     )
+
+
+@mark.skipif(VERSION < (3, 8), reason="async not supported in 3.7")
+def test_top_level_async():
+    with Notebook():
+        import async_cells

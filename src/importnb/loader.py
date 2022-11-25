@@ -29,13 +29,13 @@ from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FuzzyFinder, get_loader_details, get_loader_index
 
-_GTE38 = sys.version_info.major == 3 and sys.version_info.minor >= 8
-
 
 __all__ = "Notebook", "reload"
 
+VERSION = sys.version_info.major, sys.version_info.minor
 
 MAGIC = re.compile("^\s*%{2}", re.MULTILINE)
+ALLOW_TOP_LEVEL_AWAIT = getattr(ast, "PyCF_ALLOW_TOP_LEVEL_AWAIT", 0x0)
 
 
 def _get_co_flags_set(co_flags):
@@ -117,7 +117,7 @@ class BaseLoader(Interface, SourceFileLoader):
 
     def nodes_to_code(self, nodes, path="<unknown>", *, _optimize=-1):
         """compile ast nodes to python code object"""
-        flags = inspect.CO_COROUTINE and ast.PyCF_ALLOW_TOP_LEVEL_AWAIT
+        flags = ALLOW_TOP_LEVEL_AWAIT
         return bootstrap._call_with_frames_removed(
             compile, nodes, path, "exec", flags=flags, dont_inherit=True, optimize=_optimize
         )
@@ -141,6 +141,9 @@ class BaseLoader(Interface, SourceFileLoader):
         _init_module_attrs(spec, module)
         if self.name:
             module.__name__ = self.name
+
+        if module.__file__.endswith((".ipynb", ".ipy")):
+            module.get_ipython = get_ipython
 
         if getattr(spec, "alias", None):
             # put a fuzzy spec on the modules to avoid re importing it.
@@ -173,10 +176,12 @@ class BaseLoader(Interface, SourceFileLoader):
             loop = get_event_loop()
             loop.run_until_complete(self.aexec_module(module))
 
-        except BaseException:
+        except BaseException as e:
             alias = getattr(module.__spec__, "alias", None)
             if alias:
                 sys.modules.pop(alias, None)
+
+            raise e
 
     async def aexec_module(self, module):
         """an async exec_module method permitting top-level await."""
@@ -190,7 +195,7 @@ class BaseLoader(Interface, SourceFileLoader):
                 ast.Module([node], []),
                 module.__file__,
                 "exec",
-                flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT,
+                flags=ALLOW_TOP_LEVEL_AWAIT,
             )
             if inspect.CO_COROUTINE in _get_co_flags_set(co.co_flags):
                 # when something async is encountered we compile it with the single flag
@@ -200,7 +205,7 @@ class BaseLoader(Interface, SourceFileLoader):
                     ast.Interactive([node]),
                     module.__file__,
                     "single",
-                    flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT,
+                    flags=ALLOW_TOP_LEVEL_AWAIT,
                 )
                 await bootstrap._call_with_frames_removed(
                     eval, co, module.__dict__, module.__dict__
@@ -264,7 +269,7 @@ class DefsOnly(ast.NodeTransformer):
 
     def visit_Module(self, node):
         args = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
-        if _GTE38:
+        if VERSION >= (3, 8):
             args += (node.type_ignores,)
         return ast.Module(*args)
 
