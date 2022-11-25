@@ -8,14 +8,15 @@ the importnb loader provides an interface for transforming these objects to vali
 
 
 import ast
-from contextlib import contextmanager
+import inspect
 import re
 import shlex
 import sys
 import textwrap
-import inspect
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from functools import partial
+from importlib import _bootstrap as bootstrap
 from importlib import reload
 from importlib._bootstrap import _init_module_attrs, _requires_builtin
 from importlib._bootstrap_external import FileFinder, decode_source
@@ -23,12 +24,11 @@ from importlib.machinery import ModuleSpec, SourceFileLoader
 from importlib.util import LazyLoader, find_spec
 from pathlib import Path
 from types import ModuleType
-from importlib import _bootstrap as bootstrap
+
 from . import get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FuzzyFinder, get_loader_details, get_loader_index
-
 
 __all__ = "Notebook", "reload"
 
@@ -170,11 +170,7 @@ class BaseLoader(Interface, SourceFileLoader):
                 # if there isn't any async non sense then we proceed with convention.
                 return bootstrap._call_with_frames_removed(exec, code, module.__dict__)
 
-            # otherwise we gotta handle the async case
-            from asyncio import get_event_loop
-
-            loop = get_event_loop()
-            loop.run_until_complete(self.aexec_module(module))
+            self.aexec_module_sync(module)
 
         except BaseException as e:
             alias = getattr(module.__spec__, "alias", None)
@@ -182,6 +178,13 @@ class BaseLoader(Interface, SourceFileLoader):
                 sys.modules.pop(alias, None)
 
             raise e
+
+    def aexec_module_sync(self, module):
+        # otherwise we gotta handle the async case
+        from asyncio import get_event_loop
+
+        loop = get_event_loop()
+        loop.run_until_complete(self.aexec_module(module))
 
     async def aexec_module(self, module):
         """an async exec_module method permitting top-level await."""
@@ -370,8 +373,8 @@ class Notebook(BaseLoader):
 
         if ns.tasks:
             # i don't quite why we need to do this here, but we do. so don't move it
-            from doit.doit_cmd import DoitMain
             from doit.cmd_base import ModuleTaskLoader
+            from doit.doit_cmd import DoitMain
 
         if ns.code:
             with main_argv(sys.argv[0], ns.args):

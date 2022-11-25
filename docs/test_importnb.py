@@ -15,7 +15,6 @@ import importnb
 from importnb import Notebook, get_ipython
 from importnb.loader import VERSION
 
-
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
 HERE = locals().get("__file__", None)
@@ -24,6 +23,7 @@ HERE = (Path(HERE).parent if HERE else Path()).absolute()
 sys.path.insert(0, str(HERE))
 
 IPY = bool(get_ipython())
+print(88, IPY)
 ipy = mark.skipif(not IPY, reason="""Not IPython.""")
 
 
