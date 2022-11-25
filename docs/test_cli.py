@@ -39,7 +39,7 @@ def cli_test(command):
 
             if "UserWarning: Attempting to work in a virtualenv." in out:
                 out = "".join(out.splitlines(True)[2:])
-            assert out == match
+            assert out.replace("\r", "") == match
 
         return wrapper
 
