@@ -1,7 +1,9 @@
 from pathlib import Path
 from subprocess import check_call
 from sys import executable, path, version_info
+
 from pytest import importorskip
+
 from importnb import Notebook
 
 GTE10 = version_info.major == 3 and version_info.minor >= 10
@@ -86,6 +88,7 @@ the parser namespace is Namespace(args=None)
 @cli_test("-m importnb -c '{}'")
 def test_empty_code():
     """"""
+
 
 @cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -t {UNTITLED.as_posix()} list")
 def test_doit():

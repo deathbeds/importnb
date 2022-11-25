@@ -42,6 +42,7 @@ use either `pip` or `conda/mamba`
 * `importnb.Notebook` offers parameters to customize how modules are imported
 * imports Jupyter notebooks as python modules
   * fuzzy finding conventions for finding files that are not valid python names
+* works with top-level await statements
 * integration with `pytest`
 * extensible machinery
 * translates Jupyter notebook files (ie `.ipynb` files) line-for-line to python source providing natural error messages

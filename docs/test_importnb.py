@@ -9,10 +9,11 @@ from pathlib import Path
 from shutil import copyfile, rmtree
 from types import FunctionType
 
-from pytest import fixture, mark, raises
+from pytest import fixture, mark, raises, skip
 
 import importnb
 from importnb import Notebook, get_ipython
+from importnb.loader import VERSION
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
@@ -22,6 +23,7 @@ HERE = (Path(HERE).parent if HERE else Path()).absolute()
 sys.path.insert(0, str(HERE))
 
 IPY = bool(get_ipython())
+print(88, IPY)
 ipy = mark.skipif(not IPY, reason="""Not IPython.""")
 
 
@@ -151,9 +153,9 @@ def test_no_magic(capsys, clean, magic, ref):
         stdout = capsys.readouterr()[0]
         if IPY:
             if magic:
-                assert ref.magic_slug in stdout
+                assert ref.magic_slug.rstrip() in stdout
             else:
-                assert ref.magic_slug not in stdout
+                assert ref.magic_slug.rstrip() not in stdout
 
 
 @mark.parametrize("defs", [True, False])
@@ -162,12 +164,12 @@ def test_defs_only(defs, ref):
         k for k, v in vars(ref).items() if not k[0] == "_" and isinstance(v, (type, FunctionType))
     ]
     not_defs = [k for k, v in vars(ref).items() if not k[0] == "_" and isinstance(v, (str,))]
-    with Notebook(only_defs=defs):
+    with Notebook(include_non_defs=not defs):
         import Untitled42
 
         assert all(hasattr(Untitled42, k) for k in known_defs)
 
-        if not defs:
+        if defs:
             assert not any(hasattr(Untitled42, k) for k in not_defs)
 
 
@@ -282,3 +284,9 @@ def test_cli(clean):
         "ipython -m importnb -- {}".format(module.__file__).split(),
         cwd=str(Path(module.__file__).parent),
     )
+
+
+@mark.skipif(VERSION < (3, 8), reason="async not supported in 3.7")
+def test_top_level_async():
+    with Notebook():
+        import async_cells
