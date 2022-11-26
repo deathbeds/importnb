@@ -64,7 +64,7 @@ version-file = "src/importnb/_version.py"
 dependencies = ["pytest", "pytest-cov", "doit", "toml"]
 
 [[tool.hatch.envs.test.matrix]]
-version = ["interactive", "stdlib"]
+version = ["stdlib", "interactive"]
 
 [tool.hatch.envs.test.overrides]
 matrix.version.features = [{value="interactive", if=["interactive"]}]
