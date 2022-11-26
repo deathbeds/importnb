@@ -153,9 +153,9 @@ def test_no_magic(capsys, clean, magic, ref):
         stdout = capsys.readouterr()[0]
         if IPY:
             if magic:
-                assert ref.magic_slug in stdout
+                assert ref.magic_slug.rstrip() in stdout
             else:
-                assert ref.magic_slug not in stdout
+                assert ref.magic_slug.rstrip() not in stdout
 
 
 @mark.parametrize("defs", [True, False])
