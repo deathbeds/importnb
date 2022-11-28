@@ -76,9 +76,11 @@ class Interface:
         return self
 
 
-class BaseLoader(Interface, SourceFileLoader):
+class Loader(Interface, SourceFileLoader):
     """The simplest implementation of a Notebook Source File Loader.
     This class breaks down the loading process into finer steps."""
+
+    extensions: tuple = field(default_factory=[".py"].copy)
 
     @property
     def loader(self):
@@ -151,6 +153,7 @@ class BaseLoader(Interface, SourceFileLoader):
             # load multiple versions with different finders.
 
             sys.modules[spec.alias] = module
+
         return module
 
     def exec_module(self, module):
@@ -168,9 +171,9 @@ class BaseLoader(Interface, SourceFileLoader):
 
             if inspect.CO_COROUTINE not in _get_co_flags_set(code.co_flags):
                 # if there isn't any async non sense then we proceed with convention.
-                return bootstrap._call_with_frames_removed(exec, code, module.__dict__)
-
-            self.aexec_module_sync(module)
+                bootstrap._call_with_frames_removed(exec, code, module.__dict__)
+            else:
+                self.aexec_module_sync(module)
 
         except BaseException as e:
             alias = getattr(module.__spec__, "alias", None)
@@ -180,11 +183,14 @@ class BaseLoader(Interface, SourceFileLoader):
             raise e
 
     def aexec_module_sync(self, module):
-        # otherwise we gotta handle the async case
-        from asyncio import get_event_loop
+        if "anyio" in sys.modules:
+            import anyio
 
-        loop = get_event_loop()
-        loop.run_until_complete(self.aexec_module(module))
+            __import__("anyio").run(self.aexec_module, module)
+        else:
+            from asyncio import get_event_loop
+
+            get_event_loop().run_until_complete(self.aexec_module(module))
 
     async def aexec_module(self, module):
         """an async exec_module method permitting top-level await."""
@@ -277,7 +283,7 @@ class DefsOnly(ast.NodeTransformer):
         return ast.Module(*args)
 
 
-class Notebook(BaseLoader):
+class Notebook(Loader):
     """Notebook is a user friendly file finder and module loader for notebook source code.
 
     > Remember, restart and run all or it didn't happen.
@@ -370,7 +376,6 @@ class Notebook(BaseLoader):
     @classmethod
     def load_ns(cls, ns):
         """load a module from a namespace, used when loading module from sys.argv parameters."""
-
         if ns.tasks:
             # i don't quite why we need to do this here, but we do. so don't move it
             from doit.cmd_base import ModuleTaskLoader
@@ -395,9 +400,8 @@ class Notebook(BaseLoader):
                 result = cls.load_file(ns.file)
         else:
             return
-
         if ns.tasks:
-            DoitMain(ModuleTaskLoader(result)).run(ns.args)
+            DoitMain(ModuleTaskLoader(result)).run(ns.args or ["help"])
         return result
 
     @classmethod
