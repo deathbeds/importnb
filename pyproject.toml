@@ -34,6 +34,15 @@ tasks = ["doit", "toml"]
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
 
+[project.entry-points.importnb]
+ipynb = "importnb.loader:Notebook"
+ipy = "importnb.loader:Notebook"
+py = "importnb.loader:Loader"
+json = "importnb.loaders:Json"
+yml = "importnb.loaders:Yaml"
+yaml = "importnb.loaders:Yaml"
+toml = "importnb.loaders:Toml"
+
 [project.scripts]
 importnb = "importnb.__main__:main"
 

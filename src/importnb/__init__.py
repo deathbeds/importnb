@@ -1,6 +1,6 @@
 # coding: utf-8
 
-__all__ = "Notebook", "reload"
+__all__ = "Notebook", "reload", "imports"
 
 
 def is_ipython():
@@ -28,5 +28,6 @@ import builtins
 
 from ._version import __version__
 from .loader import Notebook, reload
+from .entry_points import imports
 
 builtins.true, builtins.false, builtins.null = True, False, None
