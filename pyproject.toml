@@ -23,7 +23,9 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
   "License :: OSI Approved :: BSD License",
 ]
-dependencies = [] # no dependencies!
+dependencies = [
+  "importlib-metadata; python_version<'3.8'"
+] # no dependencies?
 dynamic = ["version"] # uses hatch-vcs
 
 [project.optional-dependencies]
@@ -57,7 +59,6 @@ build-backend = "hatchling.build"
 
 # hatch/hatchling configuration
 [tool.hatch.build.hooks.custom]
-
 # we build a json grammar with each release because we fiend for line numbers
 dependencies = ["lark"]
 
