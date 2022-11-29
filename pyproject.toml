@@ -71,7 +71,7 @@ version-file = "src/importnb/_version.py"
 
 # test matrix
 [tool.hatch.envs.test]
-dependencies = ["pytest", "pytest-cov", "doit", "toml", "pyyaml", "tomli_w"]
+dependencies = ["pytest", "pytest-cov", "doit", "toml", "ruamel.yaml", "tomli_w"]
 
 [[tool.hatch.envs.test.matrix]]
 version = ["stdlib", "interactive"]
