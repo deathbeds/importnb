@@ -6,7 +6,7 @@ if you're here, then there is a chance you have a notebook (`.ipynb`) in a direc
 ## basic example 
 use `importnb`'s  `Notebook` finder and loader to import notebooks as modules
 
-    # with the new pai
+    # with the new api
     from importnb import imports
     with imports("ipynb"):
         import Untitled
