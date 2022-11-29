@@ -292,6 +292,7 @@ def test_top_level_async():
         import async_cells
 
 
+@mark.skipif(sys.implementation == "pypy", reason="pypy doesn't like this design choice")
 def test_data_loaders(pytester):
     some_random_data = {"top": [{}]}
 
