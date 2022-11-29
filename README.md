@@ -6,9 +6,18 @@ if you're here, then there is a chance you have a notebook (`.ipynb`) in a direc
 ## basic example 
 use `importnb`'s  `Notebook` finder and loader to import notebooks as modules
 
-    from importnb import Notebook
+    # with the new pai
+    from importnb import imports
+    with imports("ipynb"):
+        import Untitled
+
+    # with the explicit api
+    from importnb import imports
     with Notebook():
         import Untitled
+
+
+
 
 ### What does this snippet do?
 
@@ -44,7 +53,7 @@ use either `pip` or `conda/mamba`
   * fuzzy finding conventions for finding files that are not valid python names
 * works with top-level await statements
 * integration with `pytest`
-* extensible machinery
+* extensible machinery and entry points
 * translates Jupyter notebook files (ie `.ipynb` files) line-for-line to python source providing natural error messages
 * command line interface for running notebooks as python scripts
 * has no required dependencies
@@ -67,16 +76,28 @@ these features are defined in the `importnb.loader.Interface` class and they can
 
 the primary goal of this library is to make it easy to reuse python code in notebooks. below are a few ways to invoke python's import system within the context manager.
 
-    with importnb.Notebook():
-        import Untitled100
-        import Untitled100 as nb
-        __import__("Untitled100")
+    with importnb.imports("ipynb"):
+        import Untitled
+        import Untitled as nb
+        __import__("Untitled")
         from importlib import import_module
-        import_module("Untitled100")
+        import_module("Untitled")
+
+#### import data files
+
+there is support for discovering data files. when discovered, data from disk on loaded and stored on the module with rich reprs.
+
+    with importnb.imports("toml", "json", "yaml"):
+        pass
+
+all the available entry points are found with
+
+    from importnb.entry_points import list_aliases
+    list_aliases()
 
 #### loading directly from file 
 
-    Untitled100 = Notebook.load("Untitled100.ipynb")
+    Untitled = Notebook.load("Untitled.ipynb")
 
 
 ### fuzzy finding
@@ -84,14 +105,14 @@ the primary goal of this library is to make it easy to reuse python code in note
 often notebooks have names that are not valid python files names that are restricted alphanumeric characters and an `_`.  the `importnb` fuzzy finder converts python's import convention into globs that will find modules matching specific patters. consider the statement:
 
     with importnb.Notebook():
-        import U_titl__100                        # U*titl**100.ipynb
+        import U_titl__d                        # U*titl**d.ipynb
 
-`importnb` translates `U_titl__100` to a glob format that matches the pattern `U*titl**.ipynb` when searching for the source. that means that `importnb` should fine `Untitled100.ipynb` as the source for the import[^unless].
+`importnb` translates `U_titl__d` to a glob format that matches the pattern `U*titl**d.ipynb` when searching for the source. that means that `importnb` should fine `Untitled.ipynb` as the source for the import[^unless].
 
     with importnb.Notebook():
-        import _ntitled100                        # *ntitled100.ipynb
-        import __100                        # **100.ipynb
-        import U__100                        # U**100.ipynb
+        import _ntitled                        # *ntitled.ipynb
+        import __d                     # **d.ipynb
+        import U__                        # U**.ipynb
 
 a primary motivation for this feature is name notebooks as if they were blog posts using the `YYYY-MM-DD-title-here.ipynb` convention. there are a few ways we could this file explicitly. the fuzzy finder syntax could like any of the following:
 
