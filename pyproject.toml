@@ -23,7 +23,9 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
   "License :: OSI Approved :: BSD License",
 ]
-dependencies = [] # no dependencies!
+dependencies = [
+  "importlib-metadata; python_version<'3.8'"
+] # no dependencies?
 dynamic = ["version"] # uses hatch-vcs
 
 [project.optional-dependencies]
@@ -33,6 +35,15 @@ tasks = ["doit", "toml"]
 
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
+
+[project.entry-points.importnb]
+ipynb = "importnb.loader:Notebook"
+ipy = "importnb.loader:Notebook"
+py = "importnb.loader:Loader"
+json = "importnb.loaders:Json"
+yml = "importnb.loaders:Yaml"
+yaml = "importnb.loaders:Yaml"
+toml = "importnb.loaders:Toml"
 
 [project.scripts]
 importnb = "importnb.__main__:main"
@@ -48,7 +59,6 @@ build-backend = "hatchling.build"
 
 # hatch/hatchling configuration
 [tool.hatch.build.hooks.custom]
-
 # we build a json grammar with each release because we fiend for line numbers
 dependencies = ["lark"]
 
@@ -61,13 +71,13 @@ version-file = "src/importnb/_version.py"
 
 # test matrix
 [tool.hatch.envs.test]
-dependencies = ["pytest", "pytest-cov", "doit", "toml"]
+dependencies = ["pytest", "pytest-cov", "doit", "toml", "ruamel.yaml", "tomli_w"]
 
 [[tool.hatch.envs.test.matrix]]
 version = ["stdlib", "interactive"]
 
 [tool.hatch.envs.test.overrides]
-matrix.version.features = [{value="interactive", if=["interactive"]}]
+matrix.version.features = [{ value = "interactive", if = ["interactive"] }]
 matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
 
 [tool.hatch.envs.test.scripts]

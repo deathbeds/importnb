@@ -12,7 +12,7 @@ from types import FunctionType
 from pytest import fixture, mark, raises, skip
 
 import importnb
-from importnb import Notebook, get_ipython
+from importnb import Notebook, get_ipython, imports
 from importnb.loader import VERSION
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
@@ -290,3 +290,22 @@ def test_cli(clean):
 def test_top_level_async():
     with Notebook():
         import async_cells
+
+
+def test_data_loaders(pytester):
+    some_random_data = {"top": [{}]}
+
+    import json, ruamel.yaml as yaml, tomli_w, io
+
+    sys.path.insert(0, str(pytester._path))
+    pytester.makefile(".json", json_data=json.dumps(some_random_data))
+    pytester.makefile(".toml", toml_data=tomli_w.dumps(some_random_data))
+    y = io.StringIO()
+    yaml.safe_dump(some_random_data, y)
+    pytester.makefile(".yaml", yaml_data=y.getvalue())
+
+    with imports("json", "yaml", "toml"):
+        import json_data, yaml_data, toml_data
+    assert json_data.__file__.endswith(".json")
+    assert toml_data.__file__.endswith(".toml")
+    assert yaml_data.__file__.endswith(".yaml")
