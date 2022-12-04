@@ -28,7 +28,7 @@ from types import ModuleType
 from . import get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
-from .finder import FuzzyFinder, get_loader_details, get_loader_index
+from .finder import FileModuleSpec, FuzzyFinder, get_loader_details, get_loader_index
 
 __all__ = "Notebook", "reload"
 
@@ -53,6 +53,11 @@ def _get_co_flags_set(co_flags):
     return flags
 
 
+class SourceModule(ModuleType):
+    def __fspath__(self):
+        return self.__file__
+
+
 @dataclass
 class Interface:
     """a configuration python importing interface"""
@@ -65,6 +70,7 @@ class Interface:
     include_markdown_docstring: bool = True
     include_non_defs: bool = True
     include_await: bool = True
+    module_type: ModuleType = field(default=SourceModule)
     no_magic: bool = False
 
     _loader_hook_position: int = field(default=0, repr=False)
@@ -139,7 +145,7 @@ class Loader(Interface, SourceFileLoader):
 
     def create_module(self, spec):
         """an overloaded create_module method injecting fuzzy finder setup up logic."""
-        module = ModuleType(str(spec.name))
+        module = self.module_type(str(spec.name))
         _init_module_attrs(spec, module)
         if self.name:
             module.__name__ = self.name
@@ -225,15 +231,6 @@ class Loader(Interface, SourceFileLoader):
     def code(self, str):
         return dedent(str)
 
-    def markdown(self, str):
-        return quote(str)
-
-    def raw(self, str):
-        return comment(str)
-
-    def visit(self, node):
-        return node
-
     @classmethod
     @_requires_builtin
     def is_package(cls, fullname):
@@ -261,55 +258,6 @@ class Loader(Interface, SourceFileLoader):
             details.pop(self._loader_hook_position)
             sys.path_hooks[path_id] = self.finder.path_hook(*details)
             sys.path_importer_cache.clear()
-
-
-class FileModuleSpec(ModuleSpec):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._set_fileattr = True
-
-
-def comment(str):
-    return textwrap.indent(str, "# ")
-
-
-class DefsOnly(ast.NodeTransformer):
-    INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
-
-    def visit_Module(self, node):
-        args = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
-        if VERSION >= (3, 8):
-            args += (node.type_ignores,)
-        return ast.Module(*args)
-
-
-class Notebook(Loader):
-    """Notebook is a user friendly file finder and module loader for notebook source code.
-
-    > Remember, restart and run all or it didn't happen.
-
-    Notebook provides several useful options.
-
-    * Lazy module loading.  A module is executed the first time it is used in a script.
-    """
-
-    def visit(self, nodes):
-        if self.include_non_defs:
-            return nodes
-        return DefsOnly().visit(nodes)
-
-    def code(self, str):
-        if self.no_magic:
-            if MAGIC.match(str):
-                return comment(str)
-        return super().code(str)
-
-    def source_to_nodes(self, source, path="<unknown>", *, _optimize=-1):
-        nodes = super().source_to_nodes(source, path)
-        if self.include_markdown_docstring:
-            nodes = update_docstring(nodes)
-        nodes = self.visit(nodes)
-        return ast.fix_missing_locations(nodes)
 
     @classmethod
     def load_file(cls, filename, main=True, **kwargs):
@@ -430,6 +378,66 @@ class Notebook(Loader):
         parser.add_argument("-d", "--dir", help="path to run script in")
         parser.add_argument("-t", "--tasks", action="store_true", help="run doit tasks")
         return parser
+
+
+def comment(str):
+    return textwrap.indent(str, "# ")
+
+
+class DefsOnly(ast.NodeTransformer):
+    INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
+
+    def visit_Module(self, node):
+        args = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
+        if VERSION >= (3, 8):
+            args += (node.type_ignores,)
+        return ast.Module(*args)
+
+
+class Notebook(Loader):
+    """Notebook is a user friendly file finder and module loader for notebook source code.
+
+    > Remember, restart and run all or it didn't happen.
+
+    Notebook provides several useful options.
+
+    * Lazy module loading.  A module is executed the first time it is used in a script.
+    """
+
+    def markdown(self, str):
+        return quote(str)
+
+    def raw(self, str):
+        return comment(str)
+
+    def visit(self, nodes):
+        if self.include_non_defs:
+            return nodes
+        return DefsOnly().visit(nodes)
+
+    def code(self, str):
+        if self.no_magic:
+            if MAGIC.match(str):
+                return comment(str)
+        return super().code(str)
+
+    def source_to_nodes(self, source, path="<unknown>", *, _optimize=-1):
+        nodes = super().source_to_nodes(source, path)
+        if self.include_markdown_docstring:
+            nodes = update_docstring(nodes)
+        nodes = self.visit(nodes)
+        return ast.fix_missing_locations(nodes)
+
+    def raw_to_source(self, source):
+        """transform a string from a raw file to python source."""
+        if self.path and self.path.endswith(".ipynb"):
+            # when we encounter notebooks we apply different transformers to the diff cell types
+            return LineCacheNotebookDecoder(
+                code=self.code, raw=self.raw, markdown=self.markdown
+            ).decode(source, self.path)
+
+        # for a normal file we just apply the code transformer.
+        return self.code(source)
 
 
 def _dict_module(ns):

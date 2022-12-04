@@ -1,15 +1,20 @@
-from .loader import Loader
+from .loader import Loader, SourceModule
 from dataclasses import dataclass, field
-from types import MethodType
+from types import ModuleType
+
+class DataModule(SourceModule):
+    def _repr_json_(self):
+        return self.data, dict(root=repr(self), expanded=False)
 
 
+@dataclass
 class DataStreamLoader(Loader):
     """an import loader for data streams"""
+    module_type: ModuleType = field(default=DataModule)
 
     def exec_module(self, module):
         with open(module.__file__, "rb") as file:
             module.data = self.get_data_loader()(file)
-        module._repr_json_ = MethodType(repr_json, module)
         return module
 
     def get_data_loader(self):
@@ -56,5 +61,3 @@ class Toml(DataStreamLoader):
             from tomli import load
         return load
 
-def repr_json(self):
-    return self.data, dict(root=repr(self), expanded=False)
