@@ -2,6 +2,7 @@ from .loader import Loader, SourceModule
 from dataclasses import dataclass, field
 from types import ModuleType
 
+
 class DataModule(SourceModule):
     def _repr_json_(self):
         return self.data, dict(root=repr(self), expanded=False)
@@ -10,6 +11,7 @@ class DataModule(SourceModule):
 @dataclass
 class DataStreamLoader(Loader):
     """an import loader for data streams"""
+
     module_type: ModuleType = field(default=DataModule)
 
     def exec_module(self, module):
@@ -41,7 +43,10 @@ class Yaml(DataStreamLoader):
 
     def get_data_loader(self):
         try:
-            from ruamel.yaml import safe_load
+            from ruamel.yaml import YAML
+
+            yaml = YAML(typ="safe", pure=True)
+            safe_load = yaml.load
         except ModuleNotFoundError:
             from yaml import safe_load
         # probably want an error message about how to fix this if we cant find yamls
@@ -60,4 +65,3 @@ class Toml(DataStreamLoader):
         except ModuleNotFoundError:
             from tomli import load
         return load
-

@@ -295,13 +295,15 @@ def test_top_level_async():
 def test_data_loaders(pytester):
     some_random_data = {"top": [{}]}
 
-    import json, ruamel.yaml as yaml, tomli_w, io
+    import json, tomli_w, io
+    from ruamel.yaml import YAML
+    yaml = YAML(typ="safe", pure=True)
 
     sys.path.insert(0, str(pytester._path))
     pytester.makefile(".json", json_data=json.dumps(some_random_data))
     pytester.makefile(".toml", toml_data=tomli_w.dumps(some_random_data))
     y = io.StringIO()
-    yaml.safe_dump(some_random_data, y)
+    yaml.dump(some_random_data, y)
     pytester.makefile(".yaml", yaml_data=y.getvalue())
 
     with imports("json", "yaml", "toml"):

@@ -1,18 +1,12 @@
-from .loader import Loader
-from dataclasses import dataclass, field
-from types import MethodType
+import sys
 from contextlib import contextmanager, ExitStack
 
-
-def _get_importnb_entry_points():
-    try:
-        from importlib.metadata import entry_points
-
-        yield from entry_points()["importnb"]
-    except ModuleNotFoundError:
-        from importlib_metadata import entry_points
-
-        yield from entry_points(group="importnb")
+# See compatibility note on `group`
+# https://docs.python.org/3/library/importlib.metadata.html#entry-points
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 
 
 __all__ = ("imports",)
@@ -22,7 +16,7 @@ ENTRY_POINTS = dict()
 def get_importnb_entry_points():
     """discover the known importnb entry points"""
     global ENTRY_POINTS
-    for ep in _get_importnb_entry_points():
+    for ep in entry_points(group="importnb"):
         ENTRY_POINTS[ep.name] = ep.value
     return ENTRY_POINTS
 
