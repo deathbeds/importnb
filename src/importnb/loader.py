@@ -34,7 +34,7 @@ __all__ = "Notebook", "reload"
 
 VERSION = sys.version_info.major, sys.version_info.minor
 
-MAGIC = re.compile("^\s*%{2}", re.MULTILINE)
+MAGIC = re.compile(r"^\s*%{2}", re.MULTILINE)
 ALLOW_TOP_LEVEL_AWAIT = getattr(ast, "PyCF_ALLOW_TOP_LEVEL_AWAIT", 0x0)
 
 
@@ -140,7 +140,8 @@ class Loader(Interface, SourceFileLoader):
     def get_data(self, path):
         """get_data injects an input transformation before the raw text.
 
-        this method allows notebook json to be transformed line for line into vertically sparse python code."""
+        this method allows notebook json to be transformed line for line into vertically sparse python code.
+        """
         return self.raw_to_source(decode_source(super().get_data(self.path)))
 
     def create_module(self, spec):
