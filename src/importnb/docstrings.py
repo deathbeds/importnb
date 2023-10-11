@@ -14,7 +14,7 @@ import ast
 
 create_test = ast.parse("""__test__ = globals().get('__test__', {})""", mode="single").body[0]
 test_update = ast.parse("""__test__.update""", mode="single").body[0].value
-str_nodes = (ast.Str,)
+str_nodes = (ast.Constant,)
 
 """`TestStrings` is an `ast.NodeTransformer` that captures `str_nodes` in the `TestStrings.strings` object.
 
@@ -44,7 +44,7 @@ class TestStrings(ast.NodeTransformer):
                             func=test_update,
                             args=[
                                 ast.Dict(
-                                    keys=[ast.Str("string-{}".format(node.lineno))],
+                                    keys=[ast.Constant("string-{}".format(node.lineno))],
                                     values=[node],
                                 )
                             ],
@@ -81,7 +81,7 @@ class TestStrings(ast.NodeTransformer):
 
         if isinstance(node.value, str_nodes):
             self.strings.append(
-                ast.copy_location(ast.Str(node.value.s.replace("\n```", "\n")), node)
+                ast.copy_location(ast.Constant(node.value.value.replace("\n```", "\n")), node)
             )
         return node
 
@@ -112,4 +112,4 @@ def markdown_docstring(nodes, node):
 
 
 def str_expr(node):
-    return isinstance(node, ast.Expr) and isinstance(node.value, ast.Str)
+    return isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
