@@ -1,11 +1,15 @@
 # hatch is our build and development tool.
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
 name = "importnb"
 description = "import jupyter notebooks as python modules and scripts."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = "BSD-3-Clause"
+license-files = { paths = ["LICENSE"] }
 keywords = []
 authors = [{ name = "tonyfast", email = "tony.fast@gmail.com" }]
 classifiers = [
@@ -14,24 +18,22 @@ classifiers = [
   "Framework :: IPython",
   "Framework :: Jupyter",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "License :: OSI Approved :: BSD License",
 ]
-dependencies = [
-  "importlib-metadata; python_version<'3.8'"
-] # no dependencies?
+dependencies = []
 dynamic = ["version"] # uses hatch-vcs
 
 [project.optional-dependencies]
-interactive = ["IPython"]
+interactive = ["ipython"]
 docs = ["mkdocs-material", "mkdocs-jupyter", "ruamel.yaml"]
-tasks = ["doit", "toml"]
+tasks = ["doit", "tomli"]
 
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
@@ -53,10 +55,6 @@ Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
 Source = "https://github.com/deathbeds/importnb"
 
-[build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
-
 # hatch/hatchling configuration
 [tool.hatch.build.hooks.custom]
 # we build a json grammar with each release because we fiend for line numbers
@@ -71,7 +69,7 @@ version-file = "src/importnb/_version.py"
 
 # test matrix
 [tool.hatch.envs.test]
-dependencies = ["pytest", "pytest-cov", "doit", "toml", "ruamel.yaml", "tomli_w"]
+dependencies = ["pytest", "pytest-cov", "doit", "tomli", "ruamel.yaml", "tomli_w"]
 
 [[tool.hatch.envs.test.matrix]]
 version = ["stdlib", "interactive"]
@@ -84,14 +82,20 @@ matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
 cov = "pytest"
 
 [tool.pytest.ini_options]
-addopts = "-pno:warnings --cov importnb --cov-report html --cov-report term"
-
+addopts = [
+  "-vv",
+  "--color=yes",
+  "--cov=importnb",
+  "--cov-branch",
+  "--cov-context=test",
+  "--cov-report=html",
+  "--cov-report=term-missing:skip-covered",
+]
 [tool.coverage.report]
 omit = ["src/importnb/_json_parser.py", "docs/*"]
 
 [tool.coverage.html]
 directory = "docs/coverage"
-
 
 # test a release on test-pypi
 [tool.hatch.envs.released]
