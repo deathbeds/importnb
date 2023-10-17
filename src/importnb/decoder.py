@@ -1,5 +1,7 @@
+import collections
 import json
 import linecache
+import operator
 import textwrap
 from functools import partial
 
@@ -11,6 +13,9 @@ def quote(object, *, quotes="'''"):
 
 
 from ._json_parser import Lark_StandAlone, Transformer, Tree
+
+Cell = collections.namedtuple("cell", "lineno cell_type source")
+Cell_getter = operator.itemgetter(*Cell._fields)
 
 
 class Transformer(Transformer):
@@ -26,50 +31,44 @@ class Transformer(Transformer):
         for key in ("markdown", "code", "raw"):
             setattr(self, "transform_" + key, locals().get(key))
 
-    def string(self, s):
-        return s[0].line, json.loads(s[0])
+    def nb(self, s):
+        return s[0]
 
-    def item(self, s):
-        key = s[0][-1]
-        if key == "cells":
-            if not isinstance(s[-1], Tree):
-                return self.render(list(map(dict, s[-1])))
-        elif key in {"source", "text"}:
-            return key, s[-1]
-        elif key == "cell_type":
-            if isinstance(s[-1], tuple):
-                return key, s[-1][-1]
+    def cells(self, s):
+        line = 0
+        buffer = __import__("io").StringIO()
+        for t in s:
+            if t:
+                buffer.write("\n" * (t.lineno - 2 - line))
+                body = getattr(self, f"transform_{t.cell_type[1:-1]}")("".join(t.source))
+                if not body.endswith("\n"):
+                    body += "\n"
+                buffer.write(body)
+                line += body.count("\n")
+        return buffer.getvalue()
 
-    def array(self, s):
+    def cell(self, s):
+        #  we can't know the order of the cell type and the source
+        data = dict(collections.ChainMap(*s))
+        if "source" in data:
+            return Cell(*Cell_getter(data))
+        return None
+
+    def cell_type(self, s):
+        return dict(cell_type=s[0][1])
+
+    def source(self, s):
         if s:
-            return s
-        return []
+            return dict(lineno=s[0][0], source=[json.loads(x) for _, x in s])
+        return {}
 
-    def object(self, s):
-        return [x for x in s if x is not None]
+    def string(self, s):
+        return s[0].line, str(s[0])
 
-    def render_one(self, kind, lines):
-        s = "".join(lines)
-        if not s.endswith(("\n",)):
-            s += "\n"
-        return getattr(self, f"transform_{kind}")(s)
+    def empty(self, s, default={}):
+        return default
 
-    def render(self, x):
-        body = []
-        for token in x:
-            t = token.get("cell_type")
-            try:
-                s = token["source"]
-            except KeyError:
-                s = token.get("text")
-            if s:
-                if not isinstance(s, list):
-                    s = [s]
-                l, lines = s[0][0], [x[1] for x in s]
-                body.extend([""] * (l - len(body)))
-                lines = self.render_one(t, lines)
-                body.extend(lines.splitlines())
-        return "\n".join(body + [""])
+    outputs = metadata = attachments = execution_count = empty
 
 
 class LineCacheNotebookDecoder(Transformer):
@@ -91,7 +90,7 @@ class LineCacheNotebookDecoder(Transformer):
     def decode(self, object, filename):
         s = self.source_from_json_grammar(object)
         if s:
-            source = s[0]
+            source = s
             linecache.updatecache(filename)
             if filename in linecache.cache:
                 linecache.cache[filename] = (
