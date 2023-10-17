@@ -35,16 +35,21 @@ class Transformer(Transformer):
         return s[0]
 
     def cells(self, s):
-        line = 0
-        buffer = __import__("io").StringIO()
-        for t in s:
-            if t:
-                buffer.write("\n" * (t.lineno - 2 - line))
-                body = getattr(self, f"transform_{t.cell_type[1:-1]}")("".join(t.source))
-                if not body.endswith("\n"):
-                    body += "\n"
-                buffer.write(body)
-                line += body.count("\n")
+        line, buffer = 0, __import__("io").StringIO()
+        for t in filter(bool, s):
+            # write any missing preceding lines
+            buffer.write("\n" * (t.lineno - 2 - line))
+
+            # transform the source based on the cell_type.
+            body = getattr(self, f"transform_{t.cell_type[1:-1]}")("".join(t.source))
+
+            if not body.endswith("\n"):
+                # append a new line if there isn't one.
+                body += "\n"
+            buffer.write(body)
+
+            # increment the line numbers that have been visited.
+            line += body.count("\n")
         return buffer.getvalue()
 
     def cell(self, s):
@@ -52,23 +57,26 @@ class Transformer(Transformer):
         data = dict(collections.ChainMap(*s))
         if "source" in data:
             return Cell(*Cell_getter(data))
+        # the none result will get filtered out before combining.
         return None
 
     def cell_type(self, s):
+        # every cell needs to have this to dispatch the transformers.
         return dict(cell_type=s[0][1])
 
     def source(self, s):
-        if s:
-            return dict(lineno=s[0][0], source=[json.loads(x) for _, x in s])
-        return {}
+        # return the line number and source lines.
+        return dict(lineno=s[0][0], source=[json.loads(x) for _, x in s]) if s else {}
 
     def string(self, s):
+        # capture the line number of string values
         return s[0].line, str(s[0])
 
-    def empty(self, s, default={}):
+    def _cell_default(self, s, default={}):
+        # cell_default need to return a dictionary so it can be used in a change map.
         return default
 
-    outputs = metadata = attachments = execution_count = empty
+    outputs = metadata = attachments = execution_count = _cell_default
 
 
 class LineCacheNotebookDecoder(Transformer):
@@ -88,9 +96,8 @@ class LineCacheNotebookDecoder(Transformer):
         return Lark_StandAlone(transformer=self).parse(object)
 
     def decode(self, object, filename):
-        s = self.source_from_json_grammar(object)
-        if s:
-            source = s
+        source = self.source_from_json_grammar(object)
+        if source:
             linecache.updatecache(filename)
             if filename in linecache.cache:
                 linecache.cache[filename] = (
