@@ -3,6 +3,7 @@ import json
 import linecache
 import operator
 import textwrap
+from io import StringIO
 from functools import partial
 
 
@@ -35,18 +36,18 @@ class Transformer(Transformer):
         return s[0]
 
     def cells(self, s):
-        line, buffer = 0, __import__("io").StringIO()
+        line, buffer = 0, StringIO()
         for t in filter(bool, s):
             # write any missing preceding lines
             buffer.write("\n" * (t.lineno - 2 - line))
 
             # transform the source based on the cell_type.
             body = getattr(self, f"transform_{t.cell_type[1:-1]}")("".join(t.source))
+            buffer.write(body)
 
             if not body.endswith("\n"):
-                # append a new line if there isn't one.
-                body += "\n"
-            buffer.write(body)
+                buffer.write("\n")
+                line += 1
 
             # increment the line numbers that have been visited.
             line += body.count("\n")
