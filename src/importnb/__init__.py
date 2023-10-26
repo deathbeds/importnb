@@ -24,10 +24,6 @@ def get_ipython(force=True):
     return None
 
 
-import builtins
-
 from ._version import __version__
 from .loader import Notebook, reload
 from .entry_points import imports
-
-builtins.true, builtins.false, builtins.null = True, False, None
