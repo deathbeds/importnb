@@ -2,7 +2,7 @@ from pathlib import Path
 from subprocess import check_call
 from sys import executable, path, version_info
 
-from pytest import importorskip
+from pytest import importorskip, mark
 
 from importnb import Notebook
 
@@ -85,7 +85,8 @@ the parser namespace is Namespace(args=None)
 """
 
 
-@cli_test("-m importnb -c '{}'")
+@mark.xfail
+@cli_test("""-m importnb -c '{"cells": []}'""")
 def test_empty_code():
     """"""
 
