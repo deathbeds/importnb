@@ -20,6 +20,14 @@ Cell_getter = operator.itemgetter(*Cell._fields)
 
 
 class Transformer(Transformer):
+    """a lark transformer for a grammar specifically designed for the nbformat.
+
+    tokenizes notebook documents parsed with nbformat specific grammar.
+    features of the notebook are captured as nodes in the lexical analysis.
+    they are further massaged to return a line for line representation of the
+    json document as code.
+    """
+
     def __init__(
         self,
         markdown=quote,
@@ -33,16 +41,18 @@ class Transformer(Transformer):
             setattr(self, "transform_" + key, locals().get(key))
 
     def nb(self, s):
+        # hide the nb node from the tree.
         return s[0]
 
     def cells(self, s):
+        # recombine the tokenized json document as line for line source code.
         line, buffer = 0, StringIO()
         for t in filter(bool, s):
             # write any missing preceding lines
             buffer.write("\n" * (t.lineno - 2 - line))
 
             # transform the source based on the cell_type.
-            body = getattr(self, f"transform_{t.cell_type[1:-1]}")("".join(t.source))
+            body = getattr(self, f"transform_{t.cell_type}")("".join(t.source))
             buffer.write(body)
 
             if not body.endswith("\n"):
@@ -54,7 +64,8 @@ class Transformer(Transformer):
         return buffer.getvalue()
 
     def cell(self, s):
-        #  we can't know the order of the cell type and the source
+        # we can't know the order of the cell type and the source.
+        # we tokenize the cell parts as a dictionary IFF there is source.
         data = dict(collections.ChainMap(*s))
         if "source" in data:
             return Cell(*Cell_getter(data))
@@ -63,7 +74,8 @@ class Transformer(Transformer):
 
     def cell_type(self, s):
         # every cell needs to have this to dispatch the transformers.
-        return dict(cell_type=s[0][1])
+        # remove the quotes around the string
+        return dict(cell_type=s[0][1][1:-1])
 
     def source(self, s):
         # return the line number and source lines.
@@ -72,12 +84,6 @@ class Transformer(Transformer):
     def string(self, s):
         # capture the line number of string values
         return s[0].line, str(s[0])
-
-    def _cell_default(self, s, default={}):
-        # cell_default need to return a dictionary so it can be used in a change map.
-        return default
-
-    outputs = metadata = attachments = execution_count = _cell_default
 
 
 class LineCacheNotebookDecoder(Transformer):
