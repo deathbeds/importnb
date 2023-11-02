@@ -1,11 +1,15 @@
 # hatch is our build and development tool.
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
 name = "importnb"
 description = "import jupyter notebooks as python modules and scripts."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = "BSD-3-Clause"
+license-files = { paths = ["LICENSE"] }
 keywords = []
 authors = [{ name = "tonyfast", email = "tony.fast@gmail.com" }]
 classifiers = [
@@ -14,25 +18,34 @@ classifiers = [
   "Framework :: IPython",
   "Framework :: Jupyter",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "License :: OSI Approved :: BSD License",
 ]
-dependencies = [] # no dependencies!
+dependencies = ["importlib-metadata >=4.8.3;python_version<\"3.10\""]
 dynamic = ["version"] # uses hatch-vcs
 
 [project.optional-dependencies]
-interactive = ["IPython"]
+interactive = ["ipython"]
 docs = ["mkdocs-material", "mkdocs-jupyter", "ruamel.yaml"]
-tasks = ["doit", "toml"]
+tasks = ["doit", "tomli"]
 
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
+
+[project.entry-points.importnb]
+ipynb = "importnb.loader:Notebook"
+ipy = "importnb.loader:Notebook"
+py = "importnb.loader:Loader"
+json = "importnb.loaders:Json"
+yml = "importnb.loaders:Yaml"
+yaml = "importnb.loaders:Yaml"
+toml = "importnb.loaders:Toml"
 
 [project.scripts]
 importnb = "importnb.__main__:main"
@@ -42,13 +55,8 @@ Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
 Source = "https://github.com/deathbeds/importnb"
 
-[build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
-
 # hatch/hatchling configuration
 [tool.hatch.build.hooks.custom]
-
 # we build a json grammar with each release because we fiend for line numbers
 dependencies = ["lark"]
 
@@ -61,34 +69,56 @@ version-file = "src/importnb/_version.py"
 
 # test matrix
 [tool.hatch.envs.test]
-dependencies = ["pytest", "pytest-cov", "doit", "toml"]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+  "doit",
+  "tomli",
+  "ruamel.yaml",
+  "tomli_w",
+]
 
 [[tool.hatch.envs.test.matrix]]
-version = ["interactive", "stdlib"]
-
-[tool.hatch.envs.test.interactive.overrides]
-matrix.version.features = ["interactive"]
+version = ["stdlib", "interactive"]
 
 [tool.hatch.envs.test.overrides]
+matrix.version.features = [{ value = "interactive", if = ["interactive"] }]
 matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
 
 [tool.hatch.envs.test.scripts]
 cov = "pytest"
 
 [tool.pytest.ini_options]
-addopts = "-pno:warnings --cov importnb --cov-report html --cov-report term"
+addopts = [
+  "-vv",
+  "--tb=long",
+  "--color=yes",
+  "--cov=importnb",
+  "--cov-branch",
+  "--cov-context=test",
+  "--cov-report=html",
+  "--cov-report=term-missing:skip-covered",
+  "--no-cov-on-fail",
+]
 
 [tool.coverage.report]
-omit = ["src/importnb/_json_parser.py", "docs/*"]
-
+omit = ["_json_parser.py"]
 [tool.coverage.html]
 directory = "docs/coverage"
-
+show_contexts = true
 
 # test a release on test-pypi
 [tool.hatch.envs.released]
-skip-install = true
-dependencies = ["importnb", "IPython", "pytest", "pytest-cov", "doit"]
+# skip-install = true
+dependencies = [
+  "importnb",
+  "IPython",
+  "pytest",
+  "pytest-cov",
+  "doit",
+  "tomli_w",
+  "ruamel.yaml",
+]
 
 [tool.hatch.envs.released.scripts]
 test = "pytest"
