@@ -67,6 +67,13 @@ source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "src/importnb/_version.py"
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "docs/coverage",
+  "conftest.py"
+]
+
+
 # test matrix
 [tool.hatch.envs.test]
 dependencies = [
