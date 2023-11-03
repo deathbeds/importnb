@@ -57,7 +57,7 @@ positional arguments:
   file                  run a file
   args                  arguments to pass to script
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -m MODULE, --module MODULE
                         run a module
