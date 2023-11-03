@@ -316,7 +316,13 @@ class Loader(Interface, SourceFileLoader):
         if isinstance(argv, str):
             argv = shlex.split(argv)
 
-        module = cls.load_ns(parser.parse_args(argv))
+        parsed_args = parser.parse_args(argv)
+        if parsed_args.version:
+            from importnb import __version__
+
+            print(__version__)
+            raise SystemExit(0)
+        module = cls.load_ns(parsed_args)
         if module is None:
             return parser.print_help()
 
@@ -378,6 +384,9 @@ class Loader(Interface, SourceFileLoader):
         parser.add_argument("-c", "--code", help="run raw code")
         parser.add_argument("-d", "--dir", help="path to run script in")
         parser.add_argument("-t", "--tasks", action="store_true", help="run doit tasks")
+        parser.add_argument(
+            "-v", "--version", action="store_true", help="display the importnb version"
+        )
         return parser
 
 
