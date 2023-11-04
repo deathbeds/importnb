@@ -148,6 +148,7 @@ serve = "mkdocs serve"
 # formatting cause linting sucks
 [tool.ruff]
 line-length = 100
+extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
 isort.known-first-party = ["importnb"]
