@@ -9,7 +9,7 @@ from pathlib import Path
 from shutil import copyfile, rmtree
 from types import FunctionType
 
-from pytest import fixture, mark, raises, skip
+from pytest import fixture, mark, raises
 
 import importnb
 from importnb import Notebook, get_ipython, imports
@@ -32,13 +32,13 @@ def ref():
     return Notebook.load_file(HERE / "Untitled42.ipynb")
 
 
-@fixture
+@fixture()
 def clean():
     yield
     unimport(CLOBBER)
 
 
-@fixture
+@fixture()
 def package(ref):
     package = HERE / "my_package"
     package.mkdir(parents=True, exist_ok=True)
@@ -49,7 +49,7 @@ def package(ref):
     rmtree(package)
 
 
-@fixture
+@fixture()
 def minified(ref):
     minified = Path(HERE / "minified.ipynb")
     with open(ref.__file__) as f, open(minified, "w") as o:
@@ -59,7 +59,7 @@ def minified(ref):
     minified.unlink()
 
 
-@fixture
+@fixture()
 def untitled_py(ref):
     py = Path(ref.__file__).with_suffix(".py")
     py.touch()
@@ -73,7 +73,7 @@ def cant_reload(m):
 
 
 def unimport(ns):
-    """unimport a module namespace"""
+    """Unimport a module namespace"""
     from sys import modules, path_importer_cache
 
     for module in [x for x in modules if x.startswith(ns)]:
@@ -131,8 +131,6 @@ def test_load_code(clean):
 
 
 def test_package(clean, package):
-    from shutil import copyfile
-
     with Notebook():
         import my_package.my_module
 
@@ -150,6 +148,8 @@ def test_no_magic(capsys, clean, magic, ref):
     with Notebook(no_magic=not magic):
         import Untitled42
 
+        assert Untitled42
+
         stdout = capsys.readouterr()[0]
         if IPY:
             if magic:
@@ -161,9 +161,9 @@ def test_no_magic(capsys, clean, magic, ref):
 @mark.parametrize("defs", [True, False])
 def test_defs_only(defs, ref):
     known_defs = [
-        k for k, v in vars(ref).items() if not k[0] == "_" and isinstance(v, (type, FunctionType))
+        k for k, v in vars(ref).items() if k[0] != "_" and isinstance(v, (type, FunctionType))
     ]
-    not_defs = [k for k, v in vars(ref).items() if not k[0] == "_" and isinstance(v, (str,))]
+    not_defs = [k for k, v in vars(ref).items() if k[0] != "_" and isinstance(v, (str,))]
     with Notebook(include_non_defs=not defs):
         import Untitled42
 
@@ -178,17 +178,27 @@ def test_fuzzy_finder(clean, ref, capsys):
     with Notebook():
         import __ed42
 
+        assert __ed42
+
         outs.append(capsys.readouterr())
         import __d42
 
-        outs.append(capsys.readouterr())
-        import __42
+        assert __d42
 
         outs.append(capsys.readouterr())
         import __42
+
+        assert __42
+
+        outs.append(capsys.readouterr())
+        import __42
+
+        assert __42
 
         outs.append(capsys.readouterr())
         import __42 as nb
+
+        assert nb
 
         outs.append(capsys.readouterr())
 
@@ -225,6 +235,8 @@ def test_minified_json(ref, minified):
 def test_docstrings(clean, ref):
     with Notebook():
         import Untitled42 as nb
+
+        assert nb
     assert nb.function_with_a_markdown_docstring.__doc__
     assert nb.class_with_a_python_docstring.__doc__
     assert nb.function_with_a_markdown_docstring.__doc__
@@ -238,7 +250,7 @@ def test_docstrings(clean, ref):
     assert nb.class_with_a_markdown_docstring.__doc__ == ref.class_with_a_markdown_docstring.__doc__
 
     assert ast.parse(
-        inspect.getsource(nb.function_with_a_markdown_docstring)
+        inspect.getsource(nb.function_with_a_markdown_docstring),
     ), """The source is invalid"""
 
     # the line cache isnt json, it is python
@@ -265,7 +277,7 @@ def test_lazy(capsys, clean):
 
 @ipy
 def test_import_ipy():
-    """import ipy scripts, this won't really work without ipython."""
+    """Import ipy scripts, this won't really work without ipython."""
     with Notebook():
         import ascript
 
@@ -277,18 +289,22 @@ def test_cli(clean):
     with Notebook():
         import Untitled42 as module
     __import__("subprocess").check_call(
-        "ipython -m {}".format(module.__name__).split(), cwd=str(Path(module.__file__).parent)
+        f"ipython -m {module.__name__}".split(),
+        cwd=str(Path(module.__file__).parent),
     )
     __import__("subprocess").check_call(
-        "ipython -m importnb -- {}".format(module.__file__).split(),
+        f"ipython -m importnb -- {module.__file__}".split(),
         cwd=str(Path(module.__file__).parent),
     )
 
 
 @mark.skipif(VERSION < (3, 8), reason="async not supported in 3.7")
+@mark.filterwarnings("ignore::DeprecationWarning")
 def test_top_level_async():
     with Notebook():
         import async_cells
+
+        assert async_cells
 
 
 def test_data_loaders(pytester):

@@ -1,6 +1,4 @@
 import os
-import shlex
-import sys
 from functools import partial
 from io import StringIO
 from pathlib import Path
@@ -20,7 +18,7 @@ class LarkStandAloneBuildHook(BuildHookInterface):
             py = get_standalone()
             python_parser.write_text(py)
         build_data["artifacts"].append(
-            "/src/importnb/_json_parser.py"
+            "/src/importnb/_json_parser.py",
         )  # its really important to remember the preceeding /
 
 

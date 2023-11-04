@@ -1,23 +1,28 @@
-# hatch is our build and development tool.
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling", "hatch-vcs"]
+requires = [
+  "hatch-vcs",
+  "hatchling",
+]
 
 [project]
 name = "importnb"
 description = "import jupyter notebooks as python modules and scripts."
 readme = "README.md"
-requires-python = ">=3.8"
+keywords = [
+]
 license = "BSD-3-Clause"
 license-files = { paths = ["LICENSE"] }
-keywords = []
 authors = [{ name = "tonyfast", email = "tony.fast@gmail.com" }]
+requires-python = ">=3.8"
 classifiers = [
   "Development Status :: 4 - Beta",
-  "Natural Language :: English",
   "Framework :: IPython",
   "Framework :: Jupyter",
+  "License :: OSI Approved :: BSD License",
+  "Natural Language :: English",
   "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -25,43 +30,49 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
-  "License :: OSI Approved :: BSD License",
 ]
-dependencies = ["importlib-metadata >=4.8.3;python_version<\"3.10\""]
-dynamic = ["version"] # uses hatch-vcs
-
+dynamic = [
+  "version",
+] # uses hatch-vcs
+dependencies = [
+  'importlib-metadata>=4.8.3; python_version < "3.10"',
+]
 [project.optional-dependencies]
-interactive = ["ipython"]
-docs = ["mkdocs-material", "mkdocs-jupyter", "ruamel.yaml"]
-tasks = ["doit", "tomli"]
-
-[project.entry-points.pytest11]
-importnb = "importnb.utils.pytest_importnb"
-
-[project.entry-points.importnb]
-ipynb = "importnb.loader:Notebook"
-ipy = "importnb.loader:Notebook"
-py = "importnb.loader:Loader"
-json = "importnb.loaders:Json"
-yml = "importnb.loaders:Yaml"
-yaml = "importnb.loaders:Yaml"
-toml = "importnb.loaders:Toml"
-
-[project.scripts]
-importnb = "importnb.__main__:main"
-
+docs = [
+  "mkdocs-jupyter",
+  "mkdocs-material",
+  "ruamel.yaml",
+]
+interactive = [
+  "ipython",
+]
+tasks = [
+  "doit",
+  "tomli",
+]
 [project.urls]
 Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
 Source = "https://github.com/deathbeds/importnb"
+[project.scripts]
+importnb = "importnb.__main__:main"
+[project.entry-points.importnb]
+ipy = "importnb.loader:Notebook"
+ipynb = "importnb.loader:Notebook"
+json = "importnb.loaders:Json"
+py = "importnb.loader:Loader"
+toml = "importnb.loaders:Toml"
+yaml = "importnb.loaders:Yaml"
+yml = "importnb.loaders:Yaml"
+[project.entry-points.pytest11]
+importnb = "importnb.utils.pytest_importnb"
 
-# hatch/hatchling configuration
 [tool.hatch.build.hooks.custom]
 # we build a json grammar with each release because we fiend for line numbers
 dependencies = ["lark"]
 
-# versioning
 [tool.hatch.version]
+# versioning
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
@@ -70,9 +81,8 @@ version-file = "src/importnb/_version.py"
 [tool.hatch.build.targets.sdist]
 exclude = ["docs/coverage"]
 
-
-# test matrix
 [tool.hatch.envs.test]
+# test matrix
 dependencies = [
   "pytest",
   "pytest-cov",
@@ -92,30 +102,8 @@ matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
 [tool.hatch.envs.test.scripts]
 cov = "pytest"
 
-[tool.pytest.ini_options]
-addopts = [
-  "-vv",
-  "--tb=long",
-  "--color=yes",
-  "--cov=importnb",
-  "--cov-branch",
-  "--cov-context=test",
-  "--cov-report=html",
-  "--cov-report=term-missing:skip-covered",
-  "--no-cov-on-fail",
-  "-p", "pytester"
-]
-pytest_plugins = ["pytester"]
-
-[tool.coverage.report]
-omit = ["_json_parser.py"]
-[tool.coverage.html]
-directory = "docs/coverage"
-show_contexts = true
-
-# test a release on test-pypi
 [tool.hatch.envs.released]
-# skip-install = true
+# test a release on test-pypi
 dependencies = [
   "importnb",
   "IPython",
@@ -137,27 +125,115 @@ PIP_PRE = "1"
 [[tool.hatch.envs.released.matrix]]
 version = ["interactive", "stdlib"]
 
-# documentation
 [tool.hatch.envs.docs]
+# documentation
 features = ["docs"]
 
 [tool.hatch.envs.docs.scripts]
 build = "mkdocs build"
 serve = "mkdocs serve"
 
-# formatting cause linting sucks
-[tool.isort]
-profile = "black"
-
-[tool.black]
-line_length = 100
-
 [tool.hatch.envs.format]
 skip-install = true
-dependencies = ["black", "isort"]
+dependencies = [
+  "ruff",
+  "pyproject-fmt"
+]
 
 [tool.hatch.envs.format.scripts]
 code = """
-isort .
-black .
+pyproject-fmt pyproject.toml
+ruff --fix-only .
+ruff format .
 """
+
+[tool.ruff]
+# formatting cause linting sucks
+cache-dir = "build/.cache/ruff"
+line-length = 100
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+isort.known-first-party = ["importnb"]
+ignore = [
+  "D203",
+  "D213",
+  "COM812",
+  "ISC001",
+]
+select = [
+  "A",
+  "ANN",
+  "ARG",
+  "B",
+  "BLE",
+  "C4",
+  "C90",
+  "COM",
+  "D",
+  "DJ",
+  "DTZ",
+  "E",
+  "EM",
+  "ERA",
+  "EXE",
+  "F",
+  "FBT",
+  "G",
+  "I",
+  "ICN",
+  "INP",
+  "ISC",
+  "N",
+  "NPY",
+  "PD",
+  "PGH",
+  "PIE",
+  "PL",
+  "PT",
+  "PTH",
+  "PYI",
+  "Q",
+  "RET",
+  "RSE",
+  "RUF",
+  "S",
+  "SIM",
+  "SLF",
+  "T10",
+  "T20",
+  "TCH",
+  "TID",
+  "TRY",
+  "UP",
+  "W",
+  "YTT",
+]
+[tool.ruff.lint.per-file-ignores]
+"test_cli.py" = ["D415", "D207", "D208"]
+
+[tool.pytest.ini_options]
+cache_dir = "build/.cache/pytest"
+addopts = [
+  "-vv",
+  "--tb=long",
+  "--color=yes",
+  "--cov=importnb",
+  "--cov-branch",
+  "--cov-context=test",
+  "--cov-report=html",
+  "--cov-report=term-missing:skip-covered",
+  "--no-cov-on-fail",
+  "-ppytester",
+]
+filterwarnings = [
+  "error",
+]
+
+[tool.coverage.run]
+data_file = "build/.coverage"
+[tool.coverage.report]
+omit = ["_json_parser.py"]
+[tool.coverage.html]
+directory = "docs/coverage"
+show_contexts = true

@@ -1,6 +1,5 @@
-# coding: utf-8
-
-__all__ = "Notebook", "reload", "imports"
+"""Import jupyter notebooks as python modules and scripts."""
+__all__ = "Notebook", "reload", "imports", "__version__"
 
 
 def is_ipython():
@@ -14,7 +13,7 @@ def get_ipython(force=True):
         try:
             from IPython import get_ipython
         except ModuleNotFoundError:
-            return
+            return None
         shell = get_ipython()
         if shell is None:
             from IPython import InteractiveShell
