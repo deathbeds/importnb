@@ -20,7 +20,7 @@ from importlib import _bootstrap as bootstrap
 from importlib import reload
 from importlib._bootstrap import _init_module_attrs, _requires_builtin
 from importlib._bootstrap_external import FileFinder, decode_source
-from importlib.machinery import ModuleSpec, SourceFileLoader
+from importlib.machinery import SourceFileLoader
 from importlib.util import LazyLoader, find_spec
 from pathlib import Path
 from types import ModuleType
@@ -191,8 +191,6 @@ class Loader(Interface, SourceFileLoader):
 
     def aexec_module_sync(self, module):
         if "anyio" in sys.modules:
-            import anyio
-
             __import__("anyio").run(self.aexec_module, module)
         else:
             from asyncio import get_event_loop
@@ -284,7 +282,6 @@ class Loader(Interface, SourceFileLoader):
 
         >>> assert Notebook.load_module('foo')
         """
-        from runpy import _run_module_as_main, run_module
 
         with cls() as loader:
             spec = find_spec(module)

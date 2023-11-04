@@ -1,11 +1,9 @@
 # coding: utf-8
-import ast
 import json
 import os
-import sys
 from pathlib import Path
 
-from IPython import get_ipython, paths
+from IPython import paths
 from IPython.core import profiledir
 
 

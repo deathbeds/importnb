@@ -9,7 +9,7 @@ from pathlib import Path
 from shutil import copyfile, rmtree
 from types import FunctionType
 
-from pytest import fixture, mark, raises, skip
+from pytest import fixture, mark, raises
 
 import importnb
 from importnb import Notebook, get_ipython, imports
@@ -131,9 +131,6 @@ def test_load_code(clean):
 
 
 def test_package(clean, package):
-
-    from shutil import copyfile
-
     with Notebook():
         import my_package.my_module
 
@@ -150,6 +147,7 @@ def test_package(clean, package):
 def test_no_magic(capsys, clean, magic, ref):
     with Notebook(no_magic=not magic):
         import Untitled42
+
         assert Untitled42
 
         stdout = capsys.readouterr()[0]
@@ -179,22 +177,27 @@ def test_fuzzy_finder(clean, ref, capsys):
     outs = []
     with Notebook():
         import __ed42
+
         assert __ed42
 
         outs.append(capsys.readouterr())
         import __d42
+
         assert __d42
 
         outs.append(capsys.readouterr())
         import __42
+
         assert __42
 
         outs.append(capsys.readouterr())
         import __42
+
         assert __42
 
         outs.append(capsys.readouterr())
         import __42 as nb
+
         assert nb
 
         outs.append(capsys.readouterr())
@@ -232,6 +235,7 @@ def test_minified_json(ref, minified):
 def test_docstrings(clean, ref):
     with Notebook():
         import Untitled42 as nb
+
         assert nb
     assert nb.function_with_a_markdown_docstring.__doc__
     assert nb.class_with_a_python_docstring.__doc__
@@ -297,6 +301,7 @@ def test_cli(clean):
 def test_top_level_async():
     with Notebook():
         import async_cells
+
         assert async_cells
 
 
