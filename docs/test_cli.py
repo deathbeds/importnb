@@ -49,7 +49,8 @@ def cli_test(command):
 @cli_test("-m importnb")
 def test_usage():
     """\
-usage: importnb [-h] [-m MODULE] [-c CODE] [-d DIR] [-t] [-v] [file] ...
+usage: importnb [-h] [-m MODULE] [-c CODE] [-d DIR] [-t] [--version]
+                [file] ...
 
 run notebooks as python code
 
@@ -57,14 +58,14 @@ positional arguments:
   file                  run a file
   args                  arguments to pass to script
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -m MODULE, --module MODULE
                         run a module
   -c CODE, --code CODE  run raw code
   -d DIR, --dir DIR     path to run script in
   -t, --tasks           run doit tasks
-  -v, --version         display the importnb version
+  --version             display the importnb version
 """
 
 
@@ -90,7 +91,7 @@ the parser namespace is Namespace(args=None)
 def test_empty_code():
     """"""
 
-@cli_test("-m importnb -v")
+@cli_test("-m importnb --version")
 def test_version():
     """{VERSION}
 """
