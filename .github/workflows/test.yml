@@ -24,11 +24,13 @@ jobs:
       run: python -m pip install --upgrade pip hatch
     - name: run formatters
       run:
+        set -eux
         echo "~~~bash" > $GITHUB_STEP_SUMMARY
-        hatch run format:code | tee --append $GITHUB_STEP_SUMMARY
+        hatch run format:code 2>&1 >> $GITHUB_STEP_SUMMARY
         echo "~~~" >> $GITHUB_STEP_SUMMARY
     - name: print diff
       run:
+        set -eux
         echo "~~~diff" >> $GITHUB_STEP_SUMMARY
         git diff >> $GITHUB_STEP_SUMMARY
         echo "~~~" >> $GITHUB_STEP_SUMMARY
