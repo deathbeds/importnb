@@ -146,18 +146,18 @@ build = "mkdocs build"
 serve = "mkdocs serve"
 
 # formatting cause linting sucks
-[tool.isort]
-profile = "black"
+[tool.ruff]
+line-length = 100
 
-[tool.black]
-line_length = 100
+[tool.ruff.lint.isort]
+known-first-party = ["importnb"]
 
 [tool.hatch.envs.format]
 skip-install = true
-dependencies = ["black", "isort"]
+dependencies = ["ruff"]
 
 [tool.hatch.envs.format.scripts]
 code = """
-isort .
-black .
+ruff --fix-only .
+ruff format .
 """
