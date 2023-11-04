@@ -385,7 +385,7 @@ class Loader(Interface, SourceFileLoader):
         parser.add_argument("-d", "--dir", help="path to run script in")
         parser.add_argument("-t", "--tasks", action="store_true", help="run doit tasks")
         parser.add_argument(
-            "-v", "--version", action="store_true", help="display the importnb version"
+            "--version", action="store_true", help="display the importnb version"
         )
         return parser
 
