@@ -111,6 +111,9 @@ filterwarnings = [
   "error",
 ]
 
+
+[tool.coverage.run]
+data_file = "build/.coverage"
 [tool.coverage.report]
 omit = ["_json_parser.py"]
 [tool.coverage.html]
