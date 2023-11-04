@@ -68,10 +68,7 @@ source = "vcs"
 version-file = "src/importnb/_version.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-  "docs/coverage",
-  "conftest.py"
-]
+exclude = ["docs/coverage"]
 
 
 # test matrix
