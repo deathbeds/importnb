@@ -4,7 +4,8 @@ from sys import executable, path, version_info
 
 from pytest import importorskip
 
-from importnb import Notebook, __version__ as importnb_version
+from importnb import Notebook
+from importnb import __version__ as importnb_version
 
 GTE10 = version_info.major == 3 and version_info.minor >= 10
 
@@ -34,7 +35,9 @@ def cli_test(command):
                 check_call([executable] + split(command), stderr=file, stdout=file)
             out = path.read_text()
             match = get_prepared_string(
-                f.__doc__.format(UNTITLED=UNTITLED.as_posix(), SLUG=ref.magic_slug, VERSION=importnb_version)
+                f.__doc__.format(
+                    UNTITLED=UNTITLED.as_posix(), SLUG=ref.magic_slug, VERSION=importnb_version
+                )
             )
 
             if "UserWarning: Attempting to work in a virtualenv." in out:
@@ -91,9 +94,11 @@ the parser namespace is Namespace(args=None)
 def test_empty_code():
     """"""
 
+
 @cli_test("-m importnb --version")
 def test_version():
-    """{VERSION}
+    """\
+{VERSION}
 """
 
 

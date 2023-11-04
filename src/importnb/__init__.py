@@ -27,7 +27,7 @@ def get_ipython(force=True):
 import builtins
 
 from ._version import __version__
-from .loader import Notebook, reload
 from .entry_points import imports
+from .loader import Notebook, reload
 
 builtins.true, builtins.false, builtins.null = True, False, None

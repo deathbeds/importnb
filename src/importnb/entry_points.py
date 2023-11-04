@@ -1,5 +1,5 @@
 import sys
-from contextlib import contextmanager, ExitStack
+from contextlib import ExitStack, contextmanager
 
 # See compatibility note on `group`
 # https://docs.python.org/3/library/importlib.metadata.html#entry-points
