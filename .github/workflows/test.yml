@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   format:
     name: format
@@ -23,12 +27,15 @@ jobs:
     - name: install dev dependencies
       run: python -m pip install --upgrade pip hatch
     - name: run formatters
-      run: hatch run format:code | tee pr.diff
+      run: |
+        echo "~~~bash" > "${GITHUB_STEP_SUMMARY}"
+        hatch run format:code 2>&1 | tee --append "${GITHUB_STEP_SUMMARY}"
+        echo "~~~" >> "${GITHUB_STEP_SUMMARY}"
     - name: print diff
-      run:
-        echo "~~~diff" > $GITHUB_STEP_SUMMARY
-        git diff >> $GITHUB_STEP_SUMMARY
-        echo "~~~" >> $GITHUB_STEP_SUMMARY
+      run: |
+        echo "~~~diff" >> "${GITHUB_STEP_SUMMARY}"
+        git diff | tee --append "${GITHUB_STEP_SUMMARY}"
+        echo "~~~" >> "${GITHUB_STEP_SUMMARY}"
 
   test:
     name: ${{ matrix.os }} ${{ matrix.python-version }}
