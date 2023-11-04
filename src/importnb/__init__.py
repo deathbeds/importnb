@@ -13,7 +13,7 @@ def get_ipython(force=True):
         try:
             from IPython import get_ipython
         except ModuleNotFoundError:
-            return
+            return None
         shell = get_ipython()
         if shell is None:
             from IPython import InteractiveShell

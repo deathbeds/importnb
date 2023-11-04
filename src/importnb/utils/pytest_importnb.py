@@ -1,4 +1,3 @@
-# coding: utf-8
 """A `pytest` plugin for importing notebooks as modules and using standard test discovered.
 
 The `AlternativeModule` is reusable.  See `pidgin` for an example.
@@ -28,7 +27,7 @@ class AlternativeModule(pytest.Module):
                 if path.fnmatch(pat):
                     break
             else:
-                return
+                return None
 
         if hasattr(cls, "from_parent"):
             return cls.from_parent(parent, path=Path(path))

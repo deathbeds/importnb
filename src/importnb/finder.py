@@ -1,4 +1,3 @@
-# coding: utf-8
 """# `sys.path_hook` modifiers
 
 Many suggestions for importing notebooks use `sys.meta_paths`, but `importnb` relies on the `sys.path_hooks` to load any notebook in the path. `PathHooksContext` is a base class for the `importnb.Notebook` `SourceFileLoader`.
@@ -19,7 +18,14 @@ class FileModuleSpec(ModuleSpec):
 
 class FuzzySpec(FileModuleSpec):
     def __init__(
-        self, name, loader, *, alias=None, origin=None, loader_state=None, is_package=None
+        self,
+        name,
+        loader,
+        *,
+        alias=None,
+        origin=None,
+        loader_state=None,
+        is_package=None,
     ):
         super().__init__(
             name,

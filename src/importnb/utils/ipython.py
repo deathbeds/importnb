@@ -1,4 +1,3 @@
-# coding: utf-8
 import json
 import os
 from pathlib import Path
@@ -35,7 +34,7 @@ def load_config():
 
 
 def install(project="importnb"):
-    """install the importnb extension"""
+    """Install the importnb extension"""
     config, location = load_config()
     projects = [project]
     if not installed(project):
@@ -44,7 +43,7 @@ def install(project="importnb"):
     with location.open("w") as file:
         json.dump(config, file)
 
-    print("""✅ {}""".format(projects))
+    print(f"""✅ {projects}""")
 
 
 def installed(project):
@@ -53,7 +52,7 @@ def installed(project):
 
 
 def uninstall(project="importnb"):
-    """uninstall the importnb extension"""
+    """Uninstall the importnb extension"""
     config, location = load_config()
     projects = [project]
     config["InteractiveShellApp"]["extensions"] = [
@@ -62,4 +61,4 @@ def uninstall(project="importnb"):
 
     with location.open("w") as file:
         json.dump(config, file)
-    print("""❌ {}.""".format(projects))
+    print(f"""❌ {projects}.""")

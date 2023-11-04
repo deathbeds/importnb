@@ -1,4 +1,3 @@
-# coding: utf-8
 """# Special handling of markdown cells as docstrings.
 
 Modify the Python `ast` to assign docstrings to functions when they are preceded by a Markdown cell.
@@ -43,12 +42,12 @@ class TestStrings(ast.NodeTransformer):
                             func=test_update,
                             args=[
                                 ast.Dict(
-                                    keys=[ast.Constant("string-{}".format(node.lineno))],
+                                    keys=[ast.Constant(f"string-{node.lineno}")],
                                     values=[node],
-                                )
+                                ),
                             ],
                             keywords=[],
-                        )
+                        ),
                     ),
                     node,
                 )
@@ -61,7 +60,6 @@ class TestStrings(ast.NodeTransformer):
 
     def visit_body(self, node):
         """`TestStrings.visit_body` visits nodes with a `"body"` attibute and extracts potential string tests."""
-
         body = []
         if (
             node.body
@@ -77,10 +75,9 @@ class TestStrings(ast.NodeTransformer):
 
     def visit_Expr(self, node):
         """`TestStrings.visit_Expr` append the `str_nodes` to `TestStrings.strings` to append to the `ast.Module`."""
-
         if isinstance(node.value, str_nodes):
             self.strings.append(
-                ast.copy_location(ast.Constant(node.value.value.replace("\n```", "\n")), node)
+                ast.copy_location(ast.Constant(node.value.value.replace("\n```", "\n")), node),
             )
         return node
 
