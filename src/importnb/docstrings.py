@@ -26,7 +26,6 @@ str_nodes = (ast.Constant,)
 
 
 class TestStrings(ast.NodeTransformer):
-
     strings = None
 
     def visit_Module(self, module):

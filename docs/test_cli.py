@@ -5,6 +5,7 @@ from sys import executable, path, version_info
 from pytest import importorskip
 
 from importnb import Notebook
+from importnb import __version__ as importnb_version
 
 GTE10 = version_info.major == 3 and version_info.minor >= 10
 
@@ -34,7 +35,9 @@ def cli_test(command):
                 check_call([executable] + split(command), stderr=file, stdout=file)
             out = path.read_text()
             match = get_prepared_string(
-                f.__doc__.format(UNTITLED=UNTITLED.as_posix(), SLUG=ref.magic_slug)
+                f.__doc__.format(
+                    UNTITLED=UNTITLED.as_posix(), SLUG=ref.magic_slug, VERSION=importnb_version
+                )
             )
 
             if "UserWarning: Attempting to work in a virtualenv." in out:
@@ -49,7 +52,8 @@ def cli_test(command):
 @cli_test("-m importnb")
 def test_usage():
     """\
-usage: importnb [-h] [-m MODULE] [-c CODE] [-d DIR] [-t] [file] ...
+usage: importnb [-h] [-m MODULE] [-c CODE] [-d DIR] [-t] [--version]
+                [file] ...
 
 run notebooks as python code
 
@@ -64,6 +68,7 @@ optional arguments:
   -c CODE, --code CODE  run raw code
   -d DIR, --dir DIR     path to run script in
   -t, --tasks           run doit tasks
+  --version             display the importnb version
 """
 
 
@@ -88,6 +93,13 @@ the parser namespace is Namespace(args=None)
 @cli_test("-m importnb -c '{}'")
 def test_empty_code():
     """"""
+
+
+@cli_test("-m importnb --version")
+def test_version():
+    """\
+{VERSION}
+"""
 
 
 @cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -t {UNTITLED.as_posix()} list")

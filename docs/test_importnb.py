@@ -215,7 +215,6 @@ def test_fuzzy_finder_conflict(clean, ref):
 
 
 def test_minified_json(ref, minified):
-
     with Notebook():
         import minified as minned
 
@@ -295,8 +294,12 @@ def test_top_level_async():
 def test_data_loaders(pytester):
     some_random_data = {"top": [{}]}
 
-    import json, tomli_w, io
+    import io
+    import json
+
+    import tomli_w
     from ruamel.yaml import YAML
+
     yaml = YAML(typ="safe", pure=True)
 
     sys.path.insert(0, str(pytester._path))
@@ -307,7 +310,9 @@ def test_data_loaders(pytester):
     pytester.makefile(".yaml", yaml_data=y.getvalue())
 
     with imports("json", "yaml", "toml"):
-        import json_data, yaml_data, toml_data
+        import json_data
+        import toml_data
+        import yaml_data
     assert json_data.__file__.endswith(".json")
     assert toml_data.__file__.endswith(".toml")
     assert yaml_data.__file__.endswith(".yaml")

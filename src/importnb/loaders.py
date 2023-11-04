@@ -1,6 +1,7 @@
-from .loader import Loader, SourceModule
 from dataclasses import dataclass, field
 from types import ModuleType
+
+from .loader import Loader, SourceModule
 
 
 class DataModule(SourceModule):

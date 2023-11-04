@@ -316,7 +316,8 @@ class Loader(Interface, SourceFileLoader):
         if isinstance(argv, str):
             argv = shlex.split(argv)
 
-        module = cls.load_ns(parser.parse_args(argv))
+        parsed_args = parser.parse_args(argv)
+        module = cls.load_ns(parsed_args)
         if module is None:
             return parser.print_help()
 
@@ -370,6 +371,8 @@ class Loader(Interface, SourceFileLoader):
     def get_argparser(parser=None):
         from argparse import REMAINDER, ArgumentParser
 
+        from importnb import __version__
+
         if parser is None:
             parser = ArgumentParser("importnb", description="run notebooks as python code")
         parser.add_argument("file", nargs="?", help="run a file")
@@ -378,6 +381,9 @@ class Loader(Interface, SourceFileLoader):
         parser.add_argument("-c", "--code", help="run raw code")
         parser.add_argument("-d", "--dir", help="path to run script in")
         parser.add_argument("-t", "--tasks", action="store_true", help="run doit tasks")
+        parser.add_argument(
+            "--version", action="version", version=__version__, help="display the importnb version"
+        )
         return parser
 
 
