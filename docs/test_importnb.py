@@ -299,6 +299,7 @@ def test_cli(clean):
 
 
 @mark.skipif(VERSION < (3, 8), reason="async not supported in 3.7")
+@mark.filterwarnings("ignore::DeprecationWarning")
 def test_top_level_async():
     with Notebook():
         import async_cells

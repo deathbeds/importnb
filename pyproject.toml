@@ -93,8 +93,10 @@ matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
 cov = "pytest"
 
 [tool.pytest.ini_options]
+cache_dir = "build/.cache/pytest"
 addopts = [
   "-vv",
+  "--ff",
   "--tb=long",
   "--color=yes",
   "--cov=importnb",
@@ -103,9 +105,11 @@ addopts = [
   "--cov-report=html",
   "--cov-report=term-missing:skip-covered",
   "--no-cov-on-fail",
-  "-p", "pytester"
+  "-ppytester"
 ]
-pytest_plugins = ["pytester"]
+filterwarnings = [
+  "error",
+]
 
 [tool.coverage.report]
 omit = ["_json_parser.py"]
@@ -147,6 +151,7 @@ serve = "mkdocs serve"
 
 # formatting cause linting sucks
 [tool.ruff]
+cache-dir = "build/.cache/ruff"
 line-length = 100
 extend-include = ["*.ipynb"]
 
