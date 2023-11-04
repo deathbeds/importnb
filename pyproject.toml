@@ -103,7 +103,9 @@ addopts = [
   "--cov-report=html",
   "--cov-report=term-missing:skip-covered",
   "--no-cov-on-fail",
+  "-p", "pytester"
 ]
+pytest_plugins = ["pytester"]
 
 [tool.coverage.report]
 omit = ["_json_parser.py"]
