@@ -67,6 +67,10 @@ source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "src/importnb/_version.py"
 
+[tool.hatch.build.targets.sdist]
+exclude = ["docs/coverage"]
+
+
 # test matrix
 [tool.hatch.envs.test]
 dependencies = [
@@ -99,7 +103,9 @@ addopts = [
   "--cov-report=html",
   "--cov-report=term-missing:skip-covered",
   "--no-cov-on-fail",
+  "-p", "pytester"
 ]
+pytest_plugins = ["pytester"]
 
 [tool.coverage.report]
 omit = ["_json_parser.py"]
