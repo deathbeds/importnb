@@ -11,8 +11,8 @@ description = "import jupyter notebooks as python modules and scripts."
 readme = "README.md"
 keywords = [
 ]
-license = "BSD-3-Clause"
-license-files = { paths = ["LICENSE"] }
+license = "BSD-3-Clause AND MPL-2.0"
+license-files = { paths = ["LICENSE", "LICENSE-MPL-2.0"] }
 authors = [{ name = "tonyfast", email = "tony.fast@gmail.com" }]
 requires-python = ">=3.8"
 classifiers = [
@@ -20,6 +20,7 @@ classifiers = [
   "Framework :: IPython",
   "Framework :: Jupyter",
   "License :: OSI Approved :: BSD License",
+  "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
   "Natural Language :: English",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
@@ -79,7 +80,7 @@ source = "vcs"
 version-file = "src/importnb/_version.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["docs/coverage"]
+exclude = ["docs/coverage", "docs/*.png"]
 
 [tool.hatch.envs.test]
 # test matrix
