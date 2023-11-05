@@ -57,5 +57,9 @@ jobs:
           cache-dependency-path: pyproject.toml
       - name: install dev dependencies
         run: python -m pip install --upgrade pip hatch
-      - name: run tests
+      - name: run tests (coverage)
+        if: ${{ !contains(matrix.python-version, 'pypy') }}
         run: hatch run test:cov
+      - name: run tests (no coverage)
+        if: ${{ contains(matrix.python-version, 'pypy') }}
+        run: hatch run test:run
