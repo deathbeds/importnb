@@ -101,7 +101,10 @@ matrix.version.features = [{ value = "interactive", if = ["interactive"] }]
 matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
 
 [tool.hatch.envs.test.scripts]
-cov = "pytest"
+cov = """
+pytest --cov=importnb --cov-branch --cov-context=test --cov-report=html --cov-report=term-missing:skip-covered --no-cov-on-fail
+"""
+run = "pytest"
 
 [tool.hatch.envs.released]
 # test a release on test-pypi
@@ -219,12 +222,6 @@ addopts = [
   "-vv",
   "--tb=long",
   "--color=yes",
-  "--cov=importnb",
-  "--cov-branch",
-  "--cov-context=test",
-  "--cov-report=html",
-  "--cov-report=term-missing:skip-covered",
-  "--no-cov-on-fail",
   "-ppytester",
 ]
 filterwarnings = [
