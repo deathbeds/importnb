@@ -16,12 +16,11 @@ class LarkStandAloneBuildHook(BuildHookInterface):
             py = get_standalone()
             python_parser.write_text(py)
         # its really important to remember the preceeding /
-        build_data["artifacts"].extend(
-            [
-                "/src/importnb/_json_parser.py",
-                "/src/importnb/json.g",
-            ]
-        )
+        artifacts = [
+            "/src/importnb/_json_parser.py",
+            "/src/importnb/json.g",
+        ]
+        build_data["artifacts"].extend(artifacts)
 
 
 def get_logger():
@@ -36,9 +35,8 @@ def get_logger():
 def get_lark():
     from lark.tools.standalone import build_lalr, lalr_argparser
 
-    return build_lalr(lalr_argparser.parse_args(["--propagate_positions", "src/importnb/json.g"]))[
-        0
-    ]
+    args = ["--propagate_positions", "src/importnb/json.g"]
+    return build_lalr(lalr_argparser.parse_args(args))[0]
 
 
 def write(buffer, *lines):
