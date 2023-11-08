@@ -124,7 +124,8 @@ def test_load_file(clean, ref):
 
 
 def test_load_code(clean):
-    assert Notebook.load_code(""), "can't load an empty notebook"
+    with raises(BaseException):
+        assert Notebook.load_code(""), "can't load an empty notebook"
     body = Path("docs/Untitled42.ipynb").read_text()
     m = Notebook.load_code(body)
     cant_reload(m)

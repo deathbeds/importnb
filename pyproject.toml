@@ -91,6 +91,7 @@ dependencies = [
   "tomli",
   "ruamel.yaml",
   "tomli_w",
+  "hypothesis-jsonschema"
 ]
 
 [[tool.hatch.envs.test.matrix]]

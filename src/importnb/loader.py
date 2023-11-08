@@ -105,9 +105,9 @@ class Loader(Interface, SourceFileLoader):
         """Generate a new finder based on the state of an existing loader"""
         return self.include_fuzzy_finder and FuzzyFinder or FileFinder
 
-    def raw_to_source(self, source):
-        """Transform a string from a raw file to python source."""
-        if self.path and self.path.endswith(".ipynb"):
+    def raw_to_source(self, source, force=False):
+        """transform a string from a raw file to python source."""
+        if force or self.path and self.path.endswith(".ipynb"):
             # when we encounter notebooks we apply different transformers to the diff cell types
             return LineCacheNotebookDecoder(
                 code=self.code,
@@ -375,9 +375,11 @@ class Loader(Interface, SourceFileLoader):
 
         self = cls()
         name = main and "__main__" or mod_name or "<raw code>"
+        self.path = ""
+        script_name = script_name or name
 
         return _dict_module(
-            _run_module_code(self.raw_to_source(code), mod_name=name, script_name=script_name),
+            _run_module_code(self.raw_to_source(code, True), mod_name=name, script_name=script_name)
         )
 
     @staticmethod
@@ -447,19 +449,6 @@ class Notebook(Loader):
             nodes = update_docstring(nodes)
         nodes = self.visit(nodes)
         return ast.fix_missing_locations(nodes)
-
-    def raw_to_source(self, source):
-        """Transform a string from a raw file to python source."""
-        if self.path and self.path.endswith(".ipynb"):
-            # when we encounter notebooks we apply different transformers to the diff cell types
-            return LineCacheNotebookDecoder(
-                code=self.code,
-                raw=self.raw,
-                markdown=self.markdown,
-            ).decode(source, self.path)
-
-        # for a normal file we just apply the code transformer.
-        return self.code(source)
 
 
 def _dict_module(ns):
