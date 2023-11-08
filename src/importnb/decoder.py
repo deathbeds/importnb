@@ -4,7 +4,7 @@ import linecache
 import operator
 import textwrap
 from io import StringIO
-from functools import partial
+from functools import lru_cache, partial
 
 
 def quote(object, *, quotes="'''"):
@@ -13,13 +13,33 @@ def quote(object, *, quotes="'''"):
     return quotes + object + "\n" + quotes
 
 
-from ._json_parser import Lark_StandAlone, Transformer, Tree
+from ._json_parser import (
+    Lark_StandAlone,
+    Transformer as _Lark_Transformer,
+    UnexpectedCharacters,
+    UnexpectedToken,
+)
 
 Cell = collections.namedtuple("cell", "lineno cell_type source")
 Cell_getter = operator.itemgetter(*Cell._fields)
 
 
-class Transformer(Transformer):
+class InvalidNotebook(BaseException):
+    """The notebook does not conform to the nbformat."""
+
+
+def parse_nbformat(source: str, parser=None):
+    if parser is None:
+        parser = LineCacheNotebookDecoder()._parser
+    try:
+        return parser.parse(source)
+    except (UnexpectedCharacters, UnexpectedToken) as e:
+        raise InvalidNotebook from e
+    except BaseException as e:
+        raise e
+
+
+class _Transformer(_Lark_Transformer):
     """a lark transformer for a grammar specifically designed for the nbformat.
 
     tokenizes notebook documents parsed with nbformat specific grammar.
@@ -86,7 +106,7 @@ class Transformer(Transformer):
         return s[0].line, str(s[0])
 
 
-class LineCacheNotebookDecoder(Transformer):
+class LineCacheNotebookDecoder(_Transformer):
     def __init__(
         self,
         markdown=quote,
@@ -99,8 +119,10 @@ class LineCacheNotebookDecoder(Transformer):
         for key in ("markdown", "code", "raw"):
             setattr(self, "transform_" + key, locals().get(key))
 
+        self._parser = Lark_StandAlone(transformer=self)
+
     def source_from_json_grammar(self, object):
-        return Lark_StandAlone(transformer=self).parse(object)
+        return parse_nbformat(object, self._parser)
 
     def decode(self, object, filename):
         source = self.source_from_json_grammar(object)
