@@ -1,6 +1,3 @@
-import os
-import shlex
-import sys
 from functools import partial
 from io import StringIO
 from pathlib import Path
@@ -13,15 +10,18 @@ class LarkStandAloneBuildHook(BuildHookInterface):
 
     def initialize(self, version, build_data):
         L = get_logger()
-        WIN = os.name == "nt"
         L.info("converting json grammar to python")
         python_parser = Path(self.root, "src/importnb/_json_parser.py")
         if not python_parser.exists():
             py = get_standalone()
             python_parser.write_text(py)
-        build_data["artifacts"].append(
-            "/src/importnb/_json_parser.py"
-        )  # its really important to remember the preceeding /
+        # its really important to remember the preceeding /
+        build_data["artifacts"].extend(
+            [
+                "/src/importnb/_json_parser.py",
+                "/src/importnb/json.g",
+            ]
+        )
 
 
 def get_logger():
@@ -36,7 +36,9 @@ def get_logger():
 def get_lark():
     from lark.tools.standalone import build_lalr, lalr_argparser
 
-    return build_lalr(lalr_argparser.parse_args(["--propagate_positions", "src/json.g"]))[0]
+    return build_lalr(lalr_argparser.parse_args(["--propagate_positions", "src/importnb/json.g"]))[
+        0
+    ]
 
 
 def write(buffer, *lines):

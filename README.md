@@ -3,7 +3,7 @@
 if you're here, then there is a chance you have a notebook (`.ipynb`) in a directory saved as `Untitled.ipynb`. it is just sitting there, but what if it could be used as a python module? `importnb` is here to answer that question.
 
 
-## basic example 
+## basic example
 use `importnb`'s  `Notebook` finder and loader to import notebooks as modules
 
     # with the new api
@@ -22,14 +22,14 @@ use `importnb`'s  `Notebook` finder and loader to import notebooks as modules
 ### What does this snippet do?
 
 > the snippet begins `with` a context manager that modifies the files python can discover.
-it will find  the `Untitled.ipynb` notebook and import it as a module with `__name__` `Untitled`. 
-the `__file__` description will have `.ipynb` as an extension. 
+it will find  the `Untitled.ipynb` notebook and import it as a module with `__name__` `Untitled`.
+the `__file__` description will have `.ipynb` as an extension.
 
 maybe when we give notebooks new life they eventually earn a better name than `Untitled`?
 
 ## run a notebook as a script
 
-the `importnb` command line interface mimics python's. it permits running notebooks files, modules, and raw json data. 
+the `importnb` command line interface mimics python's. it permits running notebooks files, modules, and raw json data.
 
 the commands below execute a notebook module and file respectively.
 
@@ -38,7 +38,7 @@ the commands below execute a notebook module and file respectively.
 
 ## installing `importnb`
 
-use either `pip` or `conda/mamba` 
+use either `pip` or `conda/mamba`
 
     pip install importnb
     conda install -cconda-forge importnb
@@ -95,7 +95,7 @@ all the available entry points are found with
     from importnb.entry_points import list_aliases
     list_aliases()
 
-#### loading directly from file 
+#### loading directly from file
 
     Untitled = Notebook.load("Untitled.ipynb")
 
@@ -146,7 +146,7 @@ an outcome of resolving the most recently changed is that you can import your mo
 #### `pytest`
 
 since `importnb` transforms notebooks to python documents we can use these as source for tests.
-`importnb`s `pytest` extension is not fancy, it only allows for conventional pytest test discovery. 
+`importnb`s `pytest` extension is not fancy, it only allows for conventional pytest test discovery.
 
 `nbval` is alternative testing tools that validates notebook outputs. this style is near to using notebooks as `doctest` while `importnb` primarily adds the ability to write `unittest`s in notebooks. adding tests to notebooks help preserve them over time.
 
@@ -156,14 +156,14 @@ the `importnb.Notebook` machinery is extensible. it allows other file formats to
 
     class MyLoader(importnb.Notebook): pass
 
-    
+
 ---
 
 ## developer
 
 ```bash
 pip install -e.      # install in development mode
-hatch run test:cov   # test 
+hatch run test:cov   # test
 ```
 
 * `importnb` uses `hatch` for testing in python and `IPython`
@@ -182,15 +182,16 @@ a challenge with Jupyter notebooks is that they are `json` data. this poses prob
 
 #### line-for-line `json` parser
 
-python's `json` module is not pluggable in the way we need to find line numbers. since `importnb` is meant to be dependency free on installation we couldn't look to any other packages like `ujson` or `json5`. 
+python's `json` module is not pluggable in the way we need to find line numbers. since `importnb` is meant to be dependency free on installation we couldn't look to any other packages like `ujson` or `json5`.
 
 the need for line numbers is enough that we ship a standalone `json` grammar parser. to do this without extra dependencies we use the `lark` grammar package at build time:
 * we've defined a `json.g`ramar
 * we use `hatch` hooks to invoke `lark-standalone` that generates a standalone parser for the grammar. the generated file is shipped with the package.
+  * this code is licensed under the Mozilla Public License 2.0
 
 the result of `importnb` is `json` data translated into vertically sparse, valid python code.
 
-#### reproducibility caution with the fuzzy finder 
+#### reproducibility caution with the fuzzy finder
 
 ⚠️ fuzzy finding is not reproducible as your system will change over time. in python, "explicit is better than implicit" so defining strong fuzzy strings is best practice if you MUST use esotric names. an alternative option is to use the `importlib.import_module` machinery
 
