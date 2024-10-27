@@ -7,13 +7,50 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [environments]
 dev = ["deps-dev", "deps-check", "deps-lint", "deps-build", "deps-test", "tasks-dev"]
+build = ["deps-build", "tasks-build"]
 lint = ["deps-lint", "tasks-lint"]
+test = ["deps-test", "deps-run", "tasks-test"]
 
 [tasks]
 fix = {depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"]}
 lint = {depends-on = ["lint-ruff", "lint-mypy"]}
+test = {depends-on = ["test-pytest"]}
+build = {depends-on = ["build-lark", "build-sdist", "build-wheel"]}
+release = {depends-on = ["fix", "lint", "build", "test"]}
 
-# linting ######################################################################
+# build ########################################################################
+[feature.tasks-build.tasks.build-lark]
+cmd = '''
+python hatch_build.py > src/importnb/_json_parser.py
+'''
+inputs = ["src/importnb/json.g"]
+outputs = ["src/importnb/_json_parser.py"]
+
+[feature.tasks-build.tasks.build-sdist]
+cmd = "pyproject-build . --sdist --no-isolation"
+inputs = ["pyproject.toml", "src/**/*.{py,g}", "{README.md,LICENSE,LICENSE-MPL-2.0}"]
+outputs = ["dist/*.tar.gz"]
+
+[feature.tasks-build.tasks.build-wheel]
+cmd = "pyproject-build . --wheel --no-isolation"
+inputs = ["pyproject.toml", "src/**/*.{py,g}", "{README.md,LICENSE,LICENSE-MPL-2.0}"]
+outputs = ["dist/*.whl"]
+
+# test #########################################################################
+[feature.tasks-test.tasks.test-pytest]
+cmd = """
+python -m pip install -e . -vv --no-deps --ignore-installed
+&& pytest
+  --cov importnb
+  --cov-branch
+  --cov-context test
+  --cov-report html
+  --cov-report term-missing:skip-covered
+  --no-cov-on-fail
+"""
+inputs = ["pyproject.toml", "{docs,src}/**/*.{py,ipynb}", "!**/.ipynb_checkpoints"]
+
+# lint #########################################################################
 [feature.tasks-lint.tasks]
 lint-ruff = {cmd = """
   ruff format --check && ruff check
@@ -22,7 +59,7 @@ lint-ruff = {cmd = """
   "{src,docs}/**/*.{py,ipynb}",
   "!**/.ipynb_checkpoints",
 ]}
-fix-nbstripout = "nbstripout --keep-id docs"
+fix-nbstripout = "nbstripout --keep-id --drop-empty-cells docs"
 fix-ruff = {cmd = """
   ruff format && ruff check --fix-only
 """, inputs = [
@@ -39,7 +76,7 @@ fix-taplo = {cmd = """
 """, inputs = ["*.toml"]}
 
 # dev ##########################################################################
-[feature.tasks-dev.tasks.lab]
+[feature.tasks-dev.tasks.serve-lab]
 cmd = "jupyter lab --no-browser --debug"
 
 # deps #########################################################################
@@ -50,6 +87,7 @@ importlib-metadata = ">=4.8.3"
 hatchling = "*"
 hatch-vcs = "*"
 lark = "*"
+python-build = "*"
 
 [feature.deps-lint.dependencies]
 actionlint-with-all = "*"
@@ -63,6 +101,7 @@ taplo = "*"
 pytest = "*"
 coverage = "*"
 pytest-cov = "*"
+pip = "*"
 
 [feature.deps-docs.dependencies]
 mkdocs-jupyter = "*"

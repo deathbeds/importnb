@@ -50,3 +50,7 @@ def get_standalone():
     python = StringIO()
     gen_standalone(lark, partial(print, file=python))
     return python.getvalue()
+
+
+if __name__ == "__main__":
+    print(get_standalone())
