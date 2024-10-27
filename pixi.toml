@@ -39,7 +39,7 @@ outputs = ["dist/*.whl"]
 # test #########################################################################
 [feature.tasks-test.tasks.test-pytest]
 cmd = """
-python -m pip install -e . -vv --no-deps --ignore-installed
+python -m pip install -e . -vv --no-deps --ignore-installed --disable-pip-version-check
 && pytest
   --cov importnb
   --cov-branch
@@ -98,10 +98,13 @@ ruff = "*"
 taplo = "*"
 
 [feature.deps-test.dependencies]
-pytest = "*"
+"ruamel.yaml" = "*"
 coverage = "*"
-pytest-cov = "*"
+doit = "*"
 pip = "*"
+pytest = "*"
+pytest-cov = "*"
+tomli-w = "*"
 
 [feature.deps-docs.dependencies]
 mkdocs-jupyter = "*"

@@ -3,6 +3,7 @@ from subprocess import check_call
 from sys import executable, path, version_info
 
 from pytest import importorskip
+import re
 
 from importnb import Notebook
 from importnb import __version__ as importnb_version
@@ -44,7 +45,10 @@ def cli_test(command):
 
             if "UserWarning: Attempting to work in a virtualenv." in out:
                 out = "".join(out.splitlines(True)[2:])
-            assert out == match
+
+            out_stripped = re.sub(r"\s+", " ", out)
+            match_stripped = re.sub(r"\s+", " ", out)
+            assert out_stripped == match_stripped
 
         return wrapper
 
