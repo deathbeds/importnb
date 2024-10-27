@@ -1,5 +1,6 @@
 """Import jupyter notebooks as python modules and scripts."""
-__all__ = "Notebook", "reload", "imports", "__version__"
+
+__all__ = "Notebook", "__version__", "imports", "reload"
 
 
 def is_ipython():

@@ -40,7 +40,7 @@ class FuzzySpec(FileModuleSpec):
 def fuzzy_query(str):
     new = ""
     for chr in str:
-        new += (not new.endswith("__") or chr != "_") and chr or ""
+        new += ((not new.endswith("__") or chr != "_") and chr) or ""
     return new.replace("__", "*").replace("_", "?")
 
 

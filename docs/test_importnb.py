@@ -32,13 +32,13 @@ def ref():
     return Notebook.load_file(HERE / "Untitled42.ipynb")
 
 
-@fixture()
+@fixture
 def clean():
     yield
     unimport(CLOBBER)
 
 
-@fixture()
+@fixture
 def package(ref):
     package = HERE / "my_package"
     package.mkdir(parents=True, exist_ok=True)
@@ -49,7 +49,7 @@ def package(ref):
     rmtree(package)
 
 
-@fixture()
+@fixture
 def minified(ref):
     minified = Path(HERE / "minified.ipynb")
     with open(ref.__file__) as f, open(minified, "w") as o:
@@ -59,7 +59,7 @@ def minified(ref):
     minified.unlink()
 
 
-@fixture()
+@fixture
 def untitled_py(ref):
     py = Path(ref.__file__).with_suffix(".py")
     py.touch()

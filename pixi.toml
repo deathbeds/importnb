@@ -15,15 +15,28 @@ lint = {depends-on = ["lint-ruff", "lint-mypy"]}
 
 # linting ######################################################################
 [feature.tasks-lint.tasks]
-fix-ruff = "echo TODO && exit 1"
-fix-nbstripout = "echo TODO && exit 1"
-lint-ruff = "echo TODO && exit 1"
-lint-mypy = "echo TODO && exit 1"
-fix-taplo = {cmd = """taplo fmt *.toml
+lint-ruff = {cmd = """
+  ruff format --check && ruff check
+""", inputs = [
+  "pyproject.toml",
+  "{src,docs}/**/*.{py,ipynb}",
+  "!**/.ipynb_checkpoints",
+]}
+fix-nbstripout = "nbstripout --keep-id docs"
+fix-ruff = {cmd = """
+  ruff format && ruff check --fix-only
+""", inputs = [
+  "pyproject.toml",
+  "{src,docs}/**/*.{py,ipynb}",
+  "!**/.ipynb_checkpoints",
+]}
+lint-mypy = "mypy -p importnb"
+fix-taplo = {cmd = """
+  taplo fmt *.toml
   --option=array_auto_collapse=true
   --option=compact_inline_tables=true
-  --option=column_width=88""", inputs = ["*.toml"]}
-
+  --option=column_width=88
+""", inputs = ["*.toml"]}
 
 # dev ##########################################################################
 [feature.tasks-dev.tasks.lab]

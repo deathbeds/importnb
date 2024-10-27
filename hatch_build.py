@@ -16,12 +16,10 @@ class LarkStandAloneBuildHook(BuildHookInterface):
             py = get_standalone()
             python_parser.write_text(py)
         # its really important to remember the preceeding /
-        build_data["artifacts"].extend(
-            [
-                "/src/importnb/_json_parser.py",
-                "/src/importnb/json.g",
-            ]
-        )
+        build_data["artifacts"].extend([
+            "/src/importnb/_json_parser.py",
+            "/src/importnb/json.g",
+        ])
 
 
 def get_logger():

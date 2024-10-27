@@ -5,7 +5,6 @@ notebooks combine code, markdown, and raw cells to create a complete document.
 the importnb loader provides an interface for transforming these objects to valid python.
 """
 
-
 import ast
 import inspect
 import re
@@ -103,7 +102,7 @@ class Loader(Interface, SourceFileLoader):
     @property
     def finder(self):
         """Generate a new finder based on the state of an existing loader"""
-        return self.include_fuzzy_finder and FuzzyFinder or FileFinder
+        return (self.include_fuzzy_finder and FuzzyFinder) or FileFinder
 
     def raw_to_source(self, source):
         """Transform a string from a raw file to python source."""
@@ -188,7 +187,7 @@ class Loader(Interface, SourceFileLoader):
             # from importlib
             if code is None:
                 raise ImportError(
-                    f"cannot load module {module.__name__!r} when " "get_code() returns None",
+                    f"cannot load module {module.__name__!r} when get_code() returns None",
                 )
 
             if inspect.CO_COROUTINE not in _get_co_flags_set(code.co_flags):
@@ -262,11 +261,10 @@ class Loader(Interface, SourceFileLoader):
             if all(map(e.__contains__, self.extensions)):
                 self._loader_hook_position = None
                 return self
-        else:
-            self._loader_hook_position = loader_id + 1
-            details.insert(self._loader_hook_position, (self.loader, self.extensions))
-            sys.path_hooks[path_id] = self.finder.path_hook(*details)
-            sys.path_importer_cache.clear()
+        self._loader_hook_position = loader_id + 1
+        details.insert(self._loader_hook_position, (self.loader, self.extensions))
+        sys.path_hooks[path_id] = self.finder.path_hook(*details)
+        sys.path_importer_cache.clear()
         return self
 
     def __exit__(self, *excepts):
@@ -285,7 +283,7 @@ class Loader(Interface, SourceFileLoader):
 
         >>> assert Notebook.load_file('foo.ipynb')
         """
-        name = main and "__main__" or filename
+        name = (main and "__main__") or filename
         loader = cls(name, str(filename), **kwargs)
         spec = FileModuleSpec(name, loader, origin=loader.path)
         module = loader.create_module(spec)
@@ -374,7 +372,7 @@ class Loader(Interface, SourceFileLoader):
         from runpy import _run_module_code
 
         self = cls()
-        name = main and "__main__" or mod_name or "<raw code>"
+        name = (main and "__main__") or mod_name or "<raw code>"
 
         return _dict_module(
             _run_module_code(self.raw_to_source(code), mod_name=name, script_name=script_name),
