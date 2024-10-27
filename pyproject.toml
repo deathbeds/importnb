@@ -1,19 +1,15 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = [
-  "hatch-vcs",
-  "hatchling",
-]
+requires = ["hatch-vcs", "hatchling"]
 
 [project]
 name = "importnb"
 description = "import jupyter notebooks as python modules and scripts."
 readme = "README.md"
-keywords = [
-]
+keywords = []
 license = "BSD-3-Clause AND MPL-2.0"
-license-files = { paths = ["LICENSE", "LICENSE-MPL-2.0"] }
-authors = [{ name = "tonyfast", email = "tony.fast@gmail.com" }]
+license-files = {paths = ["LICENSE", "LICENSE-MPL-2.0"]}
+authors = [{name = "tonyfast", email = "tony.fast@gmail.com"}]
 requires-python = ">=3.8"
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -32,25 +28,12 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dynamic = [
-  "version",
-] # uses hatch-vcs
-dependencies = [
-  'importlib-metadata>=4.8.3; python_version < "3.10"',
-]
+dynamic = ["version"] # uses hatch-vcs
+dependencies = ['importlib-metadata>=4.8.3; python_version < "3.10"']
 [project.optional-dependencies]
-docs = [
-  "mkdocs-jupyter",
-  "mkdocs-material",
-  "ruamel.yaml",
-]
-interactive = [
-  "ipython",
-]
-tasks = [
-  "doit",
-  "tomli",
-]
+docs = ["mkdocs-jupyter", "mkdocs-material", "ruamel.yaml"]
+interactive = ["ipython"]
+tasks = ["doit", "tomli"]
 [project.urls]
 Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
@@ -84,21 +67,14 @@ exclude = ["docs/coverage", "docs/*.png"]
 
 [tool.hatch.envs.test]
 # test matrix
-dependencies = [
-  "pytest",
-  "pytest-cov",
-  "doit",
-  "tomli",
-  "ruamel.yaml",
-  "tomli_w",
-]
+dependencies = ["pytest", "pytest-cov", "doit", "tomli", "ruamel.yaml", "tomli_w"]
 
 [[tool.hatch.envs.test.matrix]]
 version = ["stdlib", "interactive"]
 
 [tool.hatch.envs.test.overrides]
-matrix.version.features = [{ value = "interactive", if = ["interactive"] }]
-matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
+matrix.version.features = [{value = "interactive", if = ["interactive"]}]
+matrix.version.dev-mode = [{value = false, env = ["CI=true"]}]
 
 [tool.hatch.envs.test.scripts]
 cov = """
@@ -139,10 +115,7 @@ serve = "mkdocs serve"
 
 [tool.hatch.envs.format]
 skip-install = true
-dependencies = [
-  "ruff",
-  "pyproject-fmt"
-]
+dependencies = ["ruff", "pyproject-fmt"]
 
 [tool.hatch.envs.format.scripts]
 code = """
@@ -159,12 +132,7 @@ extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
 isort.known-first-party = ["importnb"]
-ignore = [
-  "D203",
-  "D213",
-  "COM812",
-  "ISC001",
-]
+ignore = ["D203", "D213", "COM812", "ISC001"]
 select = [
   "A",
   "ANN",
@@ -218,15 +186,8 @@ select = [
 
 [tool.pytest.ini_options]
 cache_dir = "build/.cache/pytest"
-addopts = [
-  "-vv",
-  "--tb=long",
-  "--color=yes",
-  "-ppytester",
-]
-filterwarnings = [
-  "error",
-]
+addopts = ["-vv", "--tb=long", "--color=yes", "-ppytester"]
+filterwarnings = ["error"]
 
 [tool.coverage.run]
 data_file = "build/.coverage"

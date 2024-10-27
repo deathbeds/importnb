@@ -1,0 +1,66 @@
+"$schema" = "https://pixi.sh/v0.34.0/schema/manifest/schema.json"
+
+[project]
+name = "importnb"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[environments]
+dev = ["deps-dev", "deps-check", "deps-lint", "deps-build", "deps-test", "tasks-dev"]
+lint = ["deps-lint", "tasks-lint"]
+
+[tasks]
+fix = {depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"]}
+lint = {depends-on = ["lint-ruff", "lint-mypy"]}
+
+# linting ######################################################################
+[feature.tasks-lint.tasks]
+fix-ruff = "echo TODO && exit 1"
+fix-nbstripout = "echo TODO && exit 1"
+lint-ruff = "echo TODO && exit 1"
+lint-mypy = "echo TODO && exit 1"
+fix-taplo = {cmd = """taplo fmt *.toml
+  --option=array_auto_collapse=true
+  --option=compact_inline_tables=true
+  --option=column_width=88""", inputs = ["*.toml"]}
+
+
+# dev ##########################################################################
+[feature.tasks-dev.tasks.lab]
+cmd = "jupyter lab --no-browser --debug"
+
+# deps #########################################################################
+[feature.deps-run.dependencies]
+importlib-metadata = ">=4.8.3"
+
+[feature.deps-build.dependencies]
+hatchling = "*"
+hatch-vcs = "*"
+lark = "*"
+
+[feature.deps-lint.dependencies]
+actionlint-with-all = "*"
+lxml = "*"
+mypy = "*"
+nbstripout = "*"
+ruff = "*"
+taplo = "*"
+
+[feature.deps-test.dependencies]
+pytest = "*"
+coverage = "*"
+pytest-cov = "*"
+
+[feature.deps-docs.dependencies]
+mkdocs-jupyter = "*"
+mkdocs-material = "*"
+"ruamel.yaml" = "*"
+
+[feature.deps-check.dependencies]
+vale = "*"
+pytest-check-links = "*"
+
+[feature.deps-dev.dependencies]
+jupyterlab = "*"
+notebook = "*"
+ipywidgets = "*"
