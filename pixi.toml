@@ -109,7 +109,7 @@ cmd = "jupyter lab --no-browser --debug"
 [environments]
 dev = ["deps-dev", "deps-check", "deps-lint", "deps-build", "deps-test", "tasks-dev"]
 build = ["deps-build", "tasks-build"]
-lint = ["deps-build", "deps-pip", "deps-run", "deps-lint", "tasks-lint"]
+lint = ["deps-build", "deps-pip", "deps-run", "deps-lint", "deps-test", "tasks-lint"]
 test = ["deps-test", "deps-build", "deps-pip", "deps-run", "tasks-test"]
 
 # deps #########################################################################
@@ -132,6 +132,7 @@ mypy = "*"
 nbstripout = "*"
 ruff = "*"
 taplo = "*"
+types-pyyaml = "*"
 
 [feature.deps-test.dependencies]
 "ruamel.yaml" = "*"

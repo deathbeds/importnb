@@ -5,6 +5,8 @@ notebooks combine code, markdown, and raw cells to create a complete document.
 the importnb loader provides an interface for transforming these objects to valid python.
 """
 
+from __future__ import annotations
+
 import ast
 import inspect
 import re
@@ -275,7 +277,7 @@ class Loader(Interface, SourceFileLoader):
             sys.path_importer_cache.clear()
 
     @classmethod
-    def load_file(cls, filename, main=True, **kwargs):
+    def load_file(cls, filename, main=True, **kwargs) -> ModuleType:
         """Import a notebook as a module from a filename.
 
         dir: The directory to load the file from.

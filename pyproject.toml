@@ -125,13 +125,15 @@ ruff --fix-only .
 ruff format .
 """
 
+# ruff #########################################################################
 [tool.ruff]
 target-version = "py39"
 preview = true
 cache-dir = "build/.cache/ruff"
 line-length = 100
 extend-include = ["*.ipynb"]
-extend-exclude = [".pixi/**"]
+extend-exclude = [".pixi/**", "**/_json_parser.py"]
+
 
 [tool.ruff.lint]
 isort.known-first-party = ["importnb"]
@@ -228,11 +230,13 @@ select = ["ALL"]
 [tool.ruff.lint.per-file-ignores]
 "test_cli.py" = ["D415", "D207", "D208"]
 
+# pytest #######################################################################
 [tool.pytest.ini_options]
 cache_dir = "build/.cache/pytest"
 addopts = ["-vv", "--tb=long", "--color=yes", "-ppytester"]
 filterwarnings = ["error"]
 
+# coverage #####################################################################
 [tool.coverage.run]
 data_file = "build/.coverage"
 [tool.coverage.report]
@@ -240,3 +244,22 @@ omit = ["_json_parser.py"]
 [tool.coverage.html]
 directory = "docs/coverage"
 show_contexts = true
+
+# mypy #########################################################################
+[tool.mypy]
+cache_dir = "build/.cache/mypy"
+exclude = "_json_parser.py"
+# language settings
+python_version = "3.9"
+allow_redefinition = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true
+warn_return_any = true
+warn_unused_ignores = true
+strict = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ["doit", "doit.*", "importlib._*", "tomllib"]
