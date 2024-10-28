@@ -1,9 +1,9 @@
+import re
 from pathlib import Path
 from subprocess import check_call
 from sys import executable, path, version_info
 
 from pytest import importorskip
-import re
 
 from importnb import Notebook
 from importnb import __version__ as importnb_version

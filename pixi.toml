@@ -5,18 +5,25 @@ name = "importnb"
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
-[environments]
-dev = ["deps-dev", "deps-check", "deps-lint", "deps-build", "deps-test", "tasks-dev"]
-build = ["deps-build", "tasks-build"]
-lint = ["deps-lint", "tasks-lint"]
-test = ["deps-test", "deps-run", "tasks-test"]
-
 [tasks]
 fix = {depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"]}
 lint = {depends-on = ["lint-ruff", "lint-mypy"]}
 test = {depends-on = ["test-pytest"]}
 build = {depends-on = ["build-lark", "build-sdist", "build-wheel"]}
 release = {depends-on = ["fix", "lint", "build", "test"]}
+
+# fragments ####################################################################
+pip-- = "python -m pip install -vv --no-deps --ignore-installed --no-build-isolation"
+pip-check-- = """
+export FREEZES=build/reports/pip-freeze
+&& export FROZEN=$FREEZES/$PIXI_ENVIRONMENT_NAME.txt
+&& rm -rf $FROZEN
+&& python -m pip check
+&& mkdir -p $FREEZES
+&& python -m pip list --format=freeze > $FROZEN
+"""
+pip-e-- = "pixi r pip-- -e . && pixi r pip-check--"
+pip-whl-- = "pixi r pip-- --find-links=dist --no-index importnb && pixi r pip-check--"
 
 # build ########################################################################
 [feature.tasks-build.tasks.build-lark]
@@ -37,10 +44,14 @@ inputs = ["pyproject.toml", "src/**/*.{py,g}", "{README.md,LICENSE,LICENSE-MPL-2
 outputs = ["dist/*.whl"]
 
 # test #########################################################################
+[feature.tasks-test.tasks.pip-test]
+cmd = """pixi r -e test pip-e--"""
+outputs = ["build/reports/pip-freeze/test.txt"]
+inputs = ["pyproject.toml"]
+
 [feature.tasks-test.tasks.test-pytest]
 cmd = """
-python -m pip install -e . -vv --no-deps --ignore-installed --disable-pip-version-check
-&& pytest
+pytest
   --cov importnb
   --cov-branch
   --cov-context test
@@ -48,10 +59,19 @@ python -m pip install -e . -vv --no-deps --ignore-installed --disable-pip-versio
   --cov-report term-missing:skip-covered
   --no-cov-on-fail
 """
-inputs = ["pyproject.toml", "{docs,src}/**/*.{py,ipynb}", "!**/.ipynb_checkpoints"]
+inputs = [
+  "pyproject.toml",
+  "{docs,src}/**/*.{py,ipynb}",
+  "!**/.ipynb_checkpoints",
+  "build/reports/pip-freeze/test.txt",
+]
+depends-on = ["pip-test"]
 
 # lint #########################################################################
 [feature.tasks-lint.tasks]
+pip-lint = {cmd = """
+  pixi r -e lint pip-e--
+""", inputs = ["pyproject.toml"], outputs = ["build/reports/pip-freeze/lint.txt"]}
 lint-ruff = {cmd = """
   ruff format --check && ruff check
 """, inputs = [
@@ -67,7 +87,13 @@ fix-ruff = {cmd = """
   "{src,docs}/**/*.{py,ipynb}",
   "!**/.ipynb_checkpoints",
 ]}
-lint-mypy = "mypy -p importnb"
+lint-mypy = {cmd = "mypy -p importnb", depends-on = [
+  "pip-lint",
+], inputs = [
+  "build/reports/pip-freeze/test.txt",
+  "src/**/*.py",
+  "!**/.ipynb_checkpoints",
+]}
 fix-taplo = {cmd = """
   taplo fmt *.toml
   --option=array_auto_collapse=true
@@ -79,6 +105,13 @@ fix-taplo = {cmd = """
 [feature.tasks-dev.tasks.serve-lab]
 cmd = "jupyter lab --no-browser --debug"
 
+# envs #########################################################################
+[environments]
+dev = ["deps-dev", "deps-check", "deps-lint", "deps-build", "deps-test", "tasks-dev"]
+build = ["deps-build", "tasks-build"]
+lint = ["deps-build", "deps-pip", "deps-run", "deps-lint", "tasks-lint"]
+test = ["deps-test", "deps-build", "deps-pip", "deps-run", "tasks-test"]
+
 # deps #########################################################################
 [feature.deps-run.dependencies]
 importlib-metadata = ">=4.8.3"
@@ -88,6 +121,9 @@ hatchling = "*"
 hatch-vcs = "*"
 lark = "*"
 python-build = "*"
+
+[feature.deps-pip.dependencies]
+pip = "*"
 
 [feature.deps-lint.dependencies]
 actionlint-with-all = "*"
@@ -101,7 +137,6 @@ taplo = "*"
 "ruamel.yaml" = "*"
 coverage = "*"
 doit = "*"
-pip = "*"
 pytest = "*"
 pytest-cov = "*"
 tomli-w = "*"
