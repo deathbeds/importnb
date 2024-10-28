@@ -1,5 +1,10 @@
+from __future__ import annotations
+
 import sys
 from contextlib import ExitStack, contextmanager
+from typing import TYPE_CHECKING, Any
+
+__all__ = ("imports",)
 
 # See compatibility note on `group`
 # https://docs.python.org/3/library/importlib.metadata.html#entry-points
@@ -8,30 +13,33 @@ if sys.version_info < (3, 10):
 else:
     from importlib.metadata import entry_points
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
-__all__ = ("imports",)
-ENTRY_POINTS = dict()
+    from .loader import Loader
+
+ENTRY_POINTS: dict[str, type[Loader] | str] = {}
 
 
-def get_importnb_entry_points():
+def get_importnb_entry_points() -> dict[str, type[Loader] | str]:
     """Discover the known importnb entry points"""
-    global ENTRY_POINTS
     for ep in entry_points(group="importnb"):
         ENTRY_POINTS[ep.name] = ep.value
     return ENTRY_POINTS
 
 
-def loader_from_alias(alias):
+def loader_from_alias(alias: str) -> type[Loader]:
     """Load an attribute from a module using the entry points value specificaiton"""
     from importlib import import_module
     from operator import attrgetter
 
     module, _, member = alias.rpartition(":")
     module = import_module(module)
-    return attrgetter(member)(module)
+    loader: type[Loader] = attrgetter(member)(module)
+    return loader
 
 
-def loader_from_ep(alias):
+def loader_from_ep(alias: str) -> type[Loader]:
     """Discover a loader for an importnb alias or vaue"""
     if ":" in alias:
         return loader_from_alias(alias)
@@ -39,14 +47,16 @@ def loader_from_ep(alias):
     if not ENTRY_POINTS:
         get_importnb_entry_points()
 
-    if alias in ENTRY_POINTS:
-        return loader_from_alias(ENTRY_POINTS[alias])
+    aliased = ENTRY_POINTS.get(alias)
+
+    if isinstance(aliased, str):
+        return loader_from_alias(aliased)
 
     raise ValueError(f"{alias} is not a valid loader alias.")
 
 
 @contextmanager
-def imports(*names):
+def imports(*names: str) -> Generator[Any, None, None]:
     """A shortcut to importnb loaders through entrypoints"""
     types = set()
     with ExitStack() as stack:
@@ -58,7 +68,7 @@ def imports(*names):
         yield stack
 
 
-def list_aliases():
+def list_aliases() -> list[str]:
     """List the entry points associated with importnb"""
     if not ENTRY_POINTS:
         get_importnb_entry_points()
