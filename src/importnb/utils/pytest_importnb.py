@@ -44,7 +44,7 @@ class AlternativeModule(pytest.Module):
                 return None
 
         if hasattr(cls, "from_parent"):
-            return cls.from_parent(parent, path=Path(path))
+            return cls.from_parent(parent=parent, path=Path(path))
         return cls(path, parent)
 
 

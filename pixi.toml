@@ -8,12 +8,17 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 [tasks]
 fix = {depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"]}
 lint = {depends-on = ["lint-ruff", "lint-mypy"]}
-test = {depends-on = ["test-pytest"]}
+test = {depends-on = ["test-pytest", "test-oldest-pytest"]}
 build = {depends-on = ["build-lark", "build-sdist", "build-wheel"]}
 release = {depends-on = ["fix", "lint", "build", "test"]}
 
 # fragments ####################################################################
-pip-- = "python -m pip install -vv --no-deps --ignore-installed --no-build-isolation"
+pip-- = """python -m pip install
+  -vv
+  --no-deps
+  --ignore-installed
+  --no-build-isolation
+  --disable-pip-version-check"""
 pip-check-- = """
 export FREEZES=build/reports/pip-freeze
 && export FROZEN=$FREEZES/$PIXI_ENVIRONMENT_NAME.txt
@@ -24,6 +29,13 @@ export FREEZES=build/reports/pip-freeze
 """
 pip-e-- = "pixi r pip-- -e . && pixi r pip-check--"
 pip-whl-- = "pixi r pip-- --find-links=dist --no-index importnb && pixi r pip-check--"
+pytest-- = """
+pytest
+  --cov importnb
+  --cov-branch
+  --cov-context test
+  --cov-report term-missing:skip-covered
+  --no-cov-on-fail"""
 
 # build ########################################################################
 [feature.tasks-build.tasks.build-lark]
@@ -50,22 +62,30 @@ outputs = ["build/reports/pip-freeze/test.txt"]
 inputs = ["pyproject.toml"]
 
 [feature.tasks-test.tasks.test-pytest]
-cmd = """
-pytest
-  --cov importnb
-  --cov-branch
-  --cov-context test
-  --cov-report html
-  --cov-report term-missing:skip-covered
-  --no-cov-on-fail
-"""
+cmd = """pixi r -e test pytest-- --cov-report=html:docs/coverage"""
+depends-on = ["pip-test"]
 inputs = [
   "pyproject.toml",
   "{docs,src}/**/*.{py,ipynb}",
   "!**/.ipynb_checkpoints",
   "build/reports/pip-freeze/test.txt",
 ]
-depends-on = ["pip-test"]
+
+# test oldest ##################################################################
+[feature.tasks-test-oldest.tasks.pip-test-oldest]
+cmd = """pixi r -e test-oldest pip-e--"""
+outputs = ["build/reports/pip-freeze/test-oldest.txt"]
+inputs = ["pyproject.toml"]
+
+[feature.tasks-test-oldest.tasks.test-oldest-pytest]
+cmd = """pixi r -e test-oldest pytest--"""
+depends-on = ["pip-test-oldest"]
+inputs = [
+  "pyproject.toml",
+  "{docs,src}/**/*.{py,ipynb}",
+  "!**/.ipynb_checkpoints",
+  "build/reports/pip-freeze/test-oldest.txt",
+]
 
 # lint #########################################################################
 [feature.tasks-lint.tasks]
@@ -108,41 +128,59 @@ cmd = "jupyter lab --no-browser --debug"
 # envs #########################################################################
 [environments]
 dev = [
-  "deps-dev",
-  "deps-run",
-  "deps-run-interactive",
-  "deps-check",
-  "deps-lint",
   "deps-build",
-  "deps-test",
+  "deps-check",
+  "deps-dev",
   "deps-docs",
+  "deps-lint",
+  "deps-run-interactive",
+  "deps-run",
+  "deps-test",
   "tasks-dev",
 ]
 build = ["deps-build", "tasks-build"]
 lint = [
   "deps-build",
-  "deps-pip",
-  "deps-run",
-  "deps-run-interactive",
   "deps-lint",
+  "deps-pip",
+  "deps-run-interactive",
+  "deps-run",
   "deps-test",
   "tasks-lint",
 ]
 test = [
-  "deps-test",
   "deps-build",
   "deps-pip",
-  "deps-run",
   "deps-run-interactive",
+  "deps-run",
+  "deps-test",
   "tasks-test",
+]
+test-oldest = [
+  "deps-build",
+  "deps-pip",
+  "deps-run-interactive-oldest",
+  "deps-run-interactive",
+  "deps-run-oldest",
+  "deps-run",
+  "deps-test-oldest",
+  "deps-test",
+  "tasks-test-oldest",
 ]
 
 # deps #########################################################################
 [feature.deps-run.dependencies]
 importlib-metadata = ">=4.8.3"
 
+[feature.deps-run-oldest.dependencies]
+importlib-metadata = "4.8.3"
+python = "3.9.*"
+
 [feature.deps-run-interactive.dependencies]
 ipython = "*"
+
+[feature.deps-run-interactive-oldest.dependencies]
+ipython = "8.7.*"
 
 [feature.deps-build.dependencies]
 hatchling = "*"
@@ -169,6 +207,9 @@ doit = "*"
 pytest = "*"
 pytest-cov = "*"
 tomli-w = "*"
+
+[feature.deps-test-oldest.dependencies]
+pytest = "7.0.*"
 
 [feature.deps-docs.dependencies]
 mkdocs-jupyter = "*"
