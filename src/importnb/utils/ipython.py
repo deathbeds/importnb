@@ -1,28 +1,45 @@
+from __future__ import annotations
+
 import json
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from IPython import paths
 from IPython.core import profiledir
 
+if TYPE_CHECKING:
+    from IPython.core.profiledir import ProfileDir
 
-def get_config(profile="default"):
+
+def get_config(profile: str | None = "default") -> Path:
     profile_dir = profiledir.ProfileDir()
+    find_profile_dir_by_name: Any = profile_dir.find_profile_dir_by_name
+    profile_: ProfileDir | None = None
+
     try:
-        profile = profile_dir.find_profile_dir_by_name(paths.get_ipython_dir(), profile)
+        profile_ = find_profile_dir_by_name(paths.get_ipython_dir(), profile)
     except profiledir.ProfileDirError:
         os.makedirs(paths.get_ipython_dir(), exist_ok=True)
-        profile = profile_dir.create_profile_dir_by_name(paths.get_ipython_dir(), profile)
-    return Path(profile.location, "ipython_config.json")
+        profile_ = find_profile_dir_by_name(paths.get_ipython_dir(), profile)
+
+    if profile_ is None:
+        raise RuntimeError("IPython profile could not be found or created.")
+
+    return Path(profile_.location, "ipython_config.json")
 
 
-def load_config():
+def load_config() -> tuple[dict[str, Any], Path]:
     location = get_config()
+    JSONDecodeError: type[Exception] = getattr(json, "JSONDecodeError", ValueError)
+    config = {}
     try:
         with location.open() as file:
             config = json.load(file)
-    except (FileNotFoundError, getattr(json, "JSONDecodeError", ValueError)):
-        config = {}
+    except FileNotFoundError:
+        pass
+    except JSONDecodeError:
+        pass
 
     if "InteractiveShellApp" not in config:
         config["InteractiveShellApp"] = {}
@@ -33,25 +50,25 @@ def load_config():
     return config, location
 
 
-def install(project="importnb"):
+def install(project: str = "importnb") -> None:
     """Install the importnb extension"""
     config, location = load_config()
     projects = [project]
     if not installed(project):
         config["InteractiveShellApp"]["extensions"].extend(projects)
 
-    with location.open("w") as file:
+    with location.open("w", encoding="utf-8") as file:
         json.dump(config, file)
 
     print(f"""✅ {projects}""")
 
 
-def installed(project):
-    config, location = load_config()
+def installed(project: str) -> bool:
+    config = load_config()[0]
     return project in config.get("InteractiveShellApp", {}).get("extensions", [])
 
 
-def uninstall(project="importnb"):
+def uninstall(project: str = "importnb") -> None:
     """Uninstall the importnb extension"""
     config, location = load_config()
     projects = [project]
@@ -59,6 +76,7 @@ def uninstall(project="importnb"):
         ext for ext in config["InteractiveShellApp"]["extensions"] if ext not in projects
     ]
 
-    with location.open("w") as file:
+    with location.open("w", encoding="utf-8") as file:
         json.dump(config, file)
+
     print(f"""❌ {projects}.""")

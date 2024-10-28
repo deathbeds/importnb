@@ -242,9 +242,15 @@ filterwarnings = ["error"]
 data_file = "build/.coverage"
 [tool.coverage.report]
 omit = ["_json_parser.py"]
+exclude_lines = [
+  "if TYPE_CHECKING:",
+  """if __name__ == "__main__":""",
+  "pragma: no cover",
+]
 [tool.coverage.html]
 directory = "docs/coverage"
 show_contexts = true
+
 
 # mypy #########################################################################
 [tool.mypy]
@@ -263,4 +269,10 @@ strict = true
 
 [[tool.mypy.overrides]]
 ignore_missing_imports = true
-module = ["doit", "doit.*", "importlib._*", "tomllib"]
+module = [
+  "doit",
+  "doit.*",
+  "importlib._bootstrap",
+  "importlib._bootstrap_external",
+  "tomllib",
+]

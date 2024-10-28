@@ -107,7 +107,17 @@ cmd = "jupyter lab --no-browser --debug"
 
 # envs #########################################################################
 [environments]
-dev = ["deps-dev", "deps-check", "deps-lint", "deps-build", "deps-test", "tasks-dev"]
+dev = [
+  "deps-dev",
+  "deps-run",
+  "deps-run-interactive",
+  "deps-check",
+  "deps-lint",
+  "deps-build",
+  "deps-test",
+  "deps-docs",
+  "tasks-dev",
+]
 build = ["deps-build", "tasks-build"]
 lint = [
   "deps-build",
