@@ -24,11 +24,15 @@ from importlib.machinery import SourceFileLoader
 from importlib.util import LazyLoader, find_spec
 from pathlib import Path
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 from . import get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FileModuleSpec, FuzzyFinder, get_loader_details, get_loader_index
+
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
 
 __all__ = "Notebook", "reload"
 
@@ -310,7 +314,7 @@ class Loader(Interface, SourceFileLoader):
             return module
 
     @classmethod
-    def load_argv(cls, argv=None, *, parser=None):
+    def load_argv(cls, argv: list[str] | None = None, *, parser=None) -> ModuleType:
         """Load a module based on python arguments
 
         load a notebook from its file name
@@ -381,7 +385,7 @@ class Loader(Interface, SourceFileLoader):
         )
 
     @staticmethod
-    def get_argparser(parser=None):
+    def get_argparser(parser: ArgumentParser | None = None) -> ArgumentParser:
         from argparse import REMAINDER, ArgumentParser
 
         from importnb import __version__

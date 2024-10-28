@@ -109,12 +109,30 @@ cmd = "jupyter lab --no-browser --debug"
 [environments]
 dev = ["deps-dev", "deps-check", "deps-lint", "deps-build", "deps-test", "tasks-dev"]
 build = ["deps-build", "tasks-build"]
-lint = ["deps-build", "deps-pip", "deps-run", "deps-lint", "deps-test", "tasks-lint"]
-test = ["deps-test", "deps-build", "deps-pip", "deps-run", "tasks-test"]
+lint = [
+  "deps-build",
+  "deps-pip",
+  "deps-run",
+  "deps-run-interactive",
+  "deps-lint",
+  "deps-test",
+  "tasks-lint",
+]
+test = [
+  "deps-test",
+  "deps-build",
+  "deps-pip",
+  "deps-run",
+  "deps-run-interactive",
+  "tasks-test",
+]
 
 # deps #########################################################################
 [feature.deps-run.dependencies]
 importlib-metadata = ">=4.8.3"
+
+[feature.deps-run-interactive.dependencies]
+ipython = "*"
 
 [feature.deps-build.dependencies]
 hatchling = "*"
