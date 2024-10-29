@@ -62,7 +62,11 @@ outputs = ["build/reports/pip-freeze/test.txt"]
 inputs = ["pyproject.toml"]
 
 [feature.tasks-test.tasks.test-pytest]
-cmd = """pixi r -e test pytest-- --cov-report=html:docs/coverage"""
+cmd = """pixi r -e test pytest--
+  --cov-report=html:docs/coverage
+  --self-contained-html
+  --html=docs/pytest.html
+"""
 depends-on = ["pip-test"]
 inputs = [
   "pyproject.toml",
@@ -206,6 +210,7 @@ coverage = "*"
 doit = "*"
 pytest = "*"
 pytest-cov = "*"
+pytest-html = "*"
 tomli-w = "*"
 
 [feature.deps-test-oldest.dependencies]

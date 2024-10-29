@@ -3,5 +3,6 @@ __pycache__/
 .pixi/
 build/
 dist/
+docs/pytest.html
 src/importnb/_json_parser.py
 src/importnb/_version.py
