@@ -16,15 +16,14 @@ import textwrap
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from functools import partial
-from importlib import _bootstrap as bootstrap
 from importlib import reload
-from importlib._bootstrap import _init_module_attrs, _requires_builtin
-from importlib._bootstrap_external import FileFinder, decode_source
-from importlib.machinery import SourceFileLoader
+from importlib._bootstrap import _call_with_frames_removed, _init_module_attrs, _requires_builtin
+from importlib._bootstrap_external import decode_source
+from importlib.machinery import FileFinder, ModuleSpec, SourceFileLoader
 from importlib.util import LazyLoader, find_spec
 from pathlib import Path
-from types import ModuleType
-from typing import TYPE_CHECKING
+from types import CodeType, ModuleType
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 from . import get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
@@ -32,7 +31,11 @@ from .docstrings import update_docstring
 from .finder import FileModuleSpec, FuzzyFinder, get_loader_details, get_loader_index
 
 if TYPE_CHECKING:
-    from argparse import ArgumentParser
+    from argparse import ArgumentParser, Namespace
+    from collections.abc import Generator
+    from importlib.abc import Loader as Loader_
+
+    A = TypeVar("A", bound=ast.AST)
 
 __all__ = "Notebook", "reload"
 
@@ -42,9 +45,9 @@ MAGIC = re.compile(r"^\s*%{2}", re.MULTILINE)
 ALLOW_TOP_LEVEL_AWAIT = getattr(ast, "PyCF_ALLOW_TOP_LEVEL_AWAIT", 0x0)
 
 
-def _get_co_flags_set(co_flags):
+def _get_co_flags_set(co_flags: int) -> set[int]:
     """Return a deconstructed set of code flags from a code object."""
-    flags = set()
+    flags: set[int] = set()
     for i in range(12):
         flag = 1 << i
         if co_flags & flag:
@@ -58,7 +61,7 @@ def _get_co_flags_set(co_flags):
 
 
 class SourceModule(ModuleType):
-    def __fspath__(self):
+    def __fspath__(self) -> str | None:
         return self.__file__
 
 
@@ -66,39 +69,37 @@ class SourceModule(ModuleType):
 class Interface:
     """a configuration python importing interface"""
 
-    name: str = None
-    path: str = None
+    name: str | None = None
+    path: str | None = None
     lazy: bool = False
-    extensions: tuple = field(default_factory=[".ipy", ".ipynb"].copy)
+    extensions: tuple[str, ...] = field(default_factory=lambda: (".ipy", ".ipynb"))
     include_fuzzy_finder: bool = True
     include_markdown_docstring: bool = True
     include_non_defs: bool = True
     include_await: bool = True
-    module_type: ModuleType = field(default=SourceModule)
+    module_type: type[ModuleType] = field(default_factory=lambda: SourceModule)
     no_magic: bool = False
 
-    _loader_hook_position: int = field(default=0, repr=False)
+    _loader_hook_position: int | None = field(default=0, repr=False)
 
-    def __new__(cls, name=None, path=None, **kwargs):
+    def __new__(cls, name: str | None = None, path: str | None = None, **kwargs: Any) -> Interface:
         kwargs.update(name=name, path=path)
         self = super().__new__(cls)
-        self.__init__(**kwargs)
+        self.__init__(**kwargs)  # type: ignore[misc]
         return self
 
 
-class Loader(Interface, SourceFileLoader):
+class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
     """The simplest implementation of a Notebook Source File Loader.
     This class breaks down the loading process into finer steps.
     """
 
-    extensions: tuple = field(default_factory=[".py"].copy)
+    extensions: tuple[str, ...] = field(default_factory=lambda: (".py",))
 
     @property
-    def loader(self):
+    def loader(self) -> Callable[..., Loader_]:
         """Generate a new loader based on the state of an existing loader."""
-        loader = type(self)
-        if self.lazy:
-            loader = LazyLoader.factory(loader)
+        loader = LazyLoader.factory(type(self)) if self.lazy else type(self)  # type: ignore[arg-type]
         # Strip the leading underscore from slots
         params = asdict(self)
         params.pop("name")
@@ -106,27 +107,29 @@ class Loader(Interface, SourceFileLoader):
         return partial(loader, **params)
 
     @property
-    def finder(self):
+    def finder(self) -> type[FileFinder]:
         """Generate a new finder based on the state of an existing loader"""
-        return (self.include_fuzzy_finder and FuzzyFinder) or FileFinder
+        return FuzzyFinder if self.include_fuzzy_finder else FileFinder
 
-    def raw_to_source(self, source):
+    def raw_to_source(self, source: str) -> str:
         """Transform a string from a raw file to python source."""
         if self.path and self.path.endswith(".ipynb"):
             # when we encounter notebooks we apply different transformers to the diff cell types
             return LineCacheNotebookDecoder(
                 code=self.code,
-                raw=self.raw,
-                markdown=self.markdown,
+                raw=self.raw,  # type: ignore[attr-defined]
+                markdown=self.markdown,  # type: ignore[attr-defined]
             ).decode(source, self.path)
 
         # for a normal file we just apply the code transformer.
         return self.code(source)
 
-    def source_to_nodes(self, source, path="<unknown>", *, _optimize=-1):
+    def source_to_nodes(
+        self, source: str, path: str = "<unknown>", *, _optimize: int = -1
+    ) -> ast.Module:
         """Parse source string as python ast"""
         flags = ast.PyCF_ONLY_AST
-        return bootstrap._call_with_frames_removed(
+        nodes: ast.Module = _call_with_frames_removed(
             compile,
             source,
             path,
@@ -135,11 +138,14 @@ class Loader(Interface, SourceFileLoader):
             dont_inherit=True,
             optimize=_optimize,
         )
+        return nodes
 
-    def nodes_to_code(self, nodes, path="<unknown>", *, _optimize=-1):
+    def nodes_to_code(
+        self, nodes: ast.Module, path: str = "<unknown>", *, _optimize: int = -1
+    ) -> CodeType:
         """Compile ast nodes to python code object"""
         flags = ALLOW_TOP_LEVEL_AWAIT
-        return bootstrap._call_with_frames_removed(
+        code: CodeType = _call_with_frames_removed(
             compile,
             nodes,
             path,
@@ -148,8 +154,11 @@ class Loader(Interface, SourceFileLoader):
             dont_inherit=True,
             optimize=_optimize,
         )
+        return code
 
-    def source_to_code(self, source, path="<unknown>", *, _optimize=-1):
+    def source_to_code(  # type: ignore[override]
+        self, source: str, path: str = "<unknown>", *, _optimize: int = -1
+    ) -> CodeType:
         """Tangle python source to compiled code by:
         1. parsing the source as ast nodes
         2. compiling the ast nodes as python code
@@ -157,37 +166,41 @@ class Loader(Interface, SourceFileLoader):
         nodes = self.source_to_nodes(source, path, _optimize=_optimize)
         return self.nodes_to_code(nodes, path, _optimize=_optimize)
 
-    def get_data(self, path):
+    def get_data(self, path: str) -> str:  # type: ignore[override]
         """get_data injects an input transformation before the raw text.
 
         this method allows notebook json to be transformed line for line into vertically sparse python code.
         """
-        return self.raw_to_source(decode_source(super().get_data(self.path)))
+        return self.raw_to_source(decode_source(super().get_data(self.path or path)))
 
-    def create_module(self, spec):
+    def create_module(self, spec: ModuleSpec) -> ModuleType:
         """An overloaded create_module method injecting fuzzy finder setup up logic."""
         module = self.module_type(str(spec.name))
         _init_module_attrs(spec, module)
         if self.name:
             module.__name__ = self.name
 
-        if module.__file__.endswith((".ipynb", ".ipy")):
-            module.get_ipython = get_ipython
+        if f"{module.__file__}".endswith((".ipynb", ".ipy")):
+            module.get_ipython = get_ipython  # type: ignore[attr-defined]
 
-        if getattr(spec, "alias", None):
+        alias: str | None = getattr(spec, "alias", None)
+        if alias is not None:
             # put a fuzzy spec on the modules to avoid re importing it.
             # there is a funky trick you do with the fuzzy finder where you
             # load multiple versions with different finders.
 
-            sys.modules[spec.alias] = module
+            sys.modules[alias] = module
 
         return module
 
-    def exec_module(self, module):
+    def exec_module(self, module: ModuleType) -> None:
         """Execute the module."""
         # importlib uses module.__name__, but when running modules as __main__ name will change.
         # this approach uses the original name on the spec.
         try:
+            if TYPE_CHECKING:
+                assert module.__spec__
+
             code = self.get_code(module.__spec__.name)
 
             # from importlib
@@ -198,7 +211,7 @@ class Loader(Interface, SourceFileLoader):
 
             if inspect.CO_COROUTINE not in _get_co_flags_set(code.co_flags):
                 # if there isn't any async non sense then we proceed with convention.
-                bootstrap._call_with_frames_removed(exec, code, module.__dict__)
+                _call_with_frames_removed(exec, code, module.__dict__)
             else:
                 self.aexec_module_sync(module)
 
@@ -209,7 +222,7 @@ class Loader(Interface, SourceFileLoader):
 
             raise e
 
-    def aexec_module_sync(self, module):
+    def aexec_module_sync(self, module: ModuleType) -> None:
         if "anyio" in sys.modules:
             __import__("anyio").run(self.aexec_module, module)
         else:
@@ -217,14 +230,17 @@ class Loader(Interface, SourceFileLoader):
 
             get_event_loop().run_until_complete(self.aexec_module(module))
 
-    async def aexec_module(self, module):
+    async def aexec_module(self, module: ModuleType) -> None:
         """An async exec_module method permitting top-level await."""
         # there is so redudancy in this approach, but it starts getting asynchier.
+        if TYPE_CHECKING:
+            assert self.path
+
         nodes = self.source_to_nodes(self.get_data(self.path))
 
         # iterate through the nodes and compile individual statements
         for node in nodes.body:
-            co = bootstrap._call_with_frames_removed(
+            co = _call_with_frames_removed(
                 compile,
                 ast.Module([node], []),
                 module.__file__,
@@ -234,34 +250,33 @@ class Loader(Interface, SourceFileLoader):
             if inspect.CO_COROUTINE in _get_co_flags_set(co.co_flags):
                 # when something async is encountered we compile it with the single flag
                 # this lets us use eval to retreive our coroutine.
-                co = bootstrap._call_with_frames_removed(
+                co = _call_with_frames_removed(
                     compile,
                     ast.Interactive([node]),
                     module.__file__,
                     "single",
                     flags=ALLOW_TOP_LEVEL_AWAIT,
                 )
-                await bootstrap._call_with_frames_removed(
+                await _call_with_frames_removed(
                     eval,
                     co,
                     module.__dict__,
                     module.__dict__,
                 )
             else:
-                bootstrap._call_with_frames_removed(exec, co, module.__dict__, module.__dict__)
+                _call_with_frames_removed(exec, co, module.__dict__, module.__dict__)
 
-    def code(self, str):
-        return dedent(str)
+    def code(self, raw: str) -> str:
+        return dedent(raw)
 
-    @classmethod
-    @_requires_builtin
-    def is_package(cls, fullname):
+    @_requires_builtin  # type: ignore[misc]
+    def is_package(self, fullname: str) -> bool:
         """Return False as built-in modules are never packages."""
         if "." not in fullname:
             return True
         return super().is_package(fullname)
 
-    def __enter__(self):
+    def __enter__(self) -> Loader:
         path_id, loader_id, details = get_loader_index(".py")
         for _, e in details:
             if all(map(e.__contains__, self.extensions)):
@@ -273,7 +288,7 @@ class Loader(Interface, SourceFileLoader):
         sys.path_importer_cache.clear()
         return self
 
-    def __exit__(self, *excepts):
+    def __exit__(self, *excepts: object) -> None:
         if self._loader_hook_position is not None:
             path_id, details = get_loader_details()
             details.pop(self._loader_hook_position)
@@ -281,7 +296,7 @@ class Loader(Interface, SourceFileLoader):
             sys.path_importer_cache.clear()
 
     @classmethod
-    def load_file(cls, filename, main=True, **kwargs) -> ModuleType:
+    def load_file(cls, filename: str, main: bool = True, **kwargs: Any) -> ModuleType:
         """Import a notebook as a module from a filename.
 
         dir: The directory to load the file from.
@@ -289,7 +304,7 @@ class Loader(Interface, SourceFileLoader):
 
         >>> assert Notebook.load_file('foo.ipynb')
         """
-        name = (main and "__main__") or filename
+        name = "__main__" if main else filename
         loader = cls(name, str(filename), **kwargs)
         spec = FileModuleSpec(name, loader, origin=loader.path)
         module = loader.create_module(spec)
@@ -297,7 +312,7 @@ class Loader(Interface, SourceFileLoader):
         return module
 
     @classmethod
-    def load_module(cls, module, main=False, **kwargs):
+    def load_module(cls, name: str, main: bool = False, **kwargs: Any) -> ModuleType:  # type: ignore[override]
         """Import a notebook as a module.
 
         main: Load the module in the __main__ context.
@@ -305,8 +320,14 @@ class Loader(Interface, SourceFileLoader):
         >>> assert Notebook.load_module('foo')
         """
         with cls() as loader:
-            spec = find_spec(module)
+            spec = find_spec(name)
+            if TYPE_CHECKING:
+                assert spec
+                assert spec.loader
+
             module = spec.loader.create_module(spec)
+            if TYPE_CHECKING:
+                assert module
             if main:
                 sys.modules["__main__"] = module
                 module.__name__ = "__main__"
@@ -314,7 +335,9 @@ class Loader(Interface, SourceFileLoader):
             return module
 
     @classmethod
-    def load_argv(cls, argv: list[str] | None = None, *, parser=None) -> ModuleType:
+    def load_argv(
+        cls, argv: list[str] | None = None, *, parser: ArgumentParser | None = None
+    ) -> ModuleType | None:
         """Load a module based on python arguments
 
         load a notebook from its file name
@@ -327,9 +350,7 @@ class Loader(Interface, SourceFileLoader):
             parser = cls.get_argparser()
 
         if argv is None:
-            from sys import argv
-
-            argv = argv[1:]
+            argv = sys.argv[1:]
 
         if isinstance(argv, str):
             argv = shlex.split(argv)
@@ -337,12 +358,13 @@ class Loader(Interface, SourceFileLoader):
         parsed_args = parser.parse_args(argv)
         module = cls.load_ns(parsed_args)
         if module is None:
-            return parser.print_help()
+            parser.print_help()
+            return None
 
         return module
 
     @classmethod
-    def load_ns(cls, ns):
+    def load_ns(cls, ns: Namespace) -> ModuleType | None:
         """Load a module from a namespace, used when loading module from sys.argv parameters."""
         if ns.tasks:
             # i don't quite why we need to do this here, but we do. so don't move it
@@ -373,9 +395,16 @@ class Loader(Interface, SourceFileLoader):
         return result
 
     @classmethod
-    def load_code(cls, code, argv=None, mod_name=None, script_name=None, main=False):
+    def load_code(
+        cls,
+        code: str,
+        argv: list[str] | None = None,
+        mod_name: str | None = None,
+        script_name: str | None = None,
+        main: bool = False,
+    ) -> ModuleType:
         """Load a module from raw source code"""
-        from runpy import _run_module_code
+        from runpy import _run_module_code  # type: ignore[attr-defined]
 
         self = cls()
         name = (main and "__main__") or mod_name or "<raw code>"
@@ -404,18 +433,20 @@ class Loader(Interface, SourceFileLoader):
         return parser
 
 
-def comment(str):
+def comment(str: str) -> str:
     return textwrap.indent(str, "# ")
 
 
 class DefsOnly(ast.NodeTransformer):
     INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
 
-    def visit_Module(self, node):
-        args = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
-        if VERSION >= (3, 8):
-            args += (node.type_ignores,)
-        return ast.Module(*args)
+    def visit(self, node: A) -> A:
+        visited: A = super().visit(node)
+        return visited
+
+    def visit_Module(self, node: ast.Module) -> ast.Module:
+        args: tuple[Any, ...] = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
+        return ast.Module(*[*args])
 
 
 class Notebook(Loader):
@@ -428,31 +459,33 @@ class Notebook(Loader):
     * Lazy module loading.  A module is executed the first time it is used in a script.
     """
 
-    def markdown(self, str):
+    def markdown(self, str: str) -> str:
         return quote(str)
 
-    def raw(self, str):
+    def raw(self, str: str) -> str:
         return comment(str)
 
-    def visit(self, nodes):
+    def visit(self, nodes: A) -> A:
         if self.include_non_defs:
             return nodes
         return DefsOnly().visit(nodes)
 
-    def code(self, str):
+    def code(self, str: str) -> str:
         if self.no_magic:
             if MAGIC.match(str):
                 return comment(str)
         return super().code(str)
 
-    def source_to_nodes(self, source, path="<unknown>", *, _optimize=-1):
+    def source_to_nodes(
+        self, source: str, path: str = "<unknown>", *, _optimize: int = -1
+    ) -> ast.Module:
         nodes = super().source_to_nodes(source, path)
         if self.include_markdown_docstring:
             nodes = update_docstring(nodes)
         nodes = self.visit(nodes)
         return ast.fix_missing_locations(nodes)
 
-    def raw_to_source(self, source):
+    def raw_to_source(self, source: str) -> str:
         """Transform a string from a raw file to python source."""
         if self.path and self.path.endswith(".ipynb"):
             # when we encounter notebooks we apply different transformers to the diff cell types
@@ -466,14 +499,14 @@ class Notebook(Loader):
         return self.code(source)
 
 
-def _dict_module(ns):
-    m = ModuleType(ns.get("__name__"), ns.get("__doc__"))
+def _dict_module(ns: dict[str, str]) -> ModuleType:
+    m = ModuleType(f"""{ns.get("__name__")}""", ns.get("__doc__"))
     m.__dict__.update(ns)
     return m
 
 
 @contextmanager
-def main_argv(prog, args=None):
+def main_argv(prog: str, args: list[str] | None = None) -> Generator[None, None, None]:
     if args is not None:
         args = [prog] + list(args)
         prior, sys.argv = sys.argv, args
@@ -483,20 +516,20 @@ def main_argv(prog, args=None):
 
 
 try:
-    import IPython
     from IPython.core.inputsplitter import IPythonInputSplitter
+    from IPython.core.inputtransformer import cellmagic, ipy_prompt, leading_indent
 
-    dedent = IPythonInputSplitter(
+    dedent: Callable[[str], str] = IPythonInputSplitter(
         line_input_checker=False,
         physical_line_transforms=[
-            IPython.core.inputsplitter.leading_indent(),
-            IPython.core.inputsplitter.ipy_prompt(),
-            IPython.core.inputsplitter.cellmagic(end_on_blank_line=False),
+            leading_indent(),
+            ipy_prompt(),
+            cellmagic(end_on_blank_line=False),
         ],
-    ).transform_cell
+    ).transform_cell  # type: ignore[no-untyped-call]
 except ModuleNotFoundError:
 
-    def dedent(body):
+    def dedent(body: str) -> str:
         from textwrap import dedent, indent
 
         if MAGIC.match(body):

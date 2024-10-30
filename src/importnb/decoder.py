@@ -21,9 +21,9 @@ def quote(object: str, *, quotes: str = "'''") -> str:
 class Transformer(Transformer_[Any, Any]):
     def __init__(
         self,
-        markdown: Callable[..., str] = quote,
-        code: Callable[..., str] = textwrap.dedent,
-        raw: Callable[..., str] = partial(textwrap.indent, prefix="# "),
+        markdown: Callable[..., str] | None = quote,
+        code: Callable[..., str] | None = textwrap.dedent,
+        raw: Callable[..., str] | None = partial(textwrap.indent, prefix="# "),
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -38,7 +38,7 @@ class Transformer(Transformer_[Any, Any]):
         key = s[0][-1]
         if key == "cells":
             if not isinstance(s[-1], Tree):
-                return self.render(list(map(dict, s[-1])))
+                return self.render(list(map(dict, s[-1])))  # type: ignore[arg-type]
         elif key in {"source", "text"}:
             return key, s[-1]
         elif key == "cell_type":
@@ -74,7 +74,7 @@ class Transformer(Transformer_[Any, Any]):
                     s = [s]
                 l, lines = s[0][0], [x[1] for x in s]
                 body.extend([""] * (l - len(body)))
-                lines = self.render_one(t, lines)
+                lines = self.render_one(f"{t}", lines)
                 body.extend(lines.splitlines())
         return "\n".join([*body, ""])
 
