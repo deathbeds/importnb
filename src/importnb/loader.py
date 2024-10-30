@@ -445,8 +445,12 @@ class DefsOnly(ast.NodeTransformer):
         return visited
 
     def visit_Module(self, node: ast.Module) -> ast.Module:
-        args: tuple[Any, ...] = ([x for x in node.body if isinstance(x, self.INCLUDE)],)
-        return ast.Module(*[*args])
+        args: tuple[Any, ...] = (
+            [x for x in node.body if isinstance(x, self.INCLUDE)],
+            node.type_ignores,
+        )
+
+        return ast.Module(*args)
 
 
 class Notebook(Loader):

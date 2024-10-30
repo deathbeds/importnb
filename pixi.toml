@@ -150,38 +150,36 @@ outputs = ["build/lite/SHA256SUMS"]
 depends-on = ["build-pypi"]
 
 # lint #########################################################################
-[feature.tasks-lint.tasks]
-pip-lint = {cmd = """
-  pixi r -e lint pip-e--
-""", inputs = ["pyproject.toml"], outputs = ["build/reports/pip-freeze/lint.txt"]}
-lint-ruff = {cmd = """
-  ruff format --check && ruff check
-""", inputs = [
-  "pyproject.toml",
-  "{src,docs}/**/*.{py,ipynb}",
-  "!**/.ipynb_checkpoints",
-]}
-fix-nbstripout = "nbstripout --keep-id --drop-empty-cells docs"
-fix-ruff = {cmd = """
-  ruff format && ruff check --fix-only
-""", inputs = [
-  "pyproject.toml",
-  "{src,docs}/**/*.{py,ipynb}",
-  "!**/.ipynb_checkpoints",
-]}
-lint-mypy = {cmd = "mypy -p importnb", depends-on = [
-  "pip-lint",
-], inputs = [
-  "build/reports/pip-freeze/test.txt",
-  "src/**/*.py",
-  "!**/.ipynb_checkpoints",
-]}
-fix-taplo = {cmd = """
+[feature.tasks-lint.tasks.pip-lint]
+cmd = """pixi r -e lint pip-e--"""
+inputs = ["pyproject.toml"]
+outputs = ["build/reports/pip-freeze/lint.txt"]
+
+[feature.tasks-lint.tasks.fix-nbstripout]
+cmd = "nbstripout --keep-id --drop-empty-cells docs"
+inputs = ["docs/**/*.ipynb", "!**/.ipynb_checkpoints"]
+
+[feature.tasks-lint.tasks.fix-ruff]
+cmd = """ruff format && ruff check --fix-only"""
+inputs = ["pyproject.toml", "{src,docs}/**/*.{py,ipynb}", "!**/.ipynb_checkpoints"]
+
+[feature.tasks-lint.tasks.fix-taplo]
+cmd = """
   taplo fmt *.toml
   --option=array_auto_collapse=true
   --option=compact_inline_tables=true
-  --option=column_width=88
-""", inputs = ["*.toml"]}
+  --option=column_width=100
+"""
+inputs = ["*.toml"]
+
+[feature.tasks-lint.tasks.lint-mypy]
+cmd = "mypy -p importnb"
+depends-on = ["pip-lint"]
+inputs = ["build/reports/pip-freeze/test.txt", "src/**/*.py", "!**/.ipynb_checkpoints"]
+
+[feature.tasks-lint.tasks.lint-ruff]
+cmd = """ruff format --check && ruff check"""
+inputs = ["pyproject.toml", "{src,docs}/**/*.{py,ipynb}", "!**/.ipynb_checkpoints"]
 
 # dev ##########################################################################
 [feature.tasks-dev.tasks.serve-lab]
@@ -190,14 +188,7 @@ cmd = "jupyter lab --no-browser --debug"
 # envs #########################################################################
 [environments]
 build = ["deps-build", "tasks-build"]
-test = [
-  "deps-build",
-  "deps-pip",
-  "deps-run-interactive",
-  "deps-run",
-  "deps-test",
-  "tasks-test",
-]
+test = ["deps-build", "deps-pip", "deps-run-interactive", "deps-run", "deps-test", "tasks-test"]
 test-oldest = [
   "deps-build",
   "deps-pip",
