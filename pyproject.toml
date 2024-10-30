@@ -31,11 +31,6 @@ classifiers = [
 ]
 dynamic = ["version"] # uses hatch-vcs
 dependencies = ['importlib-metadata>=4.8.3; python_version < "3.10"']
-[project.optional-dependencies]
-docs = ["mkdocs-jupyter", "mkdocs-material", "ruamel.yaml"]
-interactive = ["ipython"]
-tasks = ["doit", "tomli"]
-pytest = ["pytest >=7"]
 [project.urls]
 Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
@@ -53,78 +48,20 @@ yml = "importnb.loaders:Yaml"
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
 
-[tool.hatch.build.hooks.custom]
-# we build a json grammar with each release because we fiend for line numbers
-dependencies = ["lark"]
-
 [tool.hatch.version]
-# versioning
 source = "vcs"
 
-[tool.hatch.build.hooks.vcs]
-version-file = "src/importnb/_version.py"
-
-[tool.hatch.build.targets.sdist]
-exclude = ["docs/coverage", "docs/*.png"]
-
-[tool.hatch.envs.test]
-# test matrix
-dependencies = ["pytest", "pytest-cov", "doit", "tomli", "ruamel.yaml", "tomli_w"]
-
-[[tool.hatch.envs.test.matrix]]
-version = ["stdlib", "interactive"]
-
-[tool.hatch.envs.test.overrides]
-matrix.version.features = [{value = "interactive", if = ["interactive"]}]
-matrix.version.dev-mode = [{value = false, env = ["CI=true"]}]
-
-[tool.hatch.envs.test.scripts]
-cov = """
-pytest --cov=importnb --cov-branch --cov-context=test --cov-report=html --cov-report=term-missing:skip-covered --no-cov-on-fail
-"""
-run = "pytest"
-
-[tool.hatch.envs.released]
-# test a release on test-pypi
-dependencies = [
-  "importnb",
-  "IPython",
-  "pytest",
-  "pytest-cov",
-  "doit",
-  "tomli_w",
-  "ruamel.yaml",
+[tool.hatch.build]
+hooks.vcs.version-file = "src/importnb/_version.py"
+hooks.custom.dependencies = ["lark"]
+targets.sdist.exclude = [
+  ".github",
+  ".readthedocs.yml",
+  "docs/*.png",
+  "docs/coverage",
+  "lite",
+  "pixi.*",
 ]
-
-[tool.hatch.envs.released.scripts]
-test = "pytest"
-
-[tool.hatch.envs.released.env-vars]
-PIP_INDEX_URL = "https://test.pypi.org/simple/"
-PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
-PIP_PRE = "1"
-
-[[tool.hatch.envs.released.matrix]]
-version = ["interactive", "stdlib"]
-
-[tool.hatch.envs.docs]
-# documentation
-features = ["docs"]
-
-[tool.hatch.envs.docs.scripts]
-build = "mkdocs build"
-serve = "mkdocs serve"
-
-[tool.hatch.envs.format]
-skip-install = true
-dependencies = ["ruff", "pyproject-fmt"]
-
-[tool.hatch.envs.format.scripts]
-code = """
-pyproject-fmt pyproject.toml
-ruff --fix-only .
-ruff format .
-"""
 
 # ruff #########################################################################
 [tool.ruff]
@@ -134,7 +71,6 @@ cache-dir = "build/.cache/ruff"
 line-length = 100
 extend-include = ["*.ipynb"]
 extend-exclude = [".pixi/**", "**/_json_parser.py"]
-
 
 [tool.ruff.lint]
 isort.known-first-party = ["importnb"]
@@ -197,6 +133,7 @@ ignore = [
   "N802",
   "N806",
   "N813",
+  "PYI034",
   "PERF203",
   "PLC0415",
   "PLC2701",
@@ -225,6 +162,7 @@ ignore = [
   "T201",
   "TRY003",
   "TRY201",
+  "TRY300",
   "TRY301",
   "W391",
   "YTT204",
@@ -238,6 +176,7 @@ select = ["ALL"]
 cache_dir = "build/.cache/pytest"
 addopts = ["-vv", "--tb=long", "--color=yes", "-ppytester"]
 filterwarnings = ["error"]
+testpaths = ["docs", "src"]
 
 # coverage #####################################################################
 [tool.coverage.run]

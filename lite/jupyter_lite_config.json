@@ -1,0 +1,10 @@
+{
+    "LiteBuildConfig": {
+      "output_dir": "../build/lite",
+      "contents": ["../docs"],
+      "cache_dir": "../build/.cache/lite/"
+    },
+    "PipliteAddon": {
+      "piplite_urls": ["../dist"]
+    }
+  }

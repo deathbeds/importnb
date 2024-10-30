@@ -1,8 +1,10 @@
 __pycache__/
 .ipynb_checkpoints/
 .pixi/
+*.doit.*
 build/
 dist/
 docs/pytest.html
+site
 src/importnb/_json_parser.py
 src/importnb/_version.py
