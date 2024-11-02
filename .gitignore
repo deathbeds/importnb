@@ -9,6 +9,7 @@ docs/coverage
 docs/my_package
 docs/mypy
 docs/pytest.html
+docs/minified.ipynb
 site
 src/importnb/_json_parser.py
 src/importnb/_version.py

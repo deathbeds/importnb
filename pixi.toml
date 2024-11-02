@@ -232,6 +232,7 @@ docs = ["deps-docs", "deps-build", "deps-run", "deps-pip", "tasks-docs"]
 lite = ["deps-lite", "tasks-lite"]
 lint = [
   "deps-build",
+  "deps-docs",
   "deps-lint",
   "deps-pip",
   "deps-run-interactive",
