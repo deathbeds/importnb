@@ -6,20 +6,13 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [tasks]
-release = {depends-on = [
-  "fix",
-  "lint",
-  "build",
-  "test",
-  "docs",
-  # TODO: link check and spell check
-  # "check",
-]}
+release = {depends-on = ["fix", "lint", "build", "test", "docs", "check"]}
 docs = {depends-on = ["lite-build", "docs-build"]}
 test = {depends-on = ["test-pytest", "test-oldest-pytest"]}
 build = {depends-on = ["build-lark", "build-pypi"]}
 fix = {depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"]}
 lint = {depends-on = ["lint-ruff", "lint-mypy-src", "lint-mypy-dev", "lint-actionlint"]}
+check = {depends-on = ["check-links"]}
 
 # fragments ####################################################################
 pip-- = """python -m pip install
@@ -203,6 +196,27 @@ inputs = ["pyproject.toml", "{src,docs}/**/*.{py,ipynb}", "!**/.ipynb_checkpoint
 cmd = "actionlint -shellcheck=shellcheck -pyflakes=pyflakes"
 inputs = [".github/workflows"]
 
+# check ########################################################################
+[feature.tasks-check.tasks.check-links]
+cmd = """
+  rm -rf build/reports/check-links
+  && mkdir -p build/reports/check-links
+  && cd build/reports/check-links
+  && touch pytest.ini
+  && pytest
+    -vv
+    -c pytest.ini
+    -p no:warnings
+    --rootdir=.
+    --check-links
+    --check-anchors
+    --check-links-ignore '^https?://'
+    -k "not (404 or coverage or lite or mypy or Untitled)"
+    ../../../site/**/*.html
+"""
+depends-on = ["docs-build"]
+inputs = ["site/**/*.html"]
+
 # dev ##########################################################################
 [feature.tasks-dev.tasks.pip-dev]
 cmd = """pixi r -e dev pip-e--"""
@@ -240,8 +254,10 @@ lint = [
   "deps-test",
   "tasks-lint",
 ]
+check = ["deps-check", "tasks-check"]
 dev = [
   "deps-build",
+  "deps-check",
   "deps-dev",
   "deps-docs",
   "deps-lint",
@@ -317,3 +333,7 @@ jupyterlite-core = "0.4.3"
 jupyterlite-pyodide-kernel = "0.4.3"
 jupyterlite-core-with-translation = "*"
 jupyterlite-core-with-libarchive = "*"
+
+[feature.deps-check.dependencies]
+pytest-check-links = "*"
+pytest-html = "*"

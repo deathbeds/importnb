@@ -12,71 +12,97 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CACHE_EPOCH: 0
+  INB_PIXI_VERSION: 0.34.0
 
 jobs:
-  format:
-    name: format
+  build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v${{ env.INB_PIXI_VERSION }}
+          cache: true
+          environments: build
+      - run: pixi r build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inb-${{ github.run_number }}-dist
+          path: |
+            ./dist
+            ./.pixi/task-cache-v0
+            ./build/reports
+
+  lint:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: prefix-dev/setup-pixi@v0.8.1
       with:
-        fetch-depth: 0
-    - uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
-        cache: pip
-        cache-dependency-path: pyproject.toml
-    - name: install dev dependencies
-      run: python -m pip install --upgrade pip hatch
-    - name: run formatters
-      run: |
-        echo "~~~bash" > "${GITHUB_STEP_SUMMARY}"
-        hatch run format:code 2>&1 | tee --append "${GITHUB_STEP_SUMMARY}"
-        echo "~~~" >> "${GITHUB_STEP_SUMMARY}"
+        pixi-version: v${{ env.INB_PIXI_VERSION }}
+        cache: true
+        environments: lint
+    - run: pixi run fix
     - name: print diff
       run: |
         echo "~~~diff" >> "${GITHUB_STEP_SUMMARY}"
         git diff | tee --append "${GITHUB_STEP_SUMMARY}"
         echo "~~~" >> "${GITHUB_STEP_SUMMARY}"
+    - run: pixi run lint
 
-  test:
-    name: ${{ matrix.os }} ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
+  test-pixi:
+    needs: [build]
+    name: ${{ matrix.vm }} ${{ matrix.test-env }}
+    runs-on: ${{ matrix.vm }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "pypy3.9"]
         include:
-          - os: ubuntu-latest
-            hatch-envs: /home/runner/.local/share/hatch/env
-          - os: macos-latest
-            hatch-envs: /Users/runner/Library/Application Support/hatch/env
-          - os: windows-latest
-            hatch-envs: C:\Users\runneradmin\AppData\Local\hatch\env
-
+          - {vm: macos-13,       test-env: test-oldest}
+          - {vm: macos-latest,   test-env: test}
+          - {vm: ubuntu-latest,  test-env: test-oldest}
+          - {vm: ubuntu-latest,  test-env: test}
+          - {vm: windows-latest, test-env: test-oldest}
+          - {vm: windows-latest, test-env: test}
     steps:
       - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
         with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v4
+          pixi-version: v${{ env.INB_PIXI_VERSION }}
+          cache: true
+          environments: ${{ matrix.test-env }}
+      - uses: actions/download-artifact@v4
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: cache hatch envs
-        uses: actions/cache@v3
+          name: inb-${{ github.run_number }}-dist
+      - run: pixi r ${{ matrix.test-env }}
+      - if: always()
+        uses: actions/upload-artifact@v4
         with:
+          name: |-
+            inb-${{ github.run_number }}-${{ matrix.test-env }}-${{ matrix.vm }}
           path: |
-            ${{ matrix.hatch-envs }}
-          key: |
-            ${{ env.CACHE_EPOCH }}-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-      - name: install dev dependencies
-        run: python -m pip install --upgrade pip hatch
-      - name: run tests (coverage)
-        if: ${{ !contains(matrix.python-version, 'pypy') }}
-        run: hatch run test:cov
-      - name: run tests (no coverage)
-        if: ${{ contains(matrix.python-version, 'pypy') }}
-        run: hatch run test:run
+            ./docs
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v${{ env.INB_PIXI_VERSION }}
+          cache: true
+          environments: build docs lite
+      - uses: actions/download-artifact@v4
+        with:
+          name: inb-${{ github.run_number }}-dist
+      - run: pixi r docs
+      - run: pixi r check
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inb-${{ github.run_number }}-docs
+          path: |
+            site
+            - run: pixi r docs
