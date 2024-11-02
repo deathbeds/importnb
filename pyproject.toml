@@ -91,7 +91,12 @@ data_file = "build/.coverage"
 
 [tool.coverage.report]
 omit = ["_json_parser.py"]
-exclude_lines = ["if TYPE_CHECKING:", """if __name__ == "__main__":""", "pragma: no cover"]
+exclude_lines = [
+  """if __name__ == "__main__":""",
+  "if _BEAR_:",
+  "if TYPE_CHECKING:",
+  "pragma: no cover",
+]
 
 ## mypy ########################################################################
 [tool.coverage.html]
