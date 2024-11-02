@@ -154,7 +154,7 @@ inputs = ["pyproject.toml"]
 outputs = ["build/reports/pip-freeze/lint.txt"]
 
 [feature.tasks-lint.tasks.fix-nbstripout]
-cmd = "nbstripout --keep-id --drop-empty-cells docs"
+cmd = "nbstripout --keep-id --drop-empty-cells docs/*.ipynb"
 inputs = ["docs/**/*.ipynb", "!**/.ipynb_checkpoints"]
 
 [feature.tasks-lint.tasks.fix-ruff]

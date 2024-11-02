@@ -166,14 +166,6 @@ ignore = [
   "A001",
   "A002",
   "A004",
-  "ANN001",
-  "ANN002",
-  "ANN003",
-  "ANN201",
-  "ANN202",
-  "ANN204",
-  "ANN205",
-  "ANN206",
   "ANN401",
   "ARG001",
   "ARG002",
@@ -253,3 +245,4 @@ select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "test_cli.py" = ["D415", "D207", "D208"]
+"Untitled42.ipynb" = ["ANN001", "ANN201"]

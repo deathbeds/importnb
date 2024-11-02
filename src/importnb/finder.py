@@ -13,7 +13,7 @@ from typing import Any
 
 
 class FileModuleSpec(ModuleSpec):
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._set_fileattr = True
 
@@ -28,7 +28,7 @@ class FuzzySpec(FileModuleSpec):
         origin: str | None = None,
         loader_state: Any | None = None,
         is_package: bool | None = None,
-    ):
+    ) -> None:
         super().__init__(
             name,
             loader,
