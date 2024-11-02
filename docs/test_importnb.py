@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import inspect
 import json
@@ -7,13 +9,21 @@ from importlib import reload
 from importlib.util import find_spec
 from pathlib import Path
 from shutil import copyfile, rmtree
-from types import FunctionType
+from types import FunctionType, ModuleType
+from typing import TYPE_CHECKING, Any
 
 from pytest import fixture, mark, raises
 
 import importnb
 from importnb import Notebook, get_ipython, imports
-from importnb.loader import VERSION
+from importnb.finder import FileModuleSpec
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from importlib.machinery import ModuleSpec
+
+    from _pytest.pytester import Pytester
+    from pytest import CaptureFixture
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
@@ -28,31 +38,31 @@ ipy = mark.skipif(not IPY, reason="""Not IPython.""")
 
 
 @fixture(scope="session")
-def ref():
+def ref() -> ModuleType:
     return Notebook.load_file(HERE / "Untitled42.ipynb")
 
 
 @fixture
-def clean():
+def clean() -> Generator[None, None, None]:
     yield
     unimport(CLOBBER)
 
 
 @fixture
-def package(ref):
+def package(ref: ModuleType) -> Generator[Path, None, None]:
     package = HERE / "my_package"
     package.mkdir(parents=True, exist_ok=True)
     target = package / "my_module.ipynb"
-    copyfile(ref.__file__, package / target)
+    copyfile(f"{ref.__file__}", package / target)
     yield package
     target.unlink()
     rmtree(package)
 
 
 @fixture
-def minified(ref):
+def minified(ref: ModuleType) -> Generator[None, None, None]:
     minified = Path(HERE / "minified.ipynb")
-    with open(ref.__file__) as f, open(minified, "w") as o:
+    with open(f"{ref.__file__}") as f, open(minified, "w") as o:
         json.dump(json.load(f), o, separators=(",", ":"))
 
     yield
@@ -60,19 +70,20 @@ def minified(ref):
 
 
 @fixture
-def untitled_py(ref):
+def untitled_py(ref: ModuleType) -> Generator[None, None, None]:
+    assert ref.__file__
     py = Path(ref.__file__).with_suffix(".py")
     py.touch()
     yield
     py.unlink()
 
 
-def cant_reload(m):
+def cant_reload(m: ModuleType) -> None:
     with raises(ImportError):
         reload(m)
 
 
-def unimport(ns):
+def unimport(ns: str | tuple[str, ...]) -> None:
     """Unimport a module namespace"""
     from sys import modules, path_importer_cache
 
@@ -82,21 +93,22 @@ def unimport(ns):
     path_importer_cache.clear()
 
 
-def test_version():
+def test_version() -> None:
     assert importnb.__version__
 
 
-def test_ref(ref):
+def test_ref(ref: ModuleType) -> None:
+    assert ref.__file__
     assert ref.__file__.endswith(".ipynb")
 
 
-def test_finder():
+def test_finder() -> None:
     assert not find_spec("Untitled42")
     with Notebook():
         assert find_spec("Untitled42")
 
 
-def test_basic(clean, ref):
+def test_basic(clean: None, ref: ModuleType) -> None:
     with Notebook():
         import Untitled42
 
@@ -107,30 +119,33 @@ def test_basic(clean, ref):
         assert reload(Untitled42)
 
 
-def test_load_module(clean, ref):
+def test_load_module(clean: None, ref: ModuleType) -> None:
     m = Notebook.load_module("Untitled42")
     assert m.__file__ == ref.__file__
     cant_reload(m)
 
 
-def test_load_module_package(clean, package):
+def test_load_module_package(clean: None, package: Path) -> None:
     m = Notebook.load_module("my_package.my_module")
+    assert m
 
 
-def test_load_file(clean, ref):
+def test_load_file(clean: None, ref: ModuleType) -> None:
     m = Notebook.load_file("docs/Untitled42.ipynb")
+    assert m.__file__
+    assert ref.__file__
     assert ref.__file__.endswith(str(Path(m.__file__)))
     cant_reload(m)
 
 
-def test_load_code(clean):
+def test_load_code(clean: None) -> None:
     assert Notebook.load_code(""), "can't load an empty notebook"
     body = Path("docs/Untitled42.ipynb").read_text()
     m = Notebook.load_code(body)
     cant_reload(m)
 
 
-def test_package(clean, package):
+def test_package(clean: None, package: Path) -> None:
     with Notebook():
         import my_package.my_module
 
@@ -144,7 +159,7 @@ def test_package(clean, package):
 
 
 @mark.parametrize("magic", [True, False])
-def test_no_magic(capsys, clean, magic, ref):
+def test_no_magic(capsys: CaptureFixture[str], clean: None, magic: bool, ref: ModuleType) -> None:
     with Notebook(no_magic=not magic):
         import Untitled42
 
@@ -159,7 +174,7 @@ def test_no_magic(capsys, clean, magic, ref):
 
 
 @mark.parametrize("defs", [True, False])
-def test_defs_only(defs, ref):
+def test_defs_only(defs: bool, ref: ModuleType) -> None:
     known_defs = [
         k for k, v in vars(ref).items() if k[0] != "_" and isinstance(v, (type, FunctionType))
     ]
@@ -173,7 +188,7 @@ def test_defs_only(defs, ref):
             assert not any(hasattr(Untitled42, k) for k in not_defs)
 
 
-def test_fuzzy_finder(clean, ref, capsys):
+def test_fuzzy_finder(clean: None, ref: ModuleType, capsys: CaptureFixture[str]) -> None:
     outs = []
     with Notebook():
         import __ed42
@@ -206,25 +221,32 @@ def test_fuzzy_finder(clean, ref, capsys):
     assert not any([outs[3].out, outs[3].err] + [outs[4].out, outs[4].err])
 
 
-def test_fuzzy_finder_conflict(clean, ref):
+def as_file_spec_loader(spec: ModuleSpec | None) -> tuple[FileModuleSpec, Notebook]:
+    assert isinstance(spec, FileModuleSpec)
+    loader = spec.loader
+    assert isinstance(loader, Notebook)
+    return spec, loader
+
+
+def test_fuzzy_finder_conflict(clean: None, ref: ModuleType) -> None:
     try:
         with Notebook():
-            spec = find_spec("__d42")
+            loader = as_file_spec_loader(find_spec("__d42"))[1]
+
             assert find_spec("__d42")
 
             new = HERE / "d42.ipynb"
             new.write_text("{}")
-            spec2 = find_spec("__d42")
-
-            assert spec.loader.path != spec2.loader.path
+            loader2 = as_file_spec_loader(find_spec("__d42"))[1]
+            assert loader.path != loader2.path
     finally:
         with Notebook():
             new.unlink()
-            spec3 = find_spec("__d42")
-            assert spec.loader.path == spec3.loader.path
+            loader3 = as_file_spec_loader(find_spec("__d42"))[1]
+            assert loader.path == loader3.path
 
 
-def test_minified_json(ref, minified):
+def test_minified_json(ref: ModuleType, minified: None) -> None:
     with Notebook():
         import minified as minned
 
@@ -232,11 +254,12 @@ def test_minified_json(ref, minified):
         assert example_source
 
 
-def test_docstrings(clean, ref):
+def test_docstrings(clean: None, ref: ModuleType) -> None:
     with Notebook():
         import Untitled42 as nb
 
         assert nb
+        assert isinstance(nb.__file__, str)
     assert nb.function_with_a_markdown_docstring.__doc__
     assert nb.class_with_a_python_docstring.__doc__
     assert nb.function_with_a_markdown_docstring.__doc__
@@ -253,20 +276,23 @@ def test_docstrings(clean, ref):
         inspect.getsource(nb.function_with_a_markdown_docstring),
     ), """The source is invalid"""
 
-    # the line cache isnt json, it is python
+    # the line cache isn't json, it is python
+    cached = linecache.cache[nb.__file__]
+    assert len(cached) >= 2
+
     with raises(getattr(json, "JSONDecodeError", ValueError)):
-        json.loads("".join(linecache.cache[nb.__file__][2]))
+        json.loads("".join(cached[2]))
 
-    assert inspect.getsource(nb).strip() == "".join(linecache.cache[nb.__file__][2]).strip()
+    assert inspect.getsource(nb).strip() == "".join(cached[2]).strip()
 
 
-def test_python_file_takes_precedent(clean, ref, untitled_py):
+def test_python_file_takes_precedent(clean: None, ref: ModuleType, untitled_py: None) -> None:
     with Notebook():
         import Untitled42
-    assert Untitled42.__file__.endswith(".py")
+    assert f"{Untitled42.__file__}".endswith(".py")
 
 
-def test_lazy(capsys, clean):
+def test_lazy(capsys: CaptureFixture[str], clean: None) -> None:
     """Use stdout to test this depsite there probably being a better way"""
     with Notebook(lazy=True):
         import Untitled42 as module
@@ -276,7 +302,7 @@ def test_lazy(capsys, clean):
 
 
 @ipy
-def test_import_ipy():
+def test_import_ipy() -> None:
     """Import ipy scripts, this won't really work without ipython."""
     with Notebook():
         import ascript
@@ -285,7 +311,7 @@ def test_import_ipy():
 
 
 @ipy
-def test_cli(clean):
+def test_cli(clean: None) -> None:
     with Notebook():
         import Untitled42 as module
     __import__("subprocess").check_call(
@@ -298,17 +324,16 @@ def test_cli(clean):
     )
 
 
-@mark.skipif(VERSION < (3, 8), reason="async not supported in 3.7")
 @mark.filterwarnings("ignore::DeprecationWarning")
-def test_top_level_async():
+def test_top_level_async() -> None:
     with Notebook():
         import async_cells
 
-        assert async_cells
+    assert async_cells
 
 
-def test_data_loaders(pytester):
-    some_random_data = {"top": [{}]}
+def test_data_loaders(pytester: Pytester) -> None:
+    some_random_data: dict[str, list[dict[str, Any]]] = {"top": [{}]}
 
     import io
     import json
@@ -329,6 +354,6 @@ def test_data_loaders(pytester):
         import json_data
         import toml_data
         import yaml_data
-    assert json_data.__file__.endswith(".json")
-    assert toml_data.__file__.endswith(".toml")
-    assert yaml_data.__file__.endswith(".yaml")
+    assert f"{json_data.__file__}".endswith(".json")
+    assert f"{toml_data.__file__}".endswith(".toml")
+    assert f"{yaml_data.__file__}".endswith(".yaml")

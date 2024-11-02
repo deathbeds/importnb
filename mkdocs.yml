@@ -10,7 +10,7 @@ nav:
     - command line tests: test_cli.py
 
 hooks:
-  - lite/docs_hooks.py
+  - lite/mkdocs_hooks.py
 
 theme:
   name: material

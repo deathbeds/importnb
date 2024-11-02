@@ -30,12 +30,13 @@ from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import FileModuleSpec, FuzzyFinder, get_loader_details, get_loader_index
 
+A = TypeVar("A", bound=ast.AST)
+
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
     from collections.abc import Generator
     from importlib.abc import Loader as Loader_
 
-    A = TypeVar("A", bound=ast.AST)
 
 __all__ = "Notebook", "reload"
 
@@ -296,7 +297,12 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
             sys.path_importer_cache.clear()
 
     @classmethod
-    def load_file(cls, filename: str, main: bool = True, **kwargs: Any) -> ModuleType:
+    def load_file(
+        cls,
+        filename: str | Path | None,
+        main: bool = True,
+        **kwargs: Any,
+    ) -> ModuleType:
         """Import a notebook as a module from a filename.
 
         dir: The directory to load the file from.
@@ -304,7 +310,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
 
         >>> assert Notebook.load_file('foo.ipynb')
         """
-        name = "__main__" if main else filename
+        name = "__main__" if main else str(filename)
         loader = cls(name, str(filename), **kwargs)
         spec = FileModuleSpec(name, loader, origin=loader.path)
         module = loader.create_module(spec)

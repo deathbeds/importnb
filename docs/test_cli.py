@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import re
 from pathlib import Path
+from shlex import split
 from subprocess import check_call
 from sys import executable, path, version_info
+from typing import Any, Callable
 
 from pytest import importorskip
 
@@ -17,20 +21,18 @@ path.insert(0, str(HERE))
 UNTITLED = HERE / "Untitled42.ipynb"
 
 ref = Notebook.load_file(UNTITLED)
-REF = Path(ref.__file__)
+REF = Path(f"{ref.__file__}")
 
 
-def get_prepared_string(x):
+def get_prepared_string(x: str) -> str:
     if GTE10:
         x = x.replace("optional arguments:", "options:")
     return x.replace("\r", "")
 
 
-def cli_test(command):
-    def delay(f):
-        def wrapper(tmp_path: Path):
-            from shlex import split
-
+def cli_test(command: str) -> Callable[..., Callable[..., None]]:
+    def delay(f: Any) -> Callable[..., None]:
+        def wrapper(tmp_path: Path) -> None:
             path = tmp_path / "tmp"
             with path.open("w") as file:
                 check_call(
@@ -56,7 +58,7 @@ def cli_test(command):
 
 
 @cli_test("-m importnb")
-def test_usage():
+def test_usage() -> None:
     """\
 usage: importnb [-h] [-m MODULE] [-c CODE] [-d DIR] [-t] [--version]
                 [file] ...
@@ -79,7 +81,7 @@ optional arguments:
 
 
 @cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} {UNTITLED.as_posix()}")
-def test_file():
+def test_file() -> None:
     """\
 i was printed from {UNTITLED} and my name is __main__
 {SLUG}
@@ -88,7 +90,7 @@ the parser namespace is Namespace(args=None)
 
 
 @cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -m {UNTITLED.stem}")
-def test_module():
+def test_module() -> None:
     """\
 i was printed from {UNTITLED} and my name is __main__
 {SLUG}
@@ -97,19 +99,19 @@ the parser namespace is Namespace(args=None)
 
 
 @cli_test("-m importnb -c '{}'")
-def test_empty_code():
+def test_empty_code() -> None:
     """"""
 
 
 @cli_test("-m importnb --version")
-def test_version():
+def test_version() -> None:
     """\
 {VERSION}
 """
 
 
 @cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -t {UNTITLED.as_posix()} list")
-def test_doit():
+def test_doit() -> None:
     """\
 i was printed from {UNTITLED} and my name is __main__
 {SLUG}

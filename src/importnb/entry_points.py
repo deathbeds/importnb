@@ -13,10 +13,10 @@ if sys.version_info < (3, 10):
 else:
     from importlib.metadata import entry_points
 
+from .loader import Loader  # noqa: TCH001
+
 if TYPE_CHECKING:
     from collections.abc import Generator
-
-    from .loader import Loader
 
 ENTRY_POINTS: dict[str, type[Loader] | str] = {}
 

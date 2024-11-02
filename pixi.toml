@@ -19,7 +19,7 @@ docs = {depends-on = ["lite-build", "docs-build"]}
 test = {depends-on = ["test-pytest", "test-oldest-pytest"]}
 build = {depends-on = ["build-lark", "build-pypi"]}
 fix = {depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"]}
-lint = {depends-on = ["lint-ruff", "lint-mypy"]}
+lint = {depends-on = ["lint-ruff", "lint-mypy-src", "lint-mypy-dev", "lint-actionlint"]}
 
 # fragments ####################################################################
 pip-- = """python -m pip install
@@ -38,9 +38,7 @@ export FREEZES=build/reports/pip-freeze
 """
 pip-e-- = "pixi r pip-- -e . && pixi r pip-check--"
 pip-whl-- = "pixi r pip-- --find-links=dist --no-index importnb && pixi r pip-check--"
-pytest-- = """
-echo TODO: --numprocesses auto
-&& pytest
+pytest-- = """pytest
   --cov importnb
   --cov-branch
   --cov-context test
@@ -65,7 +63,7 @@ rm -rf dist/
 """
 depends-on = ["build-lark"]
 inputs = [
-  "{src,docs}/**/*.{py,g,ipynb}",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
   "{README.md,LICENSE*,hatch_build.py,pyproject.toml}",
   "!**/coverage",
 ]
@@ -86,7 +84,7 @@ cmd = """pixi r -e test pytest--
 depends-on = ["pip-test"]
 inputs = [
   "pyproject.toml",
-  "{docs,src}/**/*.{py,ipynb}",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
   "!**/.ipynb_checkpoints",
   "build/reports/pip-freeze/test.txt",
 ]
@@ -102,7 +100,7 @@ cmd = """pixi r -e test-oldest pytest--"""
 depends-on = ["pip-test-oldest"]
 inputs = [
   "pyproject.toml",
-  "{docs,src}/**/*.{py,ipynb}",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
   "!**/.ipynb_checkpoints",
   "build/reports/pip-freeze/test-oldest.txt",
 ]
@@ -161,7 +159,7 @@ inputs = ["docs/**/*.ipynb", "!**/.ipynb_checkpoints"]
 
 [feature.tasks-lint.tasks.fix-ruff]
 cmd = """ruff format && ruff check --fix-only"""
-inputs = ["pyproject.toml", "{src,docs}/**/*.{py,ipynb}", "!**/.ipynb_checkpoints"]
+inputs = ["pyproject.toml", "{docs,src}/**/*.{g,ipy,ipynb,py}", "!**/.ipynb_checkpoints"]
 
 [feature.tasks-lint.tasks.fix-taplo]
 cmd = """
@@ -172,18 +170,48 @@ cmd = """
 """
 inputs = ["*.toml"]
 
-[feature.tasks-lint.tasks.lint-mypy]
-cmd = "mypy -p importnb"
+[feature.tasks-lint.tasks.lint-mypy-src]
+cmd = """
+rm -rf docs/mypy
+&& mypy -p importnb --html-report docs/mypy
+"""
 depends-on = ["pip-lint"]
-inputs = ["build/reports/pip-freeze/test.txt", "src/**/*.py", "!**/.ipynb_checkpoints"]
+inputs = [
+  "build/reports/pip-freeze/lint.txt",
+  "pyproject.toml",
+  "src/**/*.py",
+  "!**/.ipynb_checkpoints",
+]
+outputs = ["docs/mypy"]
+
+[feature.tasks-lint.tasks.lint-mypy-dev]
+cmd = """mypy *.py docs/**/*.py lite/**/*.py"""
+depends-on = ["pip-lint"]
+inputs = [
+  "{docs,lite}/**/*.py",
+  "*.py",
+  "build/reports/pip-freeze/lint.txt",
+  "pyproject.toml",
+  "!**/.ipynb_checkpoints",
+]
 
 [feature.tasks-lint.tasks.lint-ruff]
 cmd = """ruff format --check && ruff check"""
 inputs = ["pyproject.toml", "{src,docs}/**/*.{py,ipynb}", "!**/.ipynb_checkpoints"]
 
+[feature.tasks-lint.tasks.lint-actionlint]
+cmd = "actionlint -shellcheck=shellcheck -pyflakes=pyflakes"
+inputs = [".github/workflows"]
+
 # dev ##########################################################################
+[feature.tasks-dev.tasks.pip-dev]
+cmd = """pixi r -e dev pip-e--"""
+outputs = ["build/reports/pip-freeze/dev.txt"]
+inputs = ["pyproject.toml"]
+
 [feature.tasks-dev.tasks.serve-lab]
 cmd = "jupyter lab --no-browser --debug"
+depends-on = ["pip-dev"]
 
 # envs #########################################################################
 [environments]
@@ -217,6 +245,7 @@ dev = [
   "deps-docs",
   "deps-lint",
   "deps-lite",
+  "deps-pip",
   "deps-run-interactive",
   "deps-run",
   "deps-test",
@@ -254,6 +283,7 @@ nbstripout = "*"
 ruff = "0.7.*"
 taplo = "*"
 types-pyyaml = "*"
+beartype = "*"
 
 [feature.deps-test.dependencies]
 "ruamel.yaml" = "*"
@@ -279,6 +309,7 @@ mkdocstrings-python = "*"
 jupyterlab = "*"
 notebook = "*"
 ipywidgets = "*"
+beartype = "*"
 
 [feature.deps-lite.dependencies]
 jupyterlite-core = "0.4.3"

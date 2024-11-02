@@ -2,8 +2,12 @@ __pycache__/
 .ipynb_checkpoints/
 .pixi/
 *.doit.*
+*.sqlite*
 build/
 dist/
+docs/coverage
+docs/my_package
+docs/mypy
 docs/pytest.html
 site
 src/importnb/_json_parser.py

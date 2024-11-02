@@ -10,7 +10,7 @@ keywords = []
 license = "BSD-3-Clause AND MPL-2.0"
 license-files = {paths = ["LICENSE", "LICENSE-MPL-2.0"]}
 authors = [{name = "tonyfast", email = "tony.fast@gmail.com"}]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: IPython",
@@ -31,10 +31,17 @@ classifiers = [
 ]
 dynamic = ["version"] # uses hatch-vcs
 dependencies = ['importlib-metadata>=4.8.3; python_version < "3.10"']
+
+[project.optional-dependencies]
+interactive = ["ipython"]
+tasks = ["doit", "tomli"]
+test = ["doit", "pytest-cov", "pytest", "ruamel.yaml", "tomli-w", "tomli"]
+
 [project.urls]
 Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
 Source = "https://github.com/deathbeds/importnb"
+
 [project.scripts]
 importnb = "importnb.__main__:main"
 [project.entry-points.importnb]
@@ -45,9 +52,11 @@ py = "importnb.loader:Loader"
 toml = "importnb.loaders:Toml"
 yaml = "importnb.loaders:Yaml"
 yml = "importnb.loaders:Yaml"
+
 [project.entry-points.pytest11]
 importnb = "importnb.utils.pytest_importnb"
 
+# hatch ########################################################################
 [tool.hatch.version]
 source = "vcs"
 
@@ -63,22 +72,95 @@ targets.sdist.exclude = [
   "pixi.*",
 ]
 
-# ruff #########################################################################
+[tool.hatch.envs.released]
+# test a release on test-pypi
+dependencies = ["importnb", "ipython", "pytest", "pytest-cov", "doit", "tomli-w", "ruamel.yaml"]
+
+[tool.hatch.envs.released.scripts]
+test = "pytest"
+
+[tool.hatch.envs.released.env-vars]
+PIP_INDEX_URL = "https://test.pypi.org/simple/"
+PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
+PIP_PRE = "1"
+
+# tools in alphabetical order ##################################################
+## coverage ####################################################################
+[tool.coverage.run]
+data_file = "build/.coverage"
+
+[tool.coverage.report]
+omit = ["_json_parser.py"]
+exclude_lines = ["if TYPE_CHECKING:", """if __name__ == "__main__":""", "pragma: no cover"]
+
+## mypy ########################################################################
+[tool.coverage.html]
+show_contexts = true
+
+[tool.mypy]
+cache_dir = "build/.cache/mypy"
+exclude = "_json_parser.py"
+python_version = "3.9"
+show_error_context = true
+show_error_code_links = true
+allow_redefinition = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true
+warn_return_any = true
+warn_unused_ignores = true
+strict = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = [
+  # core
+  "importlib._bootstrap",
+  "importlib._bootstrap_external",
+  "tomllib",
+  # contrib
+  "doit",
+  "doit.*",
+  # test
+  "__42",
+  "__d42",
+  "__ed42",
+  "ascript",
+  "async_cells",
+  "json_data",
+  "minified",
+  "my_package.*",
+  "my_package",
+  "toml_data",
+  "Untitled42",
+  "yaml_data",
+]
+
+
+## pytest ######################################################################
+[tool.pytest.ini_options]
+cache_dir = "build/.cache/pytest"
+addopts = ["-vv", "--tb=long", "--color=yes", "-ppytester"]
+filterwarnings = ["error"]
+testpaths = ["docs", "src"]
+
+## ruff ########################################################################
 [tool.ruff]
 target-version = "py39"
 preview = true
 cache-dir = "build/.cache/ruff"
 line-length = 100
 extend-include = ["*.ipynb"]
-extend-exclude = [".pixi/**", "**/_json_parser.py"]
+extend-exclude = [".pixi/**", "**/_json_parser.py", "site", "build", "dist", ".github"]
 
 [tool.ruff.lint]
 isort.known-first-party = ["importnb"]
 ignore = [
   # linter/formatter incompatibility
+  "COM812",
   "D203",
   "D213",
-  "COM812",
   "ISC001",
   # current findings
   "A001",
@@ -168,41 +250,6 @@ ignore = [
   "YTT204",
 ]
 select = ["ALL"]
+
 [tool.ruff.lint.per-file-ignores]
 "test_cli.py" = ["D415", "D207", "D208"]
-
-# pytest #######################################################################
-[tool.pytest.ini_options]
-cache_dir = "build/.cache/pytest"
-addopts = ["-vv", "--tb=long", "--color=yes", "-ppytester"]
-filterwarnings = ["error"]
-testpaths = ["docs", "src"]
-
-# coverage #####################################################################
-[tool.coverage.run]
-data_file = "build/.coverage"
-[tool.coverage.report]
-omit = ["_json_parser.py"]
-exclude_lines = ["if TYPE_CHECKING:", """if __name__ == "__main__":""", "pragma: no cover"]
-[tool.coverage.html]
-show_contexts = true
-
-
-# mypy #########################################################################
-[tool.mypy]
-cache_dir = "build/.cache/mypy"
-exclude = "_json_parser.py"
-# language settings
-python_version = "3.9"
-allow_redefinition = true
-check_untyped_defs = true
-disallow_untyped_defs = true
-no_implicit_optional = true
-show_error_codes = true
-warn_return_any = true
-warn_unused_ignores = true
-strict = true
-
-[[tool.mypy.overrides]]
-ignore_missing_imports = true
-module = ["doit", "doit.*", "importlib._bootstrap", "importlib._bootstrap_external", "tomllib"]

@@ -2,12 +2,29 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 __all__ = "Notebook", "__version__", "imports", "reload"
 
 if TYPE_CHECKING:
     from IPython.core.interactiveshell import InteractiveShell
+
+_BEARTYPE_ = len(os.environ.get("IMPORTNB_BEARTYPE", ""))
+
+if _BEARTYPE_:
+    from beartype import BeartypeConf
+    from beartype.claw import beartype_all, beartype_this_package
+
+    beartype_this_package(
+        conf=BeartypeConf(
+            violation_type=TypeError if _BEARTYPE_ > 1 else UserWarning,
+            claw_skip_package_names=("importnb._json_parser",),
+        )
+    )
+
+    if _BEARTYPE_ > 2:
+        beartype_all(conf=BeartypeConf(violation_type=UserWarning))
 
 
 def is_ipython() -> bool:

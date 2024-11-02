@@ -8,8 +8,7 @@ from __future__ import annotations
 import ast
 from typing import TYPE_CHECKING, TypeVar
 
-if TYPE_CHECKING:
-    A = TypeVar("A", bound=ast.AST)
+A = TypeVar("A", bound=ast.AST)
 
 """# Modifying the `ast`
 

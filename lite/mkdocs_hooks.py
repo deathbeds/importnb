@@ -1,8 +1,8 @@
 import shutil
 from pathlib import Path
 
-from mkdocs.config.defaults import MkDocsConfig
-from mkdocs.structure.files import Files
+from mkdocs.config.defaults import MkDocsConfig  # type: ignore[import-not-found]
+from mkdocs.structure.files import Files  # type: ignore[import-not-found]
 
 LITE = Path(__file__).parent.parent / "build/lite"
 

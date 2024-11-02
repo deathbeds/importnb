@@ -4,12 +4,17 @@ import json
 import linecache
 import textwrap
 from functools import partial
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Union
 
 from ._json_parser import Lark_StandAlone, Token, Tree
 from ._json_parser import Transformer as Transformer_
 
-TItem = tuple[tuple[int, str], Token, tuple[int, str]]
+TLarkAtom = tuple[int, str]
+TLarkValue = tuple[str, str]
+TLarkCompound = Union[TLarkAtom, Token]
+TLarkCompounds = list[TLarkCompound]
+TLarkItem = Union[TLarkCompound, Token, TLarkCompounds]
+TLarkItems = list[TLarkItem]
 
 
 def quote(object: str, *, quotes: str = "'''") -> str:
@@ -34,22 +39,27 @@ class Transformer(Transformer_[Any, Any]):
     def string(self, s: list[Token]) -> tuple[int | None, str]:
         return s[0].line, json.loads(s[0])
 
-    def item(self, s: TItem) -> tuple[str, Any] | str | None:
+    def item(self, s: TLarkItems) -> TLarkAtom | TLarkCompound | TLarkValue | str | None:
         key = s[0][-1]
+
         if key == "cells":
             if not isinstance(s[-1], Tree):
                 return self.render(list(map(dict, s[-1])))  # type: ignore[arg-type]
         elif key in {"source", "text"}:
-            return key, s[-1]
+            body = s[-1]
+            if TYPE_CHECKING:
+                assert isinstance(body, str)
+                assert isinstance(key, str)
+            return key, body
         elif key == "cell_type":
             if isinstance(s[-1], tuple):
-                return key, s[-1][-1]
+                cell_item: tuple[str, str] = f"{key}", f"{s[-1][-1]}"
+                return cell_item
+
         return None
 
-    def array(self, s: list[Token]) -> list[Token]:
-        if s:
-            return s
-        return []
+    def array(self, s: TLarkCompounds) -> TLarkCompounds:
+        return s or []
 
     def object(self, s: list[Any]) -> list[Any]:
         return [x for x in s if x is not None]
