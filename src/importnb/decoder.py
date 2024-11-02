@@ -4,7 +4,7 @@ import json
 import linecache
 import textwrap
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, Union
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 
 from ._json_parser import Lark_StandAlone, Token, Tree
 from ._json_parser import Transformer as Transformer_
@@ -13,8 +13,15 @@ TLarkAtom = tuple[int, str]
 TLarkValue = tuple[str, str]
 TLarkCompound = Union[TLarkAtom, Token]
 TLarkCompounds = list[TLarkCompound]
-TLarkItem = Union[TLarkCompound, Token, TLarkCompounds]
+TLarkNamedBody = tuple[str, list[TLarkAtom]]
+TLarkObject = list[TLarkNamedBody]
+TLarkItem = Union[TLarkCompound, Token, TLarkCompounds, Tree[Any], TLarkNamedBody]
 TLarkItems = list[TLarkItem]
+TLarkItemReturns = Union[
+    TLarkAtom, TLarkCompound, TLarkValue, TLarkNamedBody, TLarkObject, str, None
+]
+
+I = TypeVar("I")
 
 
 def quote(object: str, *, quotes: str = "'''") -> str:
@@ -39,17 +46,18 @@ class Transformer(Transformer_[Any, Any]):
     def string(self, s: list[Token]) -> tuple[int | None, str]:
         return s[0].line, json.loads(s[0])
 
-    def item(self, s: TLarkItems) -> TLarkAtom | TLarkCompound | TLarkValue | str | None:
+    def item(self, s: TLarkItems) -> TLarkItemReturns:
+        if TYPE_CHECKING:
+            assert isinstance(s[0], tuple)
+            assert isinstance(s[0][-1], str)
+
         key = s[0][-1]
 
         if key == "cells":
             if not isinstance(s[-1], Tree):
                 return self.render(list(map(dict, s[-1])))  # type: ignore[arg-type]
         elif key in {"source", "text"}:
-            body = s[-1]
-            if TYPE_CHECKING:
-                assert isinstance(body, str)
-                assert isinstance(key, str)
+            body: list[TLarkAtom] = s[-1]  # type: ignore[assignment]
             return key, body
         elif key == "cell_type":
             if isinstance(s[-1], tuple):
@@ -58,7 +66,7 @@ class Transformer(Transformer_[Any, Any]):
 
         return None
 
-    def array(self, s: TLarkCompounds) -> TLarkCompounds:
+    def array(self, s: list[I]) -> list[I]:
         return s or []
 
     def object(self, s: list[Any]) -> list[Any]:
