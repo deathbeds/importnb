@@ -298,7 +298,7 @@ inputs = ["pyproject.toml"]
 
 [feature.tasks-dev.tasks.dev-lab]
 description = "... launch JupyterLab"
-cmd = "jupyter lab --no-browser --debug"
+cmd = "jupyter lab --no-browser --debug --config=docs/jupyter_config.json"
 depends-on = ["dev-setup"]
 
 # envs #########################################################################
@@ -403,6 +403,7 @@ jupyterlab-lsp = "*"
 notebook = "*"
 pylsp-mypy = "*"
 python-lsp-ruff = "*"
+vale-ls = "*"
 
 [feature.deps-lite.dependencies]
 jupyterlite-core = "0.4.3"

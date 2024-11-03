@@ -893,6 +893,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/uri-template-1.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.2.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/vale-3.8.0-h9a0b160_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/vale-ls-0.3.8-h996b816_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/vale-spelling-aoo-mozilla-en-dict-us-2024.03.01-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/watchdog-6.0.0-py312h7900ff3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.13-pyhd8ed1ab_0.conda
@@ -1157,6 +1158,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/uri-template-1.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.2.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/vale-3.8.0-hba536fe_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/vale-ls-0.3.8-hf438ff6_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/vale-spelling-aoo-mozilla-en-dict-us-2024.03.01-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/watchdog-6.0.0-py312h01d7ebd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.13-pyhd8ed1ab_0.conda
@@ -1421,6 +1423,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/uri-template-1.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.2.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/vale-3.8.0-h5833ebf_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/vale-ls-0.3.8-h66265a7_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/vale-spelling-aoo-mozilla-en-dict-us-2024.03.01-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/watchdog-6.0.0-py312hea69d52_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.13-pyhd8ed1ab_0.conda
@@ -1684,6 +1687,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/uri-template-1.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.2.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vale-3.8.0-h0e07d3f_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/vale-ls-0.3.8-ha073cba_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/vale-spelling-aoo-mozilla-en-dict-us-2024.03.01-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vc-14.3-ha32ba9b_22.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.40.33810-hcc2c482_22.conda
@@ -14157,6 +14161,84 @@ packages:
   license_family: MIT
   size: 8575592
   timestamp: 1729604316452
+- kind: conda
+  name: vale-ls
+  version: 0.3.8
+  build: h66265a7_0
+  subdir: osx-arm64
+  url: https://conda.anaconda.org/conda-forge/osx-arm64/vale-ls-0.3.8-h66265a7_0.conda
+  sha256: ca02024e736d0c18b9ecbe58b662f1692159ba24188b38de008d7dfc02b533f7
+  md5: 230eaba3f37f9df47aa4a65c375314b3
+  depends:
+  - __osx >=11.0
+  - bzip2 >=1.0.8,<2.0a0
+  - openssl >=3.3.1,<4.0a0
+  - vale >=3.0.0
+  - zstd >=1.5.6,<1.6.0a0
+  constrains:
+  - __osx >=11.0
+  license: MIT
+  license_family: MIT
+  size: 2819267
+  timestamp: 1724679673505
+- kind: conda
+  name: vale-ls
+  version: 0.3.8
+  build: h996b816_0
+  subdir: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/vale-ls-0.3.8-h996b816_0.conda
+  sha256: 2cd1d62eefc8365903c13ceb2ef2b8b63bdbea013633d2ef816c0c8dc3d5c48b
+  md5: 9ca14f23fcc439b87e693d8881678f71
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - bzip2 >=1.0.8,<2.0a0
+  - libgcc-ng >=13
+  - openssl >=3.3.1,<4.0a0
+  - vale >=3.0.0
+  - zstd >=1.5.6,<1.6.0a0
+  constrains:
+  - __glibc >=2.17
+  license: MIT
+  license_family: MIT
+  size: 4863439
+  timestamp: 1724679684774
+- kind: conda
+  name: vale-ls
+  version: 0.3.8
+  build: ha073cba_0
+  subdir: win-64
+  url: https://conda.anaconda.org/conda-forge/win-64/vale-ls-0.3.8-ha073cba_0.conda
+  sha256: c2b32b133eb017286f7bcd4f87830c4c37c4524ced99c83b708e3252b6f44e2b
+  md5: b6c72221a553557db4bd1e8c6d4ed9db
+  depends:
+  - ucrt >=10.0.20348.0
+  - vale >=3.0.0
+  - vc >=14.2,<15
+  - vc14_runtime >=14.29.30139
+  license: MIT
+  license_family: MIT
+  size: 2715642
+  timestamp: 1724680401749
+- kind: conda
+  name: vale-ls
+  version: 0.3.8
+  build: hf438ff6_0
+  subdir: osx-64
+  url: https://conda.anaconda.org/conda-forge/osx-64/vale-ls-0.3.8-hf438ff6_0.conda
+  sha256: e70825751f4ee40966b476156f40734dc4908b51fbe5d2d0af54522f409b3f80
+  md5: 88476d99b8d643ebd236d33b6cde2ee8
+  depends:
+  - __osx >=10.13
+  - bzip2 >=1.0.8,<2.0a0
+  - openssl >=3.3.1,<4.0a0
+  - vale >=3.0.0
+  - zstd >=1.5.6,<1.6.0a0
+  constrains:
+  - __osx >=10.13
+  license: MIT
+  license_family: MIT
+  size: 2943186
+  timestamp: 1724679851252
 - kind: conda
   name: vale-spelling-aoo-mozilla-en-dict-us
   version: 2024.03.01

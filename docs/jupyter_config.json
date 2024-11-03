@@ -1,0 +1,23 @@
+{
+    "LanguageServerManager": {
+        "language_servers": {
+            "vale": {
+                "version": 2,
+                "argv": [
+                    "vale-ls"
+                ],
+                "languages": [
+                    "markdown",
+                    "ipythongfm"
+                ],
+                "mime_types": [
+                    "text/markdown",
+                    "text/x-gfm",
+                    "text/x-ipythongfm",
+                    "text/x-markdown"
+                ],
+                "display_name": "vale"
+            }
+        }
+    }
+}
