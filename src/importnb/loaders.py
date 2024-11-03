@@ -36,7 +36,7 @@ class DataStreamLoader(Loader):
 
 @dataclass
 class Json(DataStreamLoader):
-    """an import loader for json files"""
+    """an import loader for ``.json`` files."""
 
     extensions: tuple[str, ...] = field(default_factory=lambda: (".json",))
 
@@ -48,7 +48,7 @@ class Json(DataStreamLoader):
 
 @dataclass
 class Yaml(DataStreamLoader):
-    """an import loader for yml and yaml"""
+    """an import loader for ``.yml`` and ``.yaml`` files."""
 
     extensions: tuple[str, ...] = field(default_factory=lambda: (".yml", ".yaml"))
 
@@ -66,7 +66,7 @@ class Yaml(DataStreamLoader):
 
 @dataclass
 class Toml(DataStreamLoader):
-    """an import loader for toml"""
+    """an import loader for ``.toml`` files."""
 
     extensions: tuple[str, ...] = field(default_factory=lambda: (".toml",))
 

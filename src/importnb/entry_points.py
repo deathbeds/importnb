@@ -29,7 +29,7 @@ def get_importnb_entry_points() -> dict[str, type[Loader] | str]:
 
 
 def loader_from_alias(alias: str) -> type[Loader]:
-    """Load an attribute from a module using the entry points value specificaiton"""
+    """Load an attribute from a module using the entry points value specification"""
     from importlib import import_module
     from operator import attrgetter
 
@@ -40,7 +40,7 @@ def loader_from_alias(alias: str) -> type[Loader]:
 
 
 def loader_from_ep(alias: str) -> type[Loader]:
-    """Discover a loader for an importnb alias or vaue"""
+    """Discover a loader for an importnb alias or value"""
     if ":" in alias:
         return loader_from_alias(alias)
 
@@ -57,7 +57,7 @@ def loader_from_ep(alias: str) -> type[Loader]:
 
 @contextmanager
 def imports(*names: str) -> Generator[Any, None, None]:
-    """A shortcut to importnb loaders through entrypoints"""
+    """A shortcut to importnb loaders through entry points"""
     types = set()
     with ExitStack() as stack:
         for name in names:

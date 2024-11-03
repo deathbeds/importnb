@@ -32,7 +32,7 @@ docs = {cmd = "echo 📃", depends-on = ["docs-lite", "docs-mkdocs"], descriptio
 build ALL documentation"""}
 check = {cmd = "echo 🤓", depends-on = [
   "check-links",
-  "check-spelling",
+  "check-vale",
   "check-wheel",
   "check-twine",
 ], description = """
@@ -260,22 +260,21 @@ cmd = """
 depends-on = ["docs-mkdocs"]
 inputs = ["site/**/*.html"]
 
-[feature.tasks-check.tasks.check-spelling]
+[feature.tasks-check.tasks.check-vale]
 description = """... check spelling in documentation"""
-cmd = """
-rm -rf build/reports/vale.txt
-&& mkdir -p build/reports
-&& vale
-    site/index.html
-    site/contributing/index.html
-    --no-wrap
-    --glob='!**/.ipynb_checkpoints/*'
-    --output=JSON
-  > build/reports/vale.json
-&& cat build/reports/vale.json
-"""
+cmd = "python docs/vale/check.py"
+# cmd = """
+# rm -rf build/reports/vale.txt
+# && mkdir -p build/reports
+# && vale
+#     site/index.html
+#     site/contributing/index.html
+#     src/**/*.py
+#     --glob='!**/.ipynb_checkpoints/*'
+#     --output=JSON
+# """
 depends-on = ["docs-mkdocs"]
-inputs = ["site/index.html", "docs/vale"]
+inputs = ["site/{index,contributing/}.html", "docs/vale", "src/**/*.py", "!**/.ipynb_checkpoints"]
 
 [feature.tasks-check.tasks.check-wheel]
 description = "... check the built wheel"

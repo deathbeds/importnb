@@ -217,10 +217,10 @@ a challenge with Jupyter notebooks is that they are `json` data. this poses prob
 
 python's `json` module is not pluggable in the way we need to find line numbers. since `importnb` is meant to be dependency free on installation we couldn't look to any other packages like `ujson` or `json5`.
 
-the need for line numbers is enough that we ship a standalone `json` grammar parser. to do this without extra dependencies we use the `lark` grammar package at build time:
+the need for line numbers is enough that we ship a stand-alone `json` grammar parser. to do this without extra dependencies we use the `lark` grammar package at build time:
 
 * we've defined a minimal grammar in `json.g`
-* we use `hatch` hooks to invoke `lark-standalone` that generates a standalone parser for the grammar.
+* we use `hatch` hooks to invoke `lark-standalone` that generates a stand-alone parser for the grammar.
   * the generated file is shipped with the package.
   * this code is licensed under the Mozilla Public License 2.0
 

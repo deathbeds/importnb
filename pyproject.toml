@@ -142,7 +142,6 @@ module = [
   "yaml_data",
 ]
 
-
 ## pytest ######################################################################
 [tool.pytest.ini_options]
 cache_dir = "build/.cache/pytest"

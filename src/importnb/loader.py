@@ -128,7 +128,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
     def source_to_nodes(
         self, source: str, path: str = "<unknown>", *, _optimize: int = -1
     ) -> ast.Module:
-        """Parse source string as python ast"""
+        """Parse source string as python AST"""
         flags = ast.PyCF_ONLY_AST
         nodes: ast.Module = _call_with_frames_removed(
             compile,
@@ -144,7 +144,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
     def nodes_to_code(
         self, nodes: ast.Module, path: str = "<unknown>", *, _optimize: int = -1
     ) -> CodeType:
-        """Compile ast nodes to python code object"""
+        """Compile AST nodes to python code object"""
         flags = ALLOW_TOP_LEVEL_AWAIT
         code: CodeType = _call_with_frames_removed(
             compile,
@@ -161,21 +161,21 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         self, source: str, path: str = "<unknown>", *, _optimize: int = -1
     ) -> CodeType:
         """Tangle python source to compiled code by:
-        1. parsing the source as ast nodes
-        2. compiling the ast nodes as python code
+        1. parsing the source as AST nodes
+        2. compiling the AST nodes as python code
         """
         nodes = self.source_to_nodes(source, path, _optimize=_optimize)
         return self.nodes_to_code(nodes, path, _optimize=_optimize)
 
     def get_data(self, path: str) -> str:  # type: ignore[override]
-        """get_data injects an input transformation before the raw text.
+        """Inject an input transformation before the raw text.
 
         this method allows notebook json to be transformed line for line into vertically sparse python code.
         """
         return self.raw_to_source(decode_source(super().get_data(self.path or path)))
 
     def create_module(self, spec: ModuleSpec) -> ModuleType:
-        """An overloaded create_module method injecting fuzzy finder setup up logic."""
+        """An overloaded ``create_module`` method injecting fuzzy finder setup logic."""
         module = self.module_type(str(spec.name))
         _init_module_attrs(spec, module)
         if self.name:
@@ -196,7 +196,8 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
 
     def exec_module(self, module: ModuleType) -> None:
         """Execute the module."""
-        # importlib uses module.__name__, but when running modules as __main__ name will change.
+        # ``importlib`` uses ``module.__name__``, but when running modules as ``__main__``
+        # name will change.
         # this approach uses the original name on the spec.
         try:
             if TYPE_CHECKING:
@@ -204,7 +205,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
 
             code = self.get_code(module.__spec__.name)
 
-            # from importlib
+            # from ``importlib``
             if code is None:
                 raise ImportError(
                     f"cannot load module {module.__name__!r} when get_code() returns None",
@@ -232,8 +233,8 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
             get_event_loop().run_until_complete(self.aexec_module(module))
 
     async def aexec_module(self, module: ModuleType) -> None:
-        """An async exec_module method permitting top-level await."""
-        # there is so redudancy in this approach, but it starts getting asynchier.
+        """An async ``exec_module`` method permitting top-level ``await``."""
+        # there is so redundancy in this approach, but it starts getting more async.
         if TYPE_CHECKING:
             assert self.path
 
@@ -250,7 +251,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
             )
             if inspect.CO_COROUTINE in _get_co_flags_set(co.co_flags):
                 # when something async is encountered we compile it with the single flag
-                # this lets us use eval to retreive our coroutine.
+                # this lets us use ``eval`` to retrieve our coroutine.
                 co = _call_with_frames_removed(
                     compile,
                     ast.Interactive([node]),
@@ -305,8 +306,8 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
     ) -> ModuleType:
         """Import a notebook as a module from a filename.
 
-        dir: The directory to load the file from.
-        main: Load the module in the __main__ context.
+        ``dir``: The directory to load the file from.
+        ``main``: Load the module in the ``__main__`` context.
 
         >>> assert Notebook.load_file('foo.ipynb')
         """
@@ -321,7 +322,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
     def load_module(cls, name: str, main: bool = False, **kwargs: Any) -> ModuleType:  # type: ignore[override]
         """Import a notebook as a module.
 
-        main: Load the module in the __main__ context.
+        ``main``: Load the module in the ``__main__`` context.
 
         >>> assert Notebook.load_module('foo')
         """
@@ -347,10 +348,10 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         """Load a module based on python arguments
 
         load a notebook from its file name
-        >>> Notebook.load_argv("foo.ipynb --arg abc")
+        >>> Notebook.load_argv("foo.ipynb --arg bar")
 
         load the same notebook from a module alias.
-        >>> Notebook.load_argv("-m foo --arg abc")
+        >>> Notebook.load_argv("-m foo --arg bar")
         """
         if parser is None:
             parser = cls.get_argparser()
@@ -371,7 +372,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
 
     @classmethod
     def load_ns(cls, ns: Namespace) -> ModuleType | None:
-        """Load a module from a namespace, used when loading module from sys.argv parameters."""
+        """Load a module from a namespace, used when loading module from ``sys.argv`` parameters."""
         if ns.tasks:
             # i don't quite why we need to do this here, but we do. so don't move it
             from doit.cmd_base import ModuleTaskLoader
