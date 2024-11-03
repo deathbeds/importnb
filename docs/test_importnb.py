@@ -84,7 +84,7 @@ def cant_reload(m: ModuleType) -> None:
 
 
 def unimport(ns: str | tuple[str, ...]) -> None:
-    """Unimport a module namespace"""
+    """Remove modules from a namespace"""
     from sys import modules, path_importer_cache
 
     for module in [x for x in modules if x.startswith(ns)]:
@@ -293,7 +293,7 @@ def test_python_file_takes_precedent(clean: None, ref: ModuleType, untitled_py: 
 
 
 def test_lazy(capsys: CaptureFixture[str], clean: None) -> None:
-    """Use stdout to test this depsite there probably being a better way"""
+    """Use ``stdout`` to test this, there probably being a better way"""
     with Notebook(lazy=True):
         import Untitled42 as module
     assert not capsys.readouterr()[0], capsys.readouterr()[0]
@@ -303,7 +303,7 @@ def test_lazy(capsys: CaptureFixture[str], clean: None) -> None:
 
 @ipy
 def test_import_ipy() -> None:
-    """Import ipy scripts, this won't really work without ipython."""
+    """Import ``.ipy`` scripts, this won't really work without ``IPython``."""
     with Notebook():
         import ascript
 

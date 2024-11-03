@@ -12,11 +12,15 @@ ROOT = DOCS.parent
 SITE = ROOT / "site"
 SRC = ROOT / "src"
 
-VALE_ARGS: list[str | Path] = [
-    "vale",
+CHECK_PATHS = {
     SITE / "index.html",
     SITE / "contributing/index.html",
-    *sorted(p for p in SRC.rglob("*.py")),
+    *sorted(p for p in [*SRC.rglob("*.py"), *DOCS.rglob("*.py")] if "checkpoint" not in str(p)),
+}
+
+VALE_ARGS: list[str | Path] = [
+    "vale",
+    *sorted(CHECK_PATHS),
     "--output=JSON",
 ]
 
@@ -67,9 +71,11 @@ def main() -> int:
     )
     out = proc.communicate()[0]
     raw: TValeResults = json.loads(out)
+    rc = proc.returncode
     if raw:
-        return proc.returncode or len(report(raw))
-    return 0
+        rc = len(report(raw))
+    print(f"... no vale issues in {len(CHECK_PATHS)} files")
+    return rc
 
 
 if __name__ == "__main__":

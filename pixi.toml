@@ -17,7 +17,7 @@ all = {cmd = "echo 🚢", depends-on = [
 run ALL non-interactive tasks to verify the project is ready to release"""}
 fix = {cmd = "echo 🧹", depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"], description = """
 apply ALL source formatting tools"""}
-build = {cmd = "echo 🏛️", depends-on = ["build-lark", "build-pypi"], description = """
+build = {cmd = "echo 📦", depends-on = ["build-lark", "build-pypi"], description = """
 build ALL distributions"""}
 lint = {cmd = "echo ✅", depends-on = [
   "lint-ruff",
