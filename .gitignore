@@ -1,15 +1,16 @@
 __pycache__/
 .ipynb_checkpoints/
 .pixi/
+.virtual_documents
 *.doit.*
 *.sqlite*
 build/
 dist/
 docs/coverage
+docs/minified.ipynb
 docs/my_package
 docs/mypy
 docs/pytest.html
-docs/minified.ipynb
 site
 src/importnb/_json_parser.py
 src/importnb/_version.py
