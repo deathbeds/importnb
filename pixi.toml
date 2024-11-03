@@ -6,13 +6,32 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [tasks]
-release = {depends-on = ["fix", "lint", "build", "test", "docs", "check"]}
-docs = {depends-on = ["lite-build", "docs-mkdocs"]}
-test = {depends-on = ["test-pytest", "test-oldest-pytest"]}
-build = {depends-on = ["build-lark", "build-pypi"]}
-fix = {depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"]}
-lint = {depends-on = ["lint-ruff", "lint-mypy-src", "lint-mypy-dev", "lint-actionlint"]}
-check = {depends-on = ["check-links", "check-spelling"]}
+release = {cmd = "echo 🚢", depends-on = [
+  "fix",
+  "lint",
+  "build",
+  "test",
+  "docs",
+  "check",
+], description = """
+run all tasks to verify the project is releasable"""}
+fix = {cmd = "echo 🧹", depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"], description = """
+apply all source formatting tools"""}
+build = {cmd = "echo 🏛️", depends-on = ["build-lark", "build-pypi"], description = """
+build all distributions"""}
+lint = {cmd = "echo ✅", depends-on = [
+  "lint-ruff",
+  "lint-mypy-src",
+  "lint-mypy-dev",
+  "lint-actionlint",
+], description = """
+apply all static analysis tools"""}
+test = {cmd = "echo ✅", depends-on = ["test-pytest", "test-min-pytest"], description = """
+run all tests"""}
+docs = {cmd = "echo 📃", depends-on = ["lite-build", "docs-mkdocs"], description = """
+build all documentation"""}
+check = {cmd = "echo 🤓", depends-on = ["check-links", "check-spelling"], description = """
+perform all pre-release checks"""}
 
 # fragments ####################################################################
 pip-- = """python -m pip install
@@ -43,13 +62,13 @@ mkdocs-- = """export JUPYTER_PLATFORM_DIRS=1
 
 # build ########################################################################
 [feature.tasks-build.tasks.build-lark]
-cmd = '''
-python hatch_build.py > src/importnb/_json_parser.py
-'''
+description = """... build the standalone JSON parser"""
+cmd = "python hatch_build.py > src/importnb/_json_parser.py"
 inputs = ["src/importnb/json.g"]
 outputs = ["src/importnb/_json_parser.py"]
 
 [feature.tasks-build.tasks.build-pypi]
+description = """... build the source and wheel distributions for PyPI"""
 cmd = """
 rm -rf dist/
 && pyproject-build . --no-isolation
@@ -63,18 +82,20 @@ inputs = [
 outputs = ["dist/*.{whl,tar.gz}"]
 
 # test #########################################################################
-[feature.tasks-test.tasks.pip-test]
+[feature.tasks-test.tasks.test-setup]
+description = """... install the package in an editable state for testing"""
 cmd = """pixi r -e test pip-e--"""
 outputs = ["build/reports/pip-freeze/test.txt"]
 inputs = ["pyproject.toml"]
 
 [feature.tasks-test.tasks.test-pytest]
+description = """... run unit tests with coverage"""
 cmd = """pixi r -e test pytest--
   --cov-report=html:docs/coverage
   --self-contained-html
   --html=docs/pytest.html
 """
-depends-on = ["pip-test"]
+depends-on = ["test-setup"]
 inputs = [
   "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
@@ -83,32 +104,35 @@ inputs = [
 ]
 
 # test oldest ##################################################################
-[feature.tasks-test-oldest.tasks.pip-test-oldest]
-cmd = """pixi r -e test-oldest pip-whl--"""
-outputs = ["build/reports/pip-freeze/test-oldest.txt"]
+[feature.tasks-test-min.tasks.test-min-setup]
+description = """... install the built wheel for testing in the oldest supported environment"""
+cmd = """pixi r -e test-min pip-whl--"""
+outputs = ["build/reports/pip-freeze/test-min.txt"]
 inputs = ["dist/*.whl"]
 
-[feature.tasks-test-oldest.tasks.test-oldest-pytest]
-cmd = """pixi r -e test-oldest pytest--"""
-depends-on = ["pip-test-oldest"]
+[feature.tasks-test-min.tasks.test-min-pytest]
+description = """... run tests in the oldest supported environemnt"""
+cmd = """pixi r -e test-min pytest--"""
+depends-on = ["test-min-setup"]
 inputs = [
   "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
   "!**/.ipynb_checkpoints",
-  "build/reports/pip-freeze/test-oldest.txt",
+  "build/reports/pip-freeze/test-min.txt",
 ]
 
 # docs #########################################################################
-[feature.tasks-docs.tasks.pip-docs]
-cmd = """pixi r -e docs pip-whl--"""
+[feature.tasks-docs.tasks.docs-setup]
+description = """... install the built package for documentation"""
+cmd = "pixi r -e docs pip-whl--"
+depends-on = ["build-pypi"]
 outputs = ["build/reports/pip-freeze/docs.txt"]
 inputs = ["dist/*.whl"]
 
 [feature.tasks-docs.tasks.docs-mkdocs]
-cmd = """
-pixi r mkdocs-- build
-"""
-depends-on = ["pip-docs", "lite-build"]
+description = """... build the documentation site"""
+cmd = "pixi r mkdocs-- build"
+depends-on = ["docs-setup", "lite-build"]
 inputs = [
   "docs/",
   "src/",
@@ -119,12 +143,14 @@ inputs = [
 ]
 outputs = ["site/", "!site/lite/"]
 
-[feature.tasks-docs.tasks.serve-docs]
+[feature.tasks-docs.tasks.docs-serve]
+description = """... serve the documentation site"""
 cmd = "pixi r mkdocs-- serve"
 depends-on = ["docs-mkdocs"]
 
 # lite #########################################################################
 [feature.tasks-lite.tasks.lite-build]
+description = """... build the browser-based demo"""
 cmd = """
 export SOURCE_DATE_EPOCH=17302488620
 && cd lite
@@ -142,20 +168,24 @@ outputs = ["build/lite/SHA256SUMS"]
 depends-on = ["build-pypi"]
 
 # lint #########################################################################
-[feature.tasks-lint.tasks.pip-lint]
+[feature.tasks-lint.tasks.lint-setup]
+description = """... install the package in an editable state for static analysis"""
 cmd = """pixi r -e lint pip-e--"""
 inputs = ["pyproject.toml"]
 outputs = ["build/reports/pip-freeze/lint.txt"]
 
 [feature.tasks-lint.tasks.fix-nbstripout]
+description = """... clean up notebooks"""
 cmd = "nbstripout --keep-id --drop-empty-cells docs/*.ipynb"
 inputs = ["docs/**/*.ipynb", "!**/.ipynb_checkpoints"]
 
 [feature.tasks-lint.tasks.fix-ruff]
+description = """... fix python source in notebooks and python files"""
 cmd = """ruff format && ruff check --fix-only"""
 inputs = ["pyproject.toml", "{docs,src}/**/*.{g,ipy,ipynb,py}", "!**/.ipynb_checkpoints"]
 
 [feature.tasks-lint.tasks.fix-taplo]
+description = """... fix toml files"""
 cmd = """
   taplo fmt *.toml
   --option=array_auto_collapse=true
@@ -165,11 +195,12 @@ cmd = """
 inputs = ["*.toml"]
 
 [feature.tasks-lint.tasks.lint-mypy-src]
+description = """... check python type hints for the shipped source code"""
 cmd = """
 rm -rf docs/mypy
 && mypy -p importnb --html-report docs/mypy
 """
-depends-on = ["pip-lint"]
+depends-on = ["lint-setup"]
 inputs = [
   "build/reports/pip-freeze/lint.txt",
   "pyproject.toml",
@@ -179,8 +210,9 @@ inputs = [
 outputs = ["docs/mypy"]
 
 [feature.tasks-lint.tasks.lint-mypy-dev]
+description = """... check python type hints for tests and tools"""
 cmd = """mypy *.py docs/**/*.py lite/**/*.py"""
-depends-on = ["pip-lint"]
+depends-on = ["lint-setup"]
 inputs = [
   "{docs,lite}/**/*.py",
   "*.py",
@@ -190,15 +222,18 @@ inputs = [
 ]
 
 [feature.tasks-lint.tasks.lint-ruff]
+description = """... check python and notebook source code style"""
 cmd = """ruff format --check && ruff check"""
 inputs = ["pyproject.toml", "{src,docs}/**/*.{py,ipynb}", "!**/.ipynb_checkpoints"]
 
 [feature.tasks-lint.tasks.lint-actionlint]
+description = """... check github actions workflows"""
 cmd = "actionlint -shellcheck=shellcheck -pyflakes=pyflakes"
 inputs = [".github/workflows"]
 
 # check ########################################################################
 [feature.tasks-check.tasks.check-links]
+description = """... check github hyperlinks in documentation"""
 cmd = """
   rm -rf build/reports/check-links
   && mkdir -p build/reports/check-links
@@ -219,11 +254,13 @@ depends-on = ["docs-mkdocs"]
 inputs = ["site/**/*.html"]
 
 [feature.tasks-check.tasks.check-spelling]
+description = """... check spelling in documentation"""
 cmd = """
 rm -rf build/reports/vale.txt
 && mkdir -p build/reports
 && vale
     site/index.html
+    site/contributing/index.html
     --no-wrap
     --glob='!**/.ipynb_checkpoints/*'
     --output=JSON
@@ -234,29 +271,29 @@ depends-on = ["docs-mkdocs"]
 inputs = ["site/index.html", "docs/vale"]
 
 # dev ##########################################################################
-[feature.tasks-dev.tasks.pip-dev]
+[feature.tasks-dev.tasks.dev-setup]
 cmd = """pixi r -e dev pip-e--"""
 outputs = ["build/reports/pip-freeze/dev.txt"]
 inputs = ["pyproject.toml"]
 
-[feature.tasks-dev.tasks.serve-lab]
+[feature.tasks-dev.tasks.dev-lab]
 cmd = "jupyter lab --no-browser --debug"
-depends-on = ["pip-dev"]
+depends-on = ["dev-setup"]
 
 # envs #########################################################################
 [environments]
 build = ["deps-build", "tasks-build"]
 test = ["deps-build", "deps-pip", "deps-run-interactive", "deps-run", "deps-test", "tasks-test"]
-test-oldest = [
+test-min = [
   "deps-build",
   "deps-pip",
   "deps-run-interactive-oldest",
   "deps-run-interactive",
   "deps-run-oldest",
   "deps-run",
-  "deps-test-oldest",
+  "deps-test-min",
   "deps-test",
-  "tasks-test-oldest",
+  "tasks-test-min",
 ]
 docs = ["deps-docs", "deps-build", "deps-run", "deps-pip", "tasks-docs"]
 lite = ["deps-lite", "tasks-lite"]
@@ -328,7 +365,7 @@ pytest-html = "*"
 pytest-xdist = "*"
 tomli-w = "*"
 
-[feature.deps-test-oldest.dependencies]
+[feature.deps-test-min.dependencies]
 pytest = "7.0.*"
 
 [feature.deps-docs.dependencies]
@@ -339,10 +376,12 @@ mkdocstrings-python = "*"
 "ruamel.yaml" = "*"
 
 [feature.deps-dev.dependencies]
+beartype = "*"
+ipywidgets = "*"
 jupyterlab = "*"
 notebook = "*"
-ipywidgets = "*"
-beartype = "*"
+pylsp-mypy = "*"
+python-lsp-ruff = "*"
 
 [feature.deps-lite.dependencies]
 jupyterlite-core = "0.4.3"
@@ -354,5 +393,4 @@ jupyterlite-core-with-libarchive = "*"
 pytest-check-links = "*"
 pytest-html = "*"
 vale = "*"
-vale-spelling-aoo-mozilla-en-dict-gb = "*"
 vale-spelling-aoo-mozilla-en-dict-us = "*"

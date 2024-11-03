@@ -4,6 +4,7 @@ repo_name: deathbeds/importnb
 site_dir: site
 nav:
   - importing notebooks: README.md
+  - contributing: contributing.md
   - tests:
     - importnb test notebook: Untitled42.ipynb
     - unit tests: test_importnb.py

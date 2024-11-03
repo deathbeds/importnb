@@ -202,17 +202,6 @@ class MyLoader(importnb.Notebook):
 
 ---
 
-## developer
-
-```bash
-pixi run release
-# or
-pixi r release
-```
-
-* `importnb` uses [`pixi`][pixi] for testing in python and `IPython`
-
----
 
 ## appendix
 ### line-for-line translation and natural error messages

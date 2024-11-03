@@ -59,11 +59,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {vm: macos-13,       test-env: test-oldest}
+          - {vm: macos-13,       test-env: test-min}
           - {vm: macos-latest,   test-env: test}
-          - {vm: ubuntu-latest,  test-env: test-oldest}
+          - {vm: ubuntu-latest,  test-env: test-min}
           - {vm: ubuntu-latest,  test-env: test}
-          - {vm: windows-latest, test-env: test-oldest}
+          - {vm: windows-latest, test-env: test-min}
           - {vm: windows-latest, test-env: test}
     steps:
       - uses: actions/checkout@v4

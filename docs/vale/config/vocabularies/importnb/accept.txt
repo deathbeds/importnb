@@ -15,8 +15,10 @@ parsers
 pluggable
 pytest
 README.md
+ReadTheDocs
 REPLite
 reproducibility
 standalone
+superset
 syntaxes
 top-level
