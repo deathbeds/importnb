@@ -1,7 +1,19 @@
 {
   "jupyter-config-data": {
     "appName": "importnb",
-    "collaborative": true
+    "faviconUrl": "../logo.svg",
+    "fileTypes": {
+      "ipy": {
+        "extensions": [
+          ".ipy"
+        ],
+        "fileFormat": "text",
+        "mimeTypes": [
+          "text/x-ipython"
+        ],
+        "name": "ipy"
+      }
+    }
   },
   "jupyter-lite-schema-version": 0
 }

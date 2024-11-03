@@ -316,7 +316,7 @@ test-min = [
   "tasks-test-min",
 ]
 docs = ["deps-docs", "deps-build", "deps-run", "deps-pip", "tasks-docs"]
-lite = ["deps-lite", "tasks-lite"]
+lite = ["deps-lab", "deps-lite", "tasks-lite"]
 lint = [
   "deps-build",
   "deps-docs",
@@ -333,6 +333,7 @@ dev = [
   "deps-check",
   "deps-dev",
   "deps-docs",
+  "deps-lab",
   "deps-lint",
   "deps-pip",
   "deps-run-interactive",
@@ -394,10 +395,12 @@ mkdocstrings = "*"
 mkdocstrings-python = "*"
 "ruamel.yaml" = "*"
 
-[feature.deps-dev.dependencies]
-beartype = "*"
+[feature.deps-lab.dependencies]
 ipywidgets = "*"
 jupyterlab = "*"
+
+[feature.deps-dev.dependencies]
+beartype = "*"
 jupyterlab-lsp = "*"
 notebook = "*"
 pylsp-mypy = "*"
