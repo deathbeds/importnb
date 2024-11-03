@@ -6,7 +6,7 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [tasks]
-release = {cmd = "echo 🚢", depends-on = [
+all = {cmd = "echo 🚢", depends-on = [
   "fix",
   "lint",
   "build",
@@ -14,24 +14,31 @@ release = {cmd = "echo 🚢", depends-on = [
   "docs",
   "check",
 ], description = """
-run all tasks to verify the project is releasable"""}
+run ALL non-interactive tasks to verify the project is ready to release"""}
 fix = {cmd = "echo 🧹", depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"], description = """
-apply all source formatting tools"""}
+apply ALL source formatting tools"""}
 build = {cmd = "echo 🏛️", depends-on = ["build-lark", "build-pypi"], description = """
-build all distributions"""}
+build ALL distributions"""}
 lint = {cmd = "echo ✅", depends-on = [
   "lint-ruff",
   "lint-mypy-src",
   "lint-mypy-dev",
   "lint-actionlint",
 ], description = """
-apply all static analysis tools"""}
+apply ALL static analysis tools"""}
 test = {cmd = "echo ✅", depends-on = ["test-pytest", "test-min-pytest"], description = """
-run all tests"""}
-docs = {cmd = "echo 📃", depends-on = ["lite-build", "docs-mkdocs"], description = """
-build all documentation"""}
-check = {cmd = "echo 🤓", depends-on = ["check-links", "check-spelling"], description = """
-perform all pre-release checks"""}
+run ALL tests"""}
+docs = {cmd = "echo 📃", depends-on = ["docs-lite", "docs-mkdocs"], description = """
+build ALL documentation"""}
+check = {cmd = "echo 🤓", depends-on = [
+  "check-links",
+  "check-spelling",
+  "check-wheel",
+  "check-twine",
+], description = """
+perform ALL pre-release checks"""}
+dev = {cmd = "echo 🎮", depends-on = ["dev-lab"], description = """
+start an interactive development environment"""}
 
 # fragments ####################################################################
 pip-- = """python -m pip install
@@ -132,7 +139,7 @@ inputs = ["dist/*.whl"]
 [feature.tasks-docs.tasks.docs-mkdocs]
 description = """... build the documentation site"""
 cmd = "pixi r mkdocs-- build"
-depends-on = ["docs-setup", "lite-build"]
+depends-on = ["docs-setup", "docs-lite"]
 inputs = [
   "docs/",
   "src/",
@@ -149,8 +156,8 @@ cmd = "pixi r mkdocs-- serve"
 depends-on = ["docs-mkdocs"]
 
 # lite #########################################################################
-[feature.tasks-lite.tasks.lite-build]
-description = """... build the browser-based demo"""
+[feature.tasks-lite.tasks.docs-lite]
+description = """... build the JupyterLite demo"""
 cmd = """
 export SOURCE_DATE_EPOCH=17302488620
 && cd lite
@@ -175,7 +182,7 @@ inputs = ["pyproject.toml"]
 outputs = ["build/reports/pip-freeze/lint.txt"]
 
 [feature.tasks-lint.tasks.fix-nbstripout]
-description = """... clean up notebooks"""
+description = """... fix notebook JSON"""
 cmd = "nbstripout --keep-id --drop-empty-cells docs/*.ipynb"
 inputs = ["docs/**/*.ipynb", "!**/.ipynb_checkpoints"]
 
@@ -270,13 +277,27 @@ rm -rf build/reports/vale.txt
 depends-on = ["docs-mkdocs"]
 inputs = ["site/index.html", "docs/vale"]
 
+[feature.tasks-check.tasks.check-wheel]
+description = "... check the built wheel"
+cmd = "check-wheel-contents dist/*.whl"
+depends-on = ["build-pypi"]
+inputs = ["dist/*.whl"]
+
+[feature.tasks-check.tasks.check-twine]
+description = "... check the built distributions for PyPI"
+cmd = "twine check --strict dist/*.whl dist/*.tar.gz"
+depends-on = ["build-pypi"]
+inputs = ["dist/"]
+
 # dev ##########################################################################
 [feature.tasks-dev.tasks.dev-setup]
+description = "... prepare for interactive development"
 cmd = """pixi r -e dev pip-e--"""
 outputs = ["build/reports/pip-freeze/dev.txt"]
 inputs = ["pyproject.toml"]
 
 [feature.tasks-dev.tasks.dev-lab]
+description = "... launch JupyterLab"
 cmd = "jupyter lab --no-browser --debug"
 depends-on = ["dev-setup"]
 
@@ -314,7 +335,6 @@ dev = [
   "deps-dev",
   "deps-docs",
   "deps-lint",
-  "deps-lite",
   "deps-pip",
   "deps-run-interactive",
   "deps-run",
@@ -379,6 +399,7 @@ mkdocstrings-python = "*"
 beartype = "*"
 ipywidgets = "*"
 jupyterlab = "*"
+jupyterlab-lsp = "*"
 notebook = "*"
 pylsp-mypy = "*"
 python-lsp-ruff = "*"
@@ -390,7 +411,9 @@ jupyterlite-core-with-translation = "*"
 jupyterlite-core-with-libarchive = "*"
 
 [feature.deps-check.dependencies]
+check-wheel-contents = "*"
 pytest-check-links = "*"
 pytest-html = "*"
+twine = "*"
 vale = "*"
 vale-spelling-aoo-mozilla-en-dict-us = "*"

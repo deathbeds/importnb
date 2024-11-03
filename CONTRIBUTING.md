@@ -22,26 +22,28 @@ pytest
 ## project
 
 `importnb` uses [`pixi`][pixi] to `fix`, `lint`, `test`, `build`, build `docs`,
-and `check` that it is ready to `release`. run all of them:
+and `check` that it is ready to release.
+
+run `all` of them with:
 
 ```bash
-pixi run release
+pixi run all
 ```
 
 ## interactive
 
-the `dev` environment, a superset of all the other environments, is available
+the `dev` environment, a superset of most other environments, is available
 with extras tools for interactive development.
 
 ```bash
-pixi run serve-lab
+pixi run dev
 ```
 
 ## continuous integration
 
 `importnb` uses:
 
-* GitHub Actions, as defined in `.github/workflows`
-* ReadTheDocs, as defined in `.readthedocs.yml`
+* GitHub Actions, defined in `.github/workflows`
+* ReadTheDocs, defined in `.readthedocs.yml`
 
 [pixi]: https://pixi.sh
