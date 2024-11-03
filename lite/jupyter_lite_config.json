@@ -5,7 +5,8 @@
       "cache_dir": "../build/.cache/lite/",
       "extra_ignore_contents": [
         ".*/coverage",
-        ".*/mypy"
+        ".*/mypy",
+        ".*/vale"
       ]
     },
     "PipliteAddon": {

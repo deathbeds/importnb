@@ -29,7 +29,7 @@ maybe when we give notebooks new life they eventually earn a better name than `U
 
 ## run a notebook as a script
 
-the `importnb` command line interface mimics python's. it permits running notebooks files, modules, and raw json data.
+the `importnb` command line interface mimics python's. it permits running notebooks files, modules, and raw `json` data.
 
 the commands below execute a notebook module and file respectively.
 
@@ -54,7 +54,7 @@ use either `pip` or `conda/mamba`
 * works with top-level await statements
 * integration with `pytest`
 * extensible machinery and entry points
-* translates Jupyter notebook files (ie `.ipynb` files) line-for-line to python source providing natural error messages
+* translates Jupyter notebook files (i.e. `.ipynb` files) line-for-line to python source providing natural error messages
 * command line interface for running notebooks as python scripts
 * has no required dependencies
 
@@ -65,12 +65,12 @@ the `Notebook` object has a few features that can be toggled:
 * `lazy:bool=False` lazy load the module, the namespace is populated when the module is access the first time.
 * `position:int=0` the relative position of the import loader in the `sys.path_hooks`
 * `fuzzy:bool=True` use fuzzy searching syntax when underscores are encountered.
-* `include_markdown_docstring:bool=True` markdown blocks preceding function/class defs become docstrings.
-* `include_magic:bool=True` ignore any ipython magic syntaxes
+* `include_markdown_docstring:bool=True` markdown blocks preceding a `class` or `def` become docstrings.
+* `include_magic:bool=True` ignore any `IPython` magic syntaxes
 * `only_defs:bool=False` import only function and class definitions. ignore intermediate * expressions.
 * `no_magic:bool=False` execute `IPython` magic statements from the loader.
 
-these features are defined in the `importnb.loader.Interface` class and they can be controlled throught the command line interface.
+these features are defined in the `importnb.loader.Interface` class and they can be controlled through the command line interface.
 
 ### importing notebooks
 
@@ -85,7 +85,7 @@ the primary goal of this library is to make it easy to reuse python code in note
 
 #### import data files
 
-there is support for discovering data files. when discovered, data from disk on loaded and stored on the module with rich reprs.
+there is support for discovering data files. when discovered, data from disk on loaded and stored on the module with rich representations.
 
     with importnb.imports("toml", "json", "yaml"):
         pass
@@ -105,14 +105,14 @@ all the available entry points are found with
 often notebooks have names that are not valid python files names that are restricted alphanumeric characters and an `_`.  the `importnb` fuzzy finder converts python's import convention into globs that will find modules matching specific patters. consider the statement:
 
     with importnb.Notebook():
-        import U_titl__d                        # U*titl**d.ipynb
+        import U_titl__d  # U*titl**d.ipynb
 
-`importnb` translates `U_titl__d` to a glob format that matches the pattern `U*titl**d.ipynb` when searching for the source. that means that `importnb` should fine `Untitled.ipynb` as the source for the import[^unless].
+`importnb` translates `U_titl__d` to a glob format that matches the pattern `U*titl**d.ipynb` when searching for the source. that means that `importnb` should fine `Untitled.ipynb` as the source for the import.
 
     with importnb.Notebook():
-        import _ntitled                        # *ntitled.ipynb
-        import __d                     # **d.ipynb
-        import U__                        # U**.ipynb
+        import _ntitled   # *ntitled.ipynb
+        import __d        # **d.ipynb
+        import U__        # U**.ipynb
 
 a primary motivation for this feature is name notebooks as if they were blog posts using the `YYYY-MM-DD-title-here.ipynb` convention. there are a few ways we could this file explicitly. the fuzzy finder syntax could like any of the following:
 
@@ -146,7 +146,7 @@ an outcome of resolving the most recently changed is that you can import your mo
 #### `pytest`
 
 since `importnb` transforms notebooks to python documents we can use these as source for tests.
-`importnb`s `pytest` extension is not fancy, it only allows for conventional pytest test discovery.
+`importnb`s `pytest` extension is not fancy, it only allows for conventional `pytest` test discovery.
 
 `nbval` is alternative testing tools that validates notebook outputs. this style is near to using notebooks as `doctest` while `importnb` primarily adds the ability to write `unittest`s in notebooks. adding tests to notebooks help preserve them over time.
 
@@ -185,7 +185,7 @@ a challenge with Jupyter notebooks is that they are `json` data. this poses prob
 python's `json` module is not pluggable in the way we need to find line numbers. since `importnb` is meant to be dependency free on installation we couldn't look to any other packages like `ujson` or `json5`.
 
 the need for line numbers is enough that we ship a standalone `json` grammar parser. to do this without extra dependencies we use the `lark` grammar package at build time:
-* we've defined a `json.g`ramar
+* we've defined a minimal grammar in `json.g`
 * we use `hatch` hooks to invoke `lark-standalone` that generates a standalone parser for the grammar. the generated file is shipped with the package.
   * this code is licensed under the Mozilla Public License 2.0
 
@@ -193,7 +193,7 @@ the result of `importnb` is `json` data translated into vertically sparse, valid
 
 #### reproducibility caution with the fuzzy finder
 
-⚠️ fuzzy finding is not reproducible as your system will change over time. in python, "explicit is better than implicit" so defining strong fuzzy strings is best practice if you MUST use esotric names. an alternative option is to use the `importlib.import_module` machinery
+⚠️ fuzzy finding is not reproducible as your system will change over time. in python, "explicit is better than implicit" so defining strong fuzzy strings is best practice if you MUST use esoteric names. an alternative option is to use the `importlib.import_module` machinery
 
 
 [pip]: #

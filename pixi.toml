@@ -7,12 +7,12 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [tasks]
 release = {depends-on = ["fix", "lint", "build", "test", "docs", "check"]}
-docs = {depends-on = ["lite-build", "docs-build"]}
+docs = {depends-on = ["lite-build", "docs-mkdocs"]}
 test = {depends-on = ["test-pytest", "test-oldest-pytest"]}
 build = {depends-on = ["build-lark", "build-pypi"]}
 fix = {depends-on = ["fix-taplo", "fix-ruff", "fix-nbstripout"]}
 lint = {depends-on = ["lint-ruff", "lint-mypy-src", "lint-mypy-dev", "lint-actionlint"]}
-check = {depends-on = ["check-links"]}
+check = {depends-on = ["check-links", "check-spelling"]}
 
 # fragments ####################################################################
 pip-- = """python -m pip install
@@ -104,7 +104,7 @@ cmd = """pixi r -e docs pip-whl--"""
 outputs = ["build/reports/pip-freeze/docs.txt"]
 inputs = ["dist/*.whl"]
 
-[feature.tasks-docs.tasks.docs-build]
+[feature.tasks-docs.tasks.docs-mkdocs]
 cmd = """
 pixi r mkdocs-- build
 """
@@ -114,13 +114,14 @@ inputs = [
   "src/",
   "build/lite/SHA256SUMS",
   "{mkdocs.yml,README.md,CONTRIBUTING.md}",
-  "!**/{.ipynb_checkpoints,__pycache__,coverage}/",
+  "!**/{.ipynb_checkpoints,__pycache__,coverage,vale,mypy}/",
+  "!docs/pytest.html",
 ]
 outputs = ["site/", "!site/lite/"]
 
 [feature.tasks-docs.tasks.serve-docs]
 cmd = "pixi r mkdocs-- serve"
-depends-on = ["docs-build"]
+depends-on = ["docs-mkdocs"]
 
 # lite #########################################################################
 [feature.tasks-lite.tasks.lite-build]
@@ -135,7 +136,7 @@ inputs = [
   "docs/",
   "lite/",
   "!**/*.doit*",
-  "!**/{.ipynb_checkpoints,__pycache__,coverage}",
+  "!**/{.ipynb_checkpoints,__pycache__,coverage,vale}",
 ]
 outputs = ["build/lite/SHA256SUMS"]
 depends-on = ["build-pypi"]
@@ -214,8 +215,23 @@ cmd = """
     -k "not (404 or coverage or lite or mypy or Untitled)"
     ../../../site/**/*.html
 """
-depends-on = ["docs-build"]
+depends-on = ["docs-mkdocs"]
 inputs = ["site/**/*.html"]
+
+[feature.tasks-check.tasks.check-spelling]
+cmd = """
+rm -rf build/reports/vale.txt
+&& mkdir -p build/reports
+&& vale
+    site/index.html
+    --no-wrap
+    --glob='!**/.ipynb_checkpoints/*'
+    --output=JSON
+  > build/reports/vale.json
+&& cat build/reports/vale.json
+"""
+depends-on = ["docs-mkdocs"]
+inputs = ["site/index.html", "docs/vale"]
 
 # dev ##########################################################################
 [feature.tasks-dev.tasks.pip-dev]
@@ -337,3 +353,6 @@ jupyterlite-core-with-libarchive = "*"
 [feature.deps-check.dependencies]
 pytest-check-links = "*"
 pytest-html = "*"
+vale = "*"
+vale-spelling-aoo-mozilla-en-dict-gb = "*"
+vale-spelling-aoo-mozilla-en-dict-us = "*"
