@@ -155,6 +155,19 @@ description = """... serve the documentation site"""
 cmd = "pixi r mkdocs-- serve"
 depends-on = ["docs-mkdocs"]
 
+[feature.tasks-docs.tasks.docs-rtd]
+description = """... copy the documentation site to where ReadTheDocs wants it"""
+cmd = """
+python -c "
+import os;
+assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadTheDocs'
+"
+&& mkdir -p "$READTHEDOCS_OUTPUT"
+&& cp -r site "$READTHEDOCS_OUTPUT/html"
+&& ls "$READTHEDOCS_OUTPUT/html"
+"""
+depends-on = ["docs-mkdocs"]
+
 # lite #########################################################################
 [feature.tasks-lite.tasks.docs-lite]
 description = """... build the JupyterLite demo"""
