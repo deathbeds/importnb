@@ -1,12 +1,10 @@
 {
     "LiteBuildConfig": {
       "output_dir": "../build/lite",
-      "contents": ["../docs"],
+      "contents": ["."],
       "cache_dir": "../build/.cache/lite/",
       "extra_ignore_contents": [
-        ".*/coverage",
-        ".*/mypy",
-        ".*/vale"
+        "mkdocs_hooks.py"
       ]
     },
     "PipliteAddon": {

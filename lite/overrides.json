@@ -1,5 +1,19 @@
 {
   "@jupyterlab/notebook-extension:tracker": {
     "windowingMode": "none"
+  },
+  "@jupyterlab/statusbar-extension:plugin": {
+    "visible": false
+  },
+  "@jupyterlab/filebrowser-extension:browser": {
+    "navigateToCurrentDirectory": false,
+    "useFuzzyFilter": true,
+    "filterDirectories": true,
+    "showLastModifiedColumn": false,
+    "showFileSizeColumn": false,
+    "showHiddenFiles": false,
+    "showFileCheckboxes": true,
+    "showFullPath": false,
+    "sortNotebooksFirst": false
   }
 }
