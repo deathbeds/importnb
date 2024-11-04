@@ -35,7 +35,16 @@ apply ALL static analysis tools""", depends-on = [
 ], cmd = "echo ✅"}
 
 test = {description = """
-run ALL tests""", depends-on = ["test-pytest", "test-min-pytest"], cmd = "echo ✅"}
+run ALL tests""", depends-on = [
+  "test-pytest",
+  "test-min-pytest",
+  "test-pypy-pytest-maybe",
+], cmd = "echo ✅"}
+
+test-pypy-pytest-maybe = {description = """
+run unit tests against pypy (if possible)""", cmd = """
+(pixi install -e test-pypy || echo "can't install pypy on this platform" && exit 0)
+&& pixi r -e test-pypy test-pypy-pytest"""}
 
 docs = {description = """
 build ALL documentation""", cmd = "echo 📃", depends-on = ["docs-lite", "docs-mkdocs"]}
@@ -48,9 +57,8 @@ perform ALL pre-release checks""", depends-on = [
   "check-twine",
 ], cmd = "echo 🤓"}
 
-dev = {description = """start an interactive development environment""", depends-on = [
-  "dev-lab",
-], cmd = "echo 🎮"}
+dev = {description = """
+start an interactive development environment""", depends-on = ["dev-lab"], cmd = "echo 🎮"}
 
 # fragments ####################################################################
 pip-- = """python -m pip install
@@ -133,6 +141,27 @@ inputs = ["dist/*.whl"]
 description = "... run tests in the oldest supported environemnt"
 cmd = "pixi r -e test-min pytest--"
 depends-on = ["test-min-setup"]
+inputs = [
+  "pyproject.toml",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "!**/.ipynb_checkpoints",
+  "build/reports/pip-freeze/test-min.txt",
+]
+
+# test pypy ##################################################################
+[feature.tasks-test-pypy]
+platforms = ["linux-64", "win-64", "osx-64"]
+
+[feature.tasks-test-pypy.tasks.test-pypy-setup]
+description = "... install the built wheel for testing in a pypy environment"
+cmd = "pixi r -e test-pypy pip-whl--"
+outputs = ["build/reports/pip-freeze/test-pypy.txt"]
+inputs = ["dist/*.whl"]
+
+[feature.tasks-test-pypy.tasks.test-pypy-pytest]
+description = "... run tests in a pypy environemnt"
+cmd = "pixi r -e test-pypy pytest--"
+depends-on = ["test-pypy-setup"]
 inputs = [
   "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
@@ -320,6 +349,7 @@ test-min = [
   "deps-test",
   "tasks-test-min",
 ]
+test-pypy = ["deps-build", "deps-pip", "deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
 docs = ["deps-docs", "deps-build", "deps-run", "deps-pip", "tasks-docs"]
 lite = ["deps-lab", "deps-lite", "tasks-lite"]
 lint = [
@@ -351,15 +381,18 @@ dev = [
 [feature.deps-run.dependencies]
 importlib-metadata = ">=4.8.3"
 
-[feature.deps-run-oldest.dependencies]
-importlib-metadata = "4.8.3"
-python = "3.9.*"
-
 [feature.deps-run-interactive.dependencies]
 ipython = "*"
 
 [feature.deps-run-interactive-oldest.dependencies]
 ipython = "8.7.*"
+
+[feature.deps-run-oldest.dependencies]
+importlib-metadata = "4.8.3"
+python = "3.9.*"
+
+[feature.deps-run-pypy.dependencies]
+pypy = "*"
 
 [feature.deps-build.dependencies]
 hatchling = "*"

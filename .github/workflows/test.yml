@@ -60,11 +60,14 @@ jobs:
       matrix:
         include:
           - {vm: macos-13,       test-env: test-min}
+          - {vm: macos-13,       test-env: test-pypy}
           - {vm: macos-latest,   test-env: test}
           - {vm: ubuntu-latest,  test-env: test-min}
           - {vm: ubuntu-latest,  test-env: test}
+          - {vm: ubuntu-latest,  test-env: test-pypy}
           - {vm: windows-latest, test-env: test-min}
           - {vm: windows-latest, test-env: test}
+          - {vm: windows-latest, test-env: test-pypy}
     steps:
       - uses: actions/checkout@v4
       - uses: prefix-dev/setup-pixi@v0.8.1
@@ -80,7 +83,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: |-
-            inb-${{ github.run_number }}-${{ matrix.test-env }}-${{ matrix.vm }}
+            inb-${{ github.run_number }}-${{ matrix.vm }}-${{ matrix.test-env }}
           path: |
             ./docs
 
