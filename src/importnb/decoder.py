@@ -18,7 +18,13 @@ TLarkObject = list[TLarkNamedBody]
 TLarkItem = Union[TLarkCompound, Token, TLarkCompounds, Tree[Any], TLarkNamedBody]
 TLarkItems = list[TLarkItem]
 TLarkItemReturns = Union[
-    TLarkAtom, TLarkCompound, TLarkValue, TLarkNamedBody, TLarkObject, str, None
+    TLarkAtom,
+    TLarkCompound,
+    TLarkValue,
+    TLarkNamedBody,
+    TLarkObject,
+    str,
+    None,
 ]
 
 I = TypeVar("I")

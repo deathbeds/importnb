@@ -17,7 +17,11 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from functools import partial
 from importlib import reload
-from importlib._bootstrap import _call_with_frames_removed, _init_module_attrs, _requires_builtin
+from importlib._bootstrap import (  # type: ignore[attr-defined]
+    _call_with_frames_removed,
+    _init_module_attrs,
+    _requires_builtin,
+)
 from importlib._bootstrap_external import decode_source
 from importlib.machinery import FileFinder, ModuleSpec, SourceFileLoader
 from importlib.util import LazyLoader, find_spec
@@ -28,7 +32,12 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar
 from . import get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
-from .finder import FileModuleSpec, FuzzyFinder, get_loader_details, get_loader_index
+from .finder import (
+    FileModuleSpec,
+    FuzzyFinder,
+    get_loader_details,
+    get_loader_index,
+)
 
 A = TypeVar("A", bound=ast.AST)
 
@@ -142,7 +151,11 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         return nodes
 
     def nodes_to_code(
-        self, nodes: ast.Module, path: str = "<unknown>", *, _optimize: int = -1
+        self,
+        nodes: ast.Module,
+        path: str = "<unknown>",
+        *,
+        _optimize: int = -1,
     ) -> CodeType:
         """Compile AST nodes to python code object"""
         flags = ALLOW_TOP_LEVEL_AWAIT
@@ -260,7 +273,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
                     flags=ALLOW_TOP_LEVEL_AWAIT,
                 )
                 await _call_with_frames_removed(
-                    eval,
+                    eval,  # noqa: S307
                     co,
                     module.__dict__,
                     module.__dict__,
@@ -343,7 +356,10 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
 
     @classmethod
     def load_argv(
-        cls, argv: list[str] | None = None, *, parser: ArgumentParser | None = None
+        cls,
+        argv: list[str] | None = None,
+        *,
+        parser: ArgumentParser | None = None,
     ) -> ModuleType | None:
         """Load a module based on python arguments
 
@@ -417,7 +433,11 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         name = (main and "__main__") or mod_name or "<raw code>"
 
         return _dict_module(
-            _run_module_code(self.raw_to_source(code), mod_name=name, script_name=script_name),
+            _run_module_code(
+                self.raw_to_source(code),
+                mod_name=name,
+                script_name=script_name,
+            ),
         )
 
     @staticmethod
@@ -435,7 +455,10 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         parser.add_argument("-d", "--dir", help="path to run script in")
         parser.add_argument("-t", "--tasks", action="store_true", help="run doit tasks")
         parser.add_argument(
-            "--version", action="version", version=__version__, help="display the importnb version"
+            "--version",
+            action="version",
+            version=__version__,
+            help="display the importnb version",
         )
         return parser
 
@@ -445,7 +468,13 @@ def comment(str: str) -> str:
 
 
 class DefsOnly(ast.NodeTransformer):
-    INCLUDE = ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef
+    INCLUDE = (
+        ast.Import,
+        ast.ImportFrom,
+        ast.ClassDef,
+        ast.FunctionDef,
+        ast.AsyncFunctionDef,
+    )
 
     def visit(self, node: A) -> A:
         visited: A = super().visit(node)
@@ -528,7 +557,11 @@ def main_argv(prog: str, args: list[str] | None = None) -> Generator[None, None,
 
 try:
     from IPython.core.inputsplitter import IPythonInputSplitter
-    from IPython.core.inputtransformer import cellmagic, ipy_prompt, leading_indent
+    from IPython.core.inputtransformer import (
+        cellmagic,
+        ipy_prompt,
+        leading_indent,
+    )
 
     dedent: Callable[[str], str] = IPythonInputSplitter(
         line_input_checker=False,
@@ -537,7 +570,7 @@ try:
             ipy_prompt(),
             cellmagic(end_on_blank_line=False),
         ],
-    ).transform_cell  # type: ignore[no-untyped-call]
+    ).transform_cell
 except ModuleNotFoundError:
 
     def dedent(body: str) -> str:

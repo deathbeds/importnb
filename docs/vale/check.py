@@ -67,7 +67,11 @@ def main() -> int:
     str_args = [a if isinstance(a, str) else f"{a.relative_to(ROOT)}" for a in VALE_ARGS]
     print(">>>", " \\\n\t".join(str_args), flush=True)
     proc = subprocess.Popen(
-        str_args, encoding="utf-8", cwd=str(ROOT), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        str_args,
+        encoding="utf-8",
+        cwd=str(ROOT),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
     out = proc.communicate()[0]
     raw: TValeResults = json.loads(out)

@@ -19,7 +19,10 @@ if _BEAR_:
     beartype_this_package(
         conf=BeartypeConf(
             violation_type=UserWarning,
-            claw_skip_package_names=("importnb._json_parser", "IPython.core.inputsplitter"),
+            claw_skip_package_names=(
+                "importnb._json_parser",
+                "IPython.core.inputsplitter",
+            ),
         )
     )
 

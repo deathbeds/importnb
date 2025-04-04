@@ -8,7 +8,7 @@ description = "import jupyter notebooks as python modules and scripts."
 readme = "README.md"
 keywords = []
 license = "BSD-3-Clause AND MPL-2.0"
-license-files = {paths = ["LICENSE", "LICENSE-MPL-2.0"]}
+license-files = ["LICENSE", "LICENSE-MPL-2.0"]
 authors = [{name = "tonyfast", email = "tony.fast@gmail.com"}]
 requires-python = ">=3.9"
 classifiers = [
@@ -75,7 +75,15 @@ targets.sdist.exclude = [
 
 [tool.hatch.envs.released]
 # test a release on test-pypi
-dependencies = ["importnb", "ipython", "pytest", "pytest-cov", "doit", "tomli-w", "ruamel.yaml"]
+dependencies = [
+  "importnb",
+  "ipython",
+  "pytest",
+  "pytest-cov",
+  "doit",
+  "tomli-w",
+  "ruamel.yaml",
+]
 
 [tool.hatch.envs.released.scripts]
 test = "pytest"
@@ -128,6 +136,8 @@ module = [
   # contrib
   "doit",
   "doit.*",
+  "IPython.core.inputtransformer",
+  "IPython.core.inputsplitter",
   # test
   "__42",
   "__d42",

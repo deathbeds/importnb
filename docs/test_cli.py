@@ -36,12 +36,17 @@ def cli_test(command: str) -> Callable[..., Callable[..., None]]:
             path = tmp_path / "tmp"
             with path.open("w") as file:
                 check_call(
-                    [executable] + split(command), stderr=file, stdout=file, cwd=str(tmp_path)
+                    [executable] + split(command),
+                    stderr=file,
+                    stdout=file,
+                    cwd=str(tmp_path),
                 )
             out = path.read_text()
             match = get_prepared_string(
                 f.__doc__.format(
-                    UNTITLED=UNTITLED.as_posix(), SLUG=ref.magic_slug, VERSION=importnb_version
+                    UNTITLED=UNTITLED.as_posix(),
+                    SLUG=ref.magic_slug,
+                    VERSION=importnb_version,
                 )
             )
 

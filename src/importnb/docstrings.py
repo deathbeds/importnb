@@ -100,7 +100,10 @@ class TestStrings(ast.NodeTransformer):
         """`TestStrings.visit_Expr` appends the `str_nodes` to `TestStrings.strings` to append to the `ast.Module`."""
         if isinstance(node.value, str_nodes):
             self.strings.append(
-                ast.copy_location(ast.Constant(node.value.value.replace("\n```", "\n")), node),
+                ast.copy_location(
+                    ast.Constant(node.value.value.replace("\n```", "\n")),
+                    node,
+                ),
             )
         return node
 

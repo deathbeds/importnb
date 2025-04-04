@@ -221,7 +221,9 @@ def test_fuzzy_finder(clean: None, ref: ModuleType, capsys: CaptureFixture[str])
     assert not any([outs[3].out, outs[3].err] + [outs[4].out, outs[4].err])
 
 
-def as_file_spec_loader(spec: ModuleSpec | None) -> tuple[FileModuleSpec, Notebook]:
+def as_file_spec_loader(
+    spec: ModuleSpec | None,
+) -> tuple[FileModuleSpec, Notebook]:
     assert isinstance(spec, FileModuleSpec)
     loader = spec.loader
     assert isinstance(loader, Notebook)

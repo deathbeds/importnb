@@ -39,7 +39,10 @@ def get_logger() -> logging.Logger:
 
 
 def get_lark() -> Any:
-    ns = lalr_argparser.parse_args(["--propagate_positions", "src/importnb/json.g"])
+    ns = lalr_argparser.parse_args([
+        "--propagate_positions",
+        "src/importnb/json.g",
+    ])
     return build_lalr(ns)[0]  # type: ignore[no-untyped-call]
 
 

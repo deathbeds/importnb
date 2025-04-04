@@ -8,12 +8,12 @@ __all__ = ("imports",)
 
 # See compatibility note on `group`
 # https://docs.python.org/3/library/importlib.metadata.html#entry-points
-if sys.version_info < (3, 10):
-    from importlib_metadata import entry_points
-else:
+if sys.version_info >= (3, 10):
     from importlib.metadata import entry_points
+else:
+    from importlib_metadata import entry_points
 
-from .loader import Loader  # noqa: TCH001
+from .loader import Loader  # noqa: TC001
 
 if TYPE_CHECKING:
     from collections.abc import Generator

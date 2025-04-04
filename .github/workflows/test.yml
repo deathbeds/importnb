@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  INB_PIXI_VERSION: 0.34.0
+  INB_PIXI_VERSION: 0.44.0
 
 jobs:
   build:
@@ -108,4 +108,3 @@ jobs:
           name: inb-${{ github.run_number }}-docs
           path: |
             site
-            - run: pixi r docs
