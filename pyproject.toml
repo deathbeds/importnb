@@ -33,7 +33,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
-interactive = ["ipython"]
+interactive = ["ipython >=8.7"]
 tasks = ["doit", "tomli"]
 test = ["doit", "pytest", "pytest-cov", "ruamel.yaml", "tomli", "tomli-w"]
 yaml = ["ruamel.yaml"]
@@ -102,7 +102,6 @@ data_file = "build/.coverage"
 exclude_lines = [
   """if __name__ == "__main__":""",
   "if TYPE_CHECKING:",
-  "if _BEAR_:",
   "pragma: no cover",
 ]
 omit = ["_json_parser.py"]
@@ -133,9 +132,10 @@ module = [
   "importlib._bootstrap",
   "importlib._bootstrap_external",
   "tomllib",
-  # contrib
+  # interactive
   "IPython.core.inputsplitter",
   "IPython.core.inputtransformer",
+  # contrib
   "doit",
   "doit.*",
   # test

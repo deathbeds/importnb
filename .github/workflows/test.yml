@@ -24,7 +24,7 @@ jobs:
           pixi-version: v${{ env.INB_PIXI_VERSION }}
           cache: true
           environments: build
-      - run: pixi r build
+      - run: pixi run build
       - uses: actions/upload-artifact@v4
         with:
           name: inb-${{ github.run_number }}-dist
@@ -42,7 +42,7 @@ jobs:
       with:
         pixi-version: v${{ env.INB_PIXI_VERSION }}
         cache: true
-        environments: lint
+        environments: lint uv
     - run: pixi run fix
     - name: print diff
       run: |
@@ -51,34 +51,30 @@ jobs:
         echo "~~~" >> "${GITHUB_STEP_SUMMARY}"
     - run: pixi run lint
 
-  test-pixi:
+  test:
     needs: [build]
     name: ${{ matrix.vm }} ${{ matrix.test-env }}
     runs-on: ${{ matrix.vm }}
     strategy:
       fail-fast: false
       matrix:
+        test-env: [test-min, test-prev, test-max]
+        vm: [ubuntu-latest, macos-latest, windows-latest]
+        exclude:
+          - {test-env: test-min, vm: macos-latest}
         include:
-          - {vm: macos-13,       test-env: test-min}
-          - {vm: macos-13,       test-env: test-pypy}
-          - {vm: macos-latest,   test-env: test}
-          - {vm: ubuntu-latest,  test-env: test-min}
-          - {vm: ubuntu-latest,  test-env: test}
-          - {vm: ubuntu-latest,  test-env: test-pypy}
-          - {vm: windows-latest, test-env: test-min}
-          - {vm: windows-latest, test-env: test}
-          - {vm: windows-latest, test-env: test-pypy}
+          - {test-env: test-min, vm: macos-13}
     steps:
       - uses: actions/checkout@v4
       - uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v${{ env.INB_PIXI_VERSION }}
           cache: true
-          environments: ${{ matrix.test-env }}
+          environments: ${{ matrix.test-env }} uv
       - uses: actions/download-artifact@v4
         with:
           name: inb-${{ github.run_number }}-dist
-      - run: pixi r ${{ matrix.test-env }}
+      - run: pixi run ${{ matrix.test-env }}
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -96,12 +92,12 @@ jobs:
         with:
           pixi-version: v${{ env.INB_PIXI_VERSION }}
           cache: true
-          environments: build docs lite
+          environments: build docs lite uv
       - uses: actions/download-artifact@v4
         with:
           name: inb-${{ github.run_number }}-dist
-      - run: pixi r docs
-      - run: pixi r check
+      - run: pixi run docs
+      - run: pixi run check
       - if: always()
         uses: actions/upload-artifact@v4
         with:

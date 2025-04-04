@@ -56,8 +56,13 @@ lint = {description = """✅ apply ALL static analysis tools""", depends-on = [
 ], cmd = "echo ✅ lint OK"}
 
 test = {description = """🧪 run ALL tests""", depends-on = [
-  "test-max-pytest",
+  # ... don't break the oldest
   "test-min-pytest",
+  # ... don't break the next-to-latest
+  "test-prev-pytest",
+  # ... don't break the latest
+  "test-max-pytest",
+  # ... try not to break pypy
   "test-pypy-pytest-maybe",
 ], cmd = "echo 🧪 test OK"}
 
@@ -84,7 +89,7 @@ test-pypy-pytest-maybe = {cmd = """
       echo "can't install pypy on this platform"
       && exit 0
     )
-  ) && pixi r -e test-pypy test-pypy-pytest""", description = """
+  ) && pixi run -e test-pypy test-pypy-pytest""", description = """
 run unit tests against pypy (if possible)"""}
 
 # fragments ####################################################################
@@ -92,8 +97,8 @@ mkdocs-- = """
   export JUPYTER_PLATFORM_DIRS=1
   && mkdocs"""
 pip-- = """
-  pixi r -q uv-- uninstall importnb
-  && pixi r -q uv-- install
+  pixi run -q uv-- uninstall importnb
+  && pixi run -q uv-- install
     --no-deps
     --no-build-isolation
     --no-cache
@@ -103,17 +108,17 @@ pip-check-- = """
   export FREEZES=build/reports/pip-freeze
   && export FROZEN=$FREEZES/$PIXI_ENVIRONMENT_NAME.txt
   && rm -rf $FROZEN
-  && pixi r uv-- check
+  && pixi run uv-- check
   && mkdir -p $FREEZES
-  && pixi r -q uv-- list --format=freeze > $FROZEN"""
+  && pixi run -q uv-- list --format=freeze > $FROZEN"""
 pip-e-- = """
-  export $(pixi r -q this-python--)
-  && pixi r pip-- -e .
-  && pixi r pip-check--"""
+  export $(pixi run -q this-python--)
+  && pixi run pip-- -e .
+  && pixi run pip-check--"""
 pip-whl-- = """
-  export $(pixi r -q this-python--)
-  && pixi r pip-- --find-links=dist --no-index importnb
-  && pixi r pip-check--"""
+  export $(pixi run -q this-python--)
+  && pixi run pip-- --find-links=dist --no-index importnb
+  && pixi run pip-check--"""
 pytest-- = """
   pytest
     --cov importnb
@@ -122,7 +127,7 @@ pytest-- = """
     --cov-report term-missing:skip-covered
     --no-cov-on-fail"""
 this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
-uv-- = "pixi r -q -e uv uv pip"
+uv-- = "pixi run -q -e uv uv pip"
 
 # build ########################################################################
 [feature.tasks-build.tasks.build-lark]
@@ -148,13 +153,13 @@ outputs = ["dist/*.{whl,tar.gz}"]
 
 # test #########################################################################
 [feature.tasks-test-max.tasks.test-max-setup]
-cmd = "pixi r pip-e--"
+cmd = "pixi run pip-e--"
 description = "... install the package in an editable state for testing"
 inputs = ["pyproject.toml"]
 outputs = ["build/reports/pip-freeze/test-max.txt"]
 
 [feature.tasks-test-max.tasks.test-max-pytest]
-cmd = """pixi r pytest--
+cmd = """pixi run pytest--
   --cov-report=html:docs/coverage
   --self-contained-html
   --html=docs/pytest.html
@@ -168,15 +173,37 @@ inputs = [
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 
+# test next-to-latest
+[feature.tasks-test-prev.tasks.test-prev-setup]
+cmd = "pixi run pip-e--"
+description = "... install the package in an editable state for testing"
+inputs = ["pyproject.toml"]
+outputs = ["build/reports/pip-freeze/test-prev.txt"]
+
+[feature.tasks-test-prev.tasks.test-prev-pytest]
+cmd = """pixi run pytest--
+  --cov-report=html:docs/coverage
+  --self-contained-html
+  --html=docs/pytest.html
+  -o generate_report_on_test=true"""
+depends-on = ["test-prev-setup"]
+description = "... run unit tests with coverage"
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "build/reports/pip-freeze/test-prev.txt",
+  "pyproject.toml",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
+]
+
 # test oldest ##################################################################
 [feature.tasks-test-min.tasks.test-min-setup]
-cmd = "pixi r pip-whl--"
+cmd = "pixi run pip-whl--"
 description = "... install the built wheel for testing in the oldest supported environment"
 inputs = ["dist/*.whl"]
 outputs = ["build/reports/pip-freeze/test-min.txt"]
 
 [feature.tasks-test-min.tasks.test-min-pytest]
-cmd = "pixi r pytest--"
+cmd = "pixi run pytest--"
 depends-on = ["test-min-setup"]
 description = "... run tests in the oldest supported environemnt"
 inputs = [
@@ -191,13 +218,13 @@ inputs = [
 platforms = ["linux-64", "osx-64", "win-64"]
 
 [feature.tasks-test-pypy.tasks.test-pypy-setup]
-cmd = "pixi r pip-whl--"
+cmd = "pixi run pip-whl--"
 description = "... install the built wheel for testing in a pypy environment"
 inputs = ["dist/*.whl"]
 outputs = ["build/reports/pip-freeze/test-pypy.txt"]
 
 [feature.tasks-test-pypy.tasks.test-pypy-pytest]
-cmd = "pixi r pytest--"
+cmd = "pixi run pytest--"
 depends-on = ["test-pypy-setup"]
 description = "... run tests in a pypy environemnt"
 inputs = [
@@ -209,14 +236,14 @@ inputs = [
 
 # docs #########################################################################
 [feature.tasks-docs.tasks.docs-setup]
-cmd = "pixi r -e docs pip-whl--"
+cmd = "pixi run -e docs pip-whl--"
 depends-on = ["build-pypi"]
 description = "... install the built package for documentation"
 inputs = ["dist/*.whl"]
 outputs = ["build/reports/pip-freeze/docs.txt"]
 
 [feature.tasks-docs.tasks.docs-mkdocs]
-cmd = "pixi r mkdocs-- build"
+cmd = "pixi run mkdocs-- build"
 depends-on = ["docs-lite", "docs-setup"]
 description = "... build the documentation site"
 inputs = [
@@ -230,7 +257,7 @@ inputs = [
 outputs = ["!site/lite/", "site/"]
 
 [feature.tasks-docs.tasks.docs-serve]
-cmd = "pixi r mkdocs-- serve"
+cmd = "pixi run mkdocs-- serve"
 depends-on = ["docs-mkdocs"]
 description = "... serve the documentation site"
 
@@ -262,7 +289,7 @@ outputs = ["build/lite/SHA256SUMS"]
 
 # lint #########################################################################
 [feature.tasks-lint.tasks.lint-setup]
-cmd = "pixi r -e lint pip-e--"
+cmd = "pixi run -e lint pip-e--"
 description = "... install the package in an editable state for static analysis"
 inputs = ["pyproject.toml"]
 outputs = ["build/reports/pip-freeze/lint.txt"]
@@ -373,7 +400,7 @@ inputs = ["dist/"]
 
 # dev ##########################################################################
 [feature.tasks-dev.tasks.dev-setup]
-cmd = "pixi r -e dev pip-e--"
+cmd = "pixi run -e dev pip-e--"
 description = "... prepare for interactive development"
 inputs = ["pyproject.toml"]
 outputs = ["build/reports/pip-freeze/dev.txt"]
@@ -393,12 +420,21 @@ ipython = "*"
 [feature.deps-run-interactive-min.dependencies]
 ipython = "8.7.*"
 
+[feature.deps-run-interactive-prev.dependencies]
+ipython = "<9"
+
+[feature.deps-run-interactive-max.dependencies]
+ipython = ">=9"
+
 [feature.deps-run-min.dependencies]
 importlib-metadata = "4.8.3.*"
 python = "3.9.*"
 
 [feature.deps-run-max.dependencies]
 python = "3.13.*"
+
+[feature.deps-run-prev.dependencies]
+python = "3.12.*"
 
 [feature.deps-run-pypy.dependencies]
 pypy = "*"
@@ -414,7 +450,6 @@ uv = "*"
 
 [feature.deps-lint.dependencies]
 actionlint-with-all = "*"
-beartype = "*"
 lxml = "*"
 mypy = "*"
 nbstripout = "*"
@@ -426,7 +461,6 @@ types-pyyaml = "*"
 coverage = "*"
 doit = "*"
 pytest = "*"
-pytest-beartype = "*"
 pytest-cov = "*"
 pytest-html = "*"
 pytest-xdist = "*"
@@ -449,24 +483,23 @@ jupyterlab = "*"
 notebook = "*"
 
 [feature.deps-dev.dependencies]
-beartype = "*"
 jupyterlab-lsp = "*"
 pylsp-mypy = "*"
 python-lsp-ruff = "*"
 vale-ls = "*"
 
 [feature.deps-lite.dependencies]
-jupyterlite-core = "0.4.3.*"
+jupyterlite-core = "0.5.*"
 jupyterlite-core-with-libarchive = "*"
 jupyterlite-core-with-translation = "*"
-jupyterlite-pyodide-kernel = "0.4.3.*"
+jupyterlite-pyodide-kernel = "0.5.*"
 
 [feature.deps-check.dependencies]
 check-wheel-contents = "*"
 pytest-check-links = "*"
 pytest-html = "*"
 twine = "*"
-vale = "*"
+vale = ">=3.8,<3.9"
 vale-spelling-aoo-mozilla-en-dict-us = "*"
 
 # envs #########################################################################
@@ -482,6 +515,8 @@ dev = [
   "deps-lint",
   "deps-run",
   "deps-run-interactive",
+  "deps-run-interactive-max",
+  "deps-run-max",
   "deps-test",
   "tasks-dev",
 ]
@@ -492,6 +527,8 @@ lint = [
   "deps-lint",
   "deps-run",
   "deps-run-interactive",
+  "deps-run-interactive-max",
+  "deps-run-max",
   "deps-test",
   "tasks-lint",
 ]
@@ -500,6 +537,7 @@ test-max = [
   "deps-build",
   "deps-run",
   "deps-run-interactive",
+  "deps-run-interactive-max",
   "deps-run-max",
   "deps-test",
   "tasks-test-max",
@@ -513,6 +551,15 @@ test-min = [
   "deps-test",
   "deps-test-min",
   "tasks-test-min",
+]
+test-prev = [
+  "deps-build",
+  "deps-run",
+  "deps-run-interactive",
+  "deps-run-interactive-prev",
+  "deps-run-prev",
+  "deps-test",
+  "tasks-test-prev",
 ]
 test-pypy = ["deps-build", "deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
 uv = ["deps-uv"]

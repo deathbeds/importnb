@@ -7,7 +7,7 @@ build:
     python: mambaforge-23.11
   commands:
     - mamba install -c conda-forge -c nodefaults pixi==0.34.0
-    - pixi r build
-    - pixi r docs-lite
-    - pixi r docs-mkdocs
-    - pixi r -v docs-rtd
+    - pixi run build
+    - pixi run docs-lite
+    - pixi run docs-mkdocs
+    - pixi run -v docs-rtd
