@@ -3,14 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatch-vcs", "hatchling"]
 
 [project]
-name = "importnb"
-description = "import jupyter notebooks as python modules and scripts."
-readme = "README.md"
-keywords = []
-license = "BSD-3-Clause AND MPL-2.0"
-license-files = ["LICENSE", "LICENSE-MPL-2.0"]
 authors = [{name = "tonyfast", email = "tony.fast@gmail.com"}]
-requires-python = ">=3.9"
 classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: IPython",
@@ -29,14 +22,21 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
   "Typing :: Typed",
 ]
-dynamic = ["version"] # uses hatch-vcs
 dependencies = ['importlib-metadata>=4.8.3; python_version < "3.10"']
+description = "import jupyter notebooks as python modules and scripts."
+dynamic = ["version"] # uses hatch-vcs
+keywords = []
+license = "BSD-3-Clause AND MPL-2.0"
+license-files = ["LICENSE", "LICENSE-MPL-2.0"]
+name = "importnb"
+readme = "README.md"
+requires-python = ">=3.9"
 
 [project.optional-dependencies]
 interactive = ["ipython"]
 tasks = ["doit", "tomli"]
-yaml = ["ruamel.yaml"]
 test = ["doit", "pytest-cov", "pytest", "ruamel.yaml", "tomli-w", "tomli"]
+yaml = ["ruamel.yaml"]
 
 [project.urls]
 Documentation = "https://github.com/deathbeds/importnb#readme"
@@ -62,8 +62,8 @@ importnb = "importnb.utils.pytest_importnb"
 source = "vcs"
 
 [tool.hatch.build]
-hooks.vcs.version-file = "src/importnb/_version.py"
 hooks.custom.dependencies = ["lark"]
+hooks.vcs.version-file = "src/importnb/_version.py"
 targets.sdist.exclude = [
   ".github",
   ".readthedocs.yml",
@@ -89,8 +89,8 @@ dependencies = [
 test = "pytest"
 
 [tool.hatch.envs.released.env-vars]
-PIP_INDEX_URL = "https://test.pypi.org/simple/"
 PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
+PIP_INDEX_URL = "https://test.pypi.org/simple/"
 PIP_PRE = "1"
 
 # tools in alphabetical order ##################################################
@@ -99,32 +99,32 @@ PIP_PRE = "1"
 data_file = "build/.coverage"
 
 [tool.coverage.report]
-omit = ["_json_parser.py"]
 exclude_lines = [
   """if __name__ == "__main__":""",
   "if _BEAR_:",
   "if TYPE_CHECKING:",
   "pragma: no cover",
 ]
+omit = ["_json_parser.py"]
 
 ## mypy ########################################################################
 [tool.coverage.html]
 show_contexts = true
 
 [tool.mypy]
-cache_dir = "build/.cache/mypy"
-exclude = "_json_parser.py"
-python_version = "3.9"
-show_error_context = true
-show_error_code_links = true
 allow_redefinition = true
+cache_dir = "build/.cache/mypy"
 check_untyped_defs = true
 disallow_untyped_defs = true
+exclude = "_json_parser.py"
 no_implicit_optional = true
+python_version = "3.9"
+show_error_code_links = true
 show_error_codes = true
+show_error_context = true
+strict = true
 warn_return_any = true
 warn_unused_ignores = true
-strict = true
 
 [[tool.mypy.overrides]]
 ignore_missing_imports = true
@@ -155,22 +155,21 @@ module = [
 
 ## pytest ######################################################################
 [tool.pytest.ini_options]
-cache_dir = "build/.cache/pytest"
 addopts = ["-vv", "--tb=long", "--color=yes", "-ppytester"]
+cache_dir = "build/.cache/pytest"
 filterwarnings = ["error"]
 testpaths = ["docs", "src"]
 
 ## ruff ########################################################################
 [tool.ruff]
-target-version = "py39"
-preview = true
 cache-dir = "build/.cache/ruff"
-line-length = 100
-extend-include = ["*.ipynb"]
 extend-exclude = [".pixi/**", "**/_json_parser.py", "site", "build", "dist", ".github"]
+extend-include = ["*.ipynb"]
+line-length = 100
+preview = true
+target-version = "py39"
 
 [tool.ruff.lint]
-isort.known-first-party = ["importnb"]
 ignore = [
   # linter/formatter incompatibility
   "COM812",
@@ -256,8 +255,9 @@ ignore = [
   "W391",
   "YTT204",
 ]
+isort.known-first-party = ["importnb"]
 select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
-"test_cli.py" = ["D415", "D207", "D208"]
 "Untitled42.ipynb" = ["ANN001", "ANN201"]
+"test_cli.py" = ["D415", "D207", "D208"]
