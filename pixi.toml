@@ -1,8 +1,9 @@
-# repo automation for `importnb`
+# # repo automation for `importnb`
 #
-# conventions
-# - taplo will reformat this file
-# - if you have arrays that need to be kept in order use comments
+# ## conventions
+#
+# - taplo will aggressively format this file and other TOML files
+#   - if you have arrays that need to be kept in order, use comments
 "$schema" = "https://pixi.sh/v0.44.0/schema/manifest/schema.json"
 
 [project]

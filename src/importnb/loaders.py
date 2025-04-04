@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Protocol
 
 from .loader import Loader, SourceModule
 
 if TYPE_CHECKING:
     from types import ModuleType
+
+
+class DataLoaderGetter(Protocol):
+    def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]: ...
 
 
 class DataModule(SourceModule):
@@ -30,7 +34,7 @@ class DataStreamLoader(Loader):
         with open(module.__file__, "rb") as file:
             module.data = self.get_data_loader()(file)
 
-    def get_data_loader(self) -> Callable[..., dict[str, Any]]:
+    def get_data_loader(self) -> DataLoaderGetter:
         raise NotImplementedError("load_data not implemented.")
 
 
@@ -40,7 +44,7 @@ class Json(DataStreamLoader):
 
     extensions: tuple[str, ...] = field(default_factory=lambda: (".json",))
 
-    def get_data_loader(self) -> Callable[..., dict[str, Any]]:
+    def get_data_loader(self) -> DataLoaderGetter:
         from json import load
 
         return load
@@ -52,7 +56,7 @@ class Yaml(DataStreamLoader):
 
     extensions: tuple[str, ...] = field(default_factory=lambda: (".yml", ".yaml"))
 
-    def get_data_loader(self) -> Callable[..., dict[str, Any]]:
+    def get_data_loader(self) -> DataLoaderGetter:
         try:
             from ruamel.yaml import YAML
 
@@ -70,7 +74,7 @@ class Toml(DataStreamLoader):
 
     extensions: tuple[str, ...] = field(default_factory=lambda: (".toml",))
 
-    def get_data_loader(self) -> Callable[..., dict[str, Any]]:
+    def get_data_loader(self) -> DataLoaderGetter:
         try:
             from tomllib import load
 
