@@ -11,15 +11,15 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
   "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
   "Natural Language :: English",
-  "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
+  "Programming Language :: Python",
   "Typing :: Typed",
 ]
 dependencies = ['importlib-metadata>=4.8.3; python_version < "3.10"']
@@ -35,7 +35,7 @@ requires-python = ">=3.9"
 [project.optional-dependencies]
 interactive = ["ipython"]
 tasks = ["doit", "tomli"]
-test = ["doit", "pytest-cov", "pytest", "ruamel.yaml", "tomli-w", "tomli"]
+test = ["doit", "pytest", "pytest-cov", "ruamel.yaml", "tomli", "tomli-w"]
 yaml = ["ruamel.yaml"]
 
 [project.urls]
@@ -76,13 +76,13 @@ targets.sdist.exclude = [
 [tool.hatch.envs.released]
 # test a release on test-pypi
 dependencies = [
+  "doit",
   "importnb",
   "ipython",
   "pytest",
   "pytest-cov",
-  "doit",
-  "tomli-w",
   "ruamel.yaml",
+  "tomli-w",
 ]
 
 [tool.hatch.envs.released.scripts]
@@ -101,8 +101,8 @@ data_file = "build/.coverage"
 [tool.coverage.report]
 exclude_lines = [
   """if __name__ == "__main__":""",
-  "if _BEAR_:",
   "if TYPE_CHECKING:",
+  "if _BEAR_:",
   "pragma: no cover",
 ]
 omit = ["_json_parser.py"]
@@ -134,11 +134,12 @@ module = [
   "importlib._bootstrap_external",
   "tomllib",
   # contrib
+  "IPython.core.inputsplitter",
+  "IPython.core.inputtransformer",
   "doit",
   "doit.*",
-  "IPython.core.inputtransformer",
-  "IPython.core.inputsplitter",
   # test
+  "Untitled42",
   "__42",
   "__d42",
   "__ed42",
@@ -146,16 +147,15 @@ module = [
   "async_cells",
   "json_data",
   "minified",
-  "my_package.*",
   "my_package",
+  "my_package.*",
   "toml_data",
-  "Untitled42",
   "yaml_data",
 ]
 
 ## pytest ######################################################################
 [tool.pytest.ini_options]
-addopts = ["-vv", "--tb=long", "--color=yes", "-ppytester"]
+addopts = ["--color=yes", "--tb=long", "-ppytester", "-vv"]
 cache_dir = "build/.cache/pytest"
 filterwarnings = ["error"]
 testpaths = ["docs", "src"]
@@ -163,7 +163,7 @@ testpaths = ["docs", "src"]
 ## ruff ########################################################################
 [tool.ruff]
 cache-dir = "build/.cache/ruff"
-extend-exclude = [".pixi/**", "**/_json_parser.py", "site", "build", "dist", ".github"]
+extend-exclude = ["**/_json_parser.py", ".github", ".pixi/**", "build", "dist", "site"]
 extend-include = ["*.ipynb"]
 line-length = 100
 preview = true
@@ -221,7 +221,6 @@ ignore = [
   "N802",
   "N806",
   "N813",
-  "PYI034",
   "PERF203",
   "PLC0415",
   "PLC2701",
@@ -236,6 +235,7 @@ ignore = [
   "PT013",
   "PTH103",
   "PTH123",
+  "PYI034",
   "RET503",
   "RUF005",
   "RUF017",
@@ -260,4 +260,4 @@ select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "Untitled42.ipynb" = ["ANN001", "ANN201"]
-"test_cli.py" = ["D415", "D207", "D208"]
+"test_cli.py" = ["D207", "D208", "D415"]

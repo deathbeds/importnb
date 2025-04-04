@@ -1,3 +1,8 @@
+# repo automation for `importnb`
+#
+# conventions
+# - taplo will reformat this file
+# - if you have arrays that need to be kept in order use comments
 "$schema" = "https://pixi.sh/v0.44.0/schema/manifest/schema.json"
 
 [project]
@@ -8,35 +13,50 @@ requires-pixi = "0.44.0.*"
 
 [tasks]
 all = {description = """🚢 run ALL non-interactive tasks to verify the project is ready to release""", depends-on = [
+  # ... formatting is the cheapest
   "fix",
+  # ... linting takes a bit longer, but is still cheaper than failing tests
   "lint",
+  # ... the built artifact is more important to get right
   "build",
+  # ... test it all
   "test",
+  # ... if it is not documented, it does not exist
   "docs",
+  # ... check outputs for humans and machine consumption
   "check",
 ], cmd = "echo 🚢 all OK "}
 
 fix = {description = """🧹 apply ALL source formatting tools""", depends-on = [
+  # ... this might change this file
   "fix-taplo",
+  # ... this might change scripts
   "fix-ruff",
+  # ... this might change tests
   "fix-nbstripout",
 ], cmd = "echo 🧹 fix OK"}
 
 build = {description = """📦 build ALL distributions""", depends-on = [
+  # ... need the grammar
   "build-lark",
+  # ... only care about PyPI distributions
   "build-pypi",
 ], cmd = "echo 📦 build OK"}
 
 lint = {description = """✅ apply ALL static analysis tools""", depends-on = [
+  # ... ruff is fast
   "lint-ruff",
+  # ... source types are inherited by users
   "lint-mypy-src",
+  # ... test types keep us honest
   "lint-mypy-dev",
+  # ... ci keeps the whole thing going
   "lint-actionlint",
 ], cmd = "echo ✅ lint OK"}
 
 test = {description = """🧪 run ALL tests""", depends-on = [
-  "test-min-pytest",
   "test-max-pytest",
+  "test-min-pytest",
   "test-pypy-pytest-maybe",
 ], cmd = "echo 🧪 test OK"}
 
@@ -47,9 +67,9 @@ docs = {description = """📃 build ALL documentation""", depends-on = [
 
 check = {description = """🤓 perform ALL pre-release checks""", depends-on = [
   "check-links",
+  "check-twine",
   "check-vale",
   "check-wheel",
-  "check-twine",
 ], cmd = "echo 🤓 check OK"}
 
 dev = {description = """🎮 start an interactive development environment""", depends-on = [
@@ -119,9 +139,9 @@ cmd = """
 depends-on = ["build-lark"]
 description = "... build the source and wheel distributions for PyPI"
 inputs = [
-  "{docs,src}/**/*.{g,ipy,ipynb,py}",
-  "{README.md,LICENSE*,hatch_build.py,pyproject.toml}",
   "!**/coverage",
+  "{README.md,LICENSE*,hatch_build.py,pyproject.toml}",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 outputs = ["dist/*.{whl,tar.gz}"]
 
@@ -141,10 +161,10 @@ cmd = """pixi r pytest--
 depends-on = ["test-max-setup"]
 description = "... run unit tests with coverage"
 inputs = [
-  "pyproject.toml",
-  "{docs,src}/**/*.{g,ipy,ipynb,py}",
   "!**/.ipynb_checkpoints",
   "build/reports/pip-freeze/test-max.txt",
+  "pyproject.toml",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 
 # test oldest ##################################################################
@@ -159,15 +179,15 @@ cmd = "pixi r pytest--"
 depends-on = ["test-min-setup"]
 description = "... run tests in the oldest supported environemnt"
 inputs = [
-  "pyproject.toml",
-  "{docs,src}/**/*.{g,ipy,ipynb,py}",
   "!**/.ipynb_checkpoints",
   "build/reports/pip-freeze/test-min.txt",
+  "pyproject.toml",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 
 # test pypy ##################################################################
 [feature.tasks-test-pypy]
-platforms = ["linux-64", "win-64", "osx-64"]
+platforms = ["linux-64", "osx-64", "win-64"]
 
 [feature.tasks-test-pypy.tasks.test-pypy-setup]
 cmd = "pixi r pip-whl--"
@@ -180,10 +200,10 @@ cmd = "pixi r pytest--"
 depends-on = ["test-pypy-setup"]
 description = "... run tests in a pypy environemnt"
 inputs = [
-  "pyproject.toml",
-  "{docs,src}/**/*.{g,ipy,ipynb,py}",
   "!**/.ipynb_checkpoints",
   "build/reports/pip-freeze/test-min.txt",
+  "pyproject.toml",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 
 # docs #########################################################################
@@ -196,17 +216,17 @@ outputs = ["build/reports/pip-freeze/docs.txt"]
 
 [feature.tasks-docs.tasks.docs-mkdocs]
 cmd = "pixi r mkdocs-- build"
-depends-on = ["docs-setup", "docs-lite"]
+depends-on = ["docs-lite", "docs-setup"]
 description = "... build the documentation site"
 inputs = [
-  "docs/",
-  "src/",
-  "build/lite/SHA256SUMS",
-  "{mkdocs.yml,README.md,CONTRIBUTING.md}",
   "!**/{.ipynb_checkpoints,__pycache__,coverage,vale,mypy}/",
   "!docs/pytest.html",
+  "build/lite/SHA256SUMS",
+  "docs/",
+  "src/",
+  "{mkdocs.yml,README.md,CONTRIBUTING.md}",
 ]
-outputs = ["site/", "!site/lite/"]
+outputs = ["!site/lite/", "site/"]
 
 [feature.tasks-docs.tasks.docs-serve]
 cmd = "pixi r mkdocs-- serve"
@@ -236,7 +256,7 @@ cmd = """
 """
 depends-on = ["build-pypi"]
 description = "... build the JupyterLite demo"
-inputs = ["dist/*.whl", "lite/", "!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}"]
+inputs = ["!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}", "dist/*.whl", "lite/"]
 outputs = ["build/lite/SHA256SUMS"]
 
 # lint #########################################################################
@@ -249,15 +269,15 @@ outputs = ["build/reports/pip-freeze/lint.txt"]
 [feature.tasks-lint.tasks.fix-nbstripout]
 cmd = "nbstripout --keep-id --drop-empty-cells docs/*.ipynb"
 description = "... fix notebook JSON"
-inputs = ["docs/**/*.ipynb", "!**/.ipynb_checkpoints"]
+inputs = ["!**/.ipynb_checkpoints", "docs/**/*.ipynb"]
 
 [feature.tasks-lint.tasks.fix-ruff]
 cmd = "ruff format && ruff check --fix-only"
 description = "... fix python source in notebooks and python files"
 inputs = [
+  "!**/.ipynb_checkpoints",
   "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
-  "!**/.ipynb_checkpoints",
 ]
 
 [feature.tasks-lint.tasks.fix-taplo]
@@ -266,6 +286,7 @@ cmd = """taplo fmt
   --option=array_auto_collapse=true
   --option=compact_inline_tables=true
   --option=reorder_keys=true
+  --option=reorder_arrays=true
   --option=column_width=88"""
 description = "... fix toml files"
 inputs = ["*.toml"]
@@ -277,10 +298,10 @@ cmd = """
 depends-on = ["lint-setup"]
 description = "... check python type hints for the shipped source code"
 inputs = [
+  "!**/.ipynb_checkpoints",
   "build/reports/pip-freeze/lint.txt",
   "pyproject.toml",
   "src/**/*.py",
-  "!**/.ipynb_checkpoints",
 ]
 outputs = ["docs/mypy"]
 
@@ -289,17 +310,17 @@ cmd = "mypy *.py docs/**/*.py lite/**/*.py"
 depends-on = ["lint-setup"]
 description = "... check python type hints for tests and tools"
 inputs = [
-  "{docs,lite}/**/*.py",
+  "!**/.ipynb_checkpoints",
   "*.py",
   "build/reports/pip-freeze/lint.txt",
   "pyproject.toml",
-  "!**/.ipynb_checkpoints",
+  "{docs,lite}/**/*.py",
 ]
 
 [feature.tasks-lint.tasks.lint-ruff]
 cmd = "ruff format --check && ruff check"
 description = "... check python and notebook source code style"
-inputs = ["pyproject.toml", "{src,docs}/**/*.{py,ipynb}", "!**/.ipynb_checkpoints"]
+inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{src,docs}/**/*.{py,ipynb}"]
 
 [feature.tasks-lint.tasks.lint-actionlint]
 cmd = "actionlint -shellcheck=shellcheck -pyflakes=pyflakes"
@@ -331,10 +352,10 @@ cmd = "python docs/vale/check.py"
 depends-on = ["docs-mkdocs"]
 description = "... check spelling in documentation"
 inputs = [
-  "site/{index,contributing/}.html",
-  "docs/vale",
-  "src/**/*.py",
   "!**/.ipynb_checkpoints",
+  "docs/vale",
+  "site/{index,contributing/}.html",
+  "src/**/*.py",
 ]
 
 [feature.tasks-check.tasks.check-wheel]
@@ -458,38 +479,38 @@ dev = [
   "deps-docs",
   "deps-lab",
   "deps-lint",
-  "deps-run-interactive",
   "deps-run",
+  "deps-run-interactive",
   "deps-test",
   "tasks-dev",
 ]
-docs = ["deps-docs", "deps-build", "deps-run", "tasks-docs"]
+docs = ["deps-build", "deps-docs", "deps-run", "tasks-docs"]
 lint = [
   "deps-build",
   "deps-docs",
   "deps-lint",
-  "deps-run-interactive",
   "deps-run",
+  "deps-run-interactive",
   "deps-test",
   "tasks-lint",
 ]
 lite = ["deps-lab", "deps-lite", "tasks-lite"]
 test-max = [
   "deps-build",
-  "deps-run-interactive",
   "deps-run",
+  "deps-run-interactive",
   "deps-run-max",
   "deps-test",
   "tasks-test-max",
 ]
 test-min = [
   "deps-build",
-  "deps-run-interactive-min",
-  "deps-run-interactive",
-  "deps-run-min",
   "deps-run",
-  "deps-test-min",
+  "deps-run-interactive",
+  "deps-run-interactive-min",
+  "deps-run-min",
   "deps-test",
+  "deps-test-min",
   "tasks-test-min",
 ]
 test-pypy = ["deps-build", "deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
