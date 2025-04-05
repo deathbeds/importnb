@@ -33,7 +33,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
-interactive = ["ipython >=8.7"]
+interactive = ["ipython >=7.16.1"]
 tasks = ["doit", "tomli"]
 test = ["doit", "pytest", "pytest-cov", "ruamel.yaml", "tomli", "tomli-w"]
 yaml = ["ruamel.yaml"]

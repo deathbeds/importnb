@@ -205,6 +205,9 @@ inputs = [
 outputs = ["build/reports/test-prev/pytest.html"]
 
 # test oldest ##################################################################
+[feature.tasks-test-min]
+platforms = ["linux-64", "osx-64", "win-64"]
+
 [feature.tasks-test-min.tasks.test-min-setup]
 cmd = "pixi run pip-whl--"
 description = "... install the built wheel for testing in the oldest supported environment"
@@ -448,7 +451,7 @@ importlib-metadata = ">=4.8.3"
 ipython = "*"
 
 [feature.deps-run-interactive-min.dependencies]
-ipython = "8.7.*"
+ipython = "7.16.1.*"
 
 [feature.deps-run-interactive-prev.dependencies]
 ipython = "<9"
