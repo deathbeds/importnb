@@ -80,6 +80,8 @@ jobs:
           name: inb-${{ github.run_number }}-dist
       - run: pixi run ${{ matrix.test-env }}-setup
       - run: pixi run ${{ matrix.test-env }}-pytest
+      - if: matrix.test-env == 'test-min' || matrix.test-env == 'test-max'
+        run: pixi run ${{ matrix.test-env }}-pytest-i
       - if: always()
         uses: actions/upload-artifact@v4
         with:

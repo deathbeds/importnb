@@ -60,10 +60,12 @@ test = {description = """🧪 run ALL tests""", depends-on = [
   "test-min-noipy-pytest",
   # ... don't break the oldest interactive environment
   "test-min-pytest",
+  "test-min-pytest-i",
   # ... don't break the next-to-latest
   "test-prev-pytest",
   # ... don't break the latest
   "test-max-pytest",
+  "test-max-pytest-i",
   # ... try not to break pypy
   "test-pypy-pytest-maybe",
 ], cmd = "echo 🧪 test OK"}
@@ -121,9 +123,18 @@ pip-whl-- = """
   export $(pixi run --quiet this-python--)
   && pixi run pip-- --find-links=dist --no-index importnb
   && pixi run pip-check--"""
-pytest-- = """
-  export COVERAGE_FILE=build/reports/$PIXI_ENVIRONMENT_NAME/.coverage
-  && pytest
+pytest-- = "pixi run test--"
+pytest-i-- = """
+  export TEST_RUNNER="ipython -m pytest --"
+  && export TEST_REPORT=pytest-i
+  && pixi r test--"""
+this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
+uv-- = "pixi run --quiet --environment uv uv pip"
+
+[tasks.test--]
+cmd = """
+  export COVERAGE_FILE=build/reports/$PIXI_ENVIRONMENT_NAME/.$TEST_REPORT.coverage
+  && $TEST_RUNNER
     --pythonwarnings error
     --cov importnb
     --cov-branch
@@ -131,10 +142,9 @@ pytest-- = """
     --cov-report term-missing:skip-covered
     --no-cov-on-fail
     --self-contained-html
-    --html=build/reports/$PIXI_ENVIRONMENT_NAME/pytest.html
+    --html build/reports/$PIXI_ENVIRONMENT_NAME/$TEST_REPORT.html
     --override-ini generate_report_on_test=true"""
-this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
-uv-- = "pixi run --quiet --environment uv uv pip"
+env = {TEST_RUNNER = "pytest", TEST_REPORT = "pytest"}
 
 # build ########################################################################
 [feature.tasks-build.tasks.build-lark]
@@ -185,6 +195,18 @@ inputs = [
 ]
 outputs = ["build/reports/test-max/pytest.html", "docs/coverage", "docs/pytest.html"]
 
+[feature.tasks-test-max.tasks.test-max-pytest-i]
+cmd = """pixi run pytest-i--"""
+depends-on = ["test-max-setup"]
+description = "... run unit tests with coverage (under ipython)"
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "build/reports/test-max/pip-freeze.txt",
+  "pyproject.toml",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
+]
+outputs = ["build/reports/test-max/pytest-i.html"]
+
 # test next-to-latest
 [feature.tasks-test-prev.tasks.test-prev-setup]
 cmd = "pixi run pip-whl--"
@@ -225,6 +247,18 @@ inputs = [
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 outputs = ["build/reports/test-min/pytest.html"]
+
+[feature.tasks-test-min.tasks.test-min-pytest-i]
+cmd = """pixi run pytest-i--"""
+depends-on = ["test-min-setup"]
+description = "... run unit tests in the oldest supported environment (under ipython)"
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "build/reports/test-min/pip-freeze.txt",
+  "pyproject.toml",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
+]
+outputs = ["build/reports/test-min/pytest-i.html"]
 
 # test oldest, no IPython ##################################################################
 [feature.tasks-test-min-noipy.tasks.test-min-noipy-setup]
