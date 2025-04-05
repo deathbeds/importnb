@@ -86,12 +86,12 @@ dev = {description = """🎮 start an interactive development environment""", de
 
 test-pypy-pytest-maybe = {cmd = """
   (
-    pixi install -e test-pypy
+    pixi install --environment test-pypy
     || (
       echo "can't install pypy on this platform"
       && exit 0
     )
-  ) && pixi run -e test-pypy test-pypy-pytest""", description = """
+  ) && pixi run --environment test-pypy test-pypy-pytest""", description = """
 run unit tests against pypy (if possible)"""}
 
 # fragments ####################################################################
@@ -99,8 +99,8 @@ mkdocs-- = """
   export JUPYTER_PLATFORM_DIRS=1
   && mkdocs"""
 pip-- = """
-  pixi run -q uv-- uninstall importnb
-  && pixi run -q uv-- install
+  pixi run --quiet uv-- uninstall importnb
+  && pixi run --quiet uv-- install
     --no-deps
     --no-build-isolation
     --no-cache
@@ -109,22 +109,22 @@ pip-- = """
 pip-check-- = """
   export ENV_REPORTS=build/reports/$PIXI_ENVIRONMENT_NAME
   && export FROZEN=$ENV_REPORTS/pip-freeze.txt
-  && rm -rf $FROZEN
+  && rm --recursive --force $FROZEN
   && pixi run uv-- check
-  && mkdir -p $ENV_REPORTS
-  && pixi run -q uv-- list --format=freeze > $FROZEN"""
+  && mkdir --parents $ENV_REPORTS
+  && pixi run --quiet uv-- list --format=freeze > $FROZEN"""
 pip-e-- = """
-  export $(pixi run -q this-python--)
-  && pixi run pip-- -e .
+  export $(pixi run --quiet this-python--)
+  && pixi run pip-- --editable .
   && pixi run pip-check--"""
 pip-whl-- = """
-  export $(pixi run -q this-python--)
+  export $(pixi run --quiet this-python--)
   && pixi run pip-- --find-links=dist --no-index importnb
   && pixi run pip-check--"""
 pytest-- = """
   export COVERAGE_FILE=build/reports/$PIXI_ENVIRONMENT_NAME/.coverage
   && pytest
-    -Werror
+    --pythonwarnings error
     --cov importnb
     --cov-branch
     --cov-context test
@@ -132,9 +132,9 @@ pytest-- = """
     --no-cov-on-fail
     --self-contained-html
     --html=build/reports/$PIXI_ENVIRONMENT_NAME/pytest.html
-    -o generate_report_on_test=true"""
+    --override-ini generate_report_on_test=true"""
 this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
-uv-- = "pixi run -q -e uv uv pip"
+uv-- = "pixi run --quiet --environment uv uv pip"
 
 # build ########################################################################
 [feature.tasks-build.tasks.build-lark]
@@ -147,7 +147,7 @@ outputs = ["src/importnb/_json_parser.py"]
 
 [feature.tasks-build.tasks.build-pypi]
 cmd = """
-  rm -rf dist/
+  rm --recursive --force dist/
   && pyproject-build . --no-isolation"""
 depends-on = ["build-lark"]
 description = "... build the source and wheel distributions for PyPI"
@@ -160,14 +160,14 @@ outputs = ["dist/*.{whl,tar.gz}"]
 
 # test #########################################################################
 [feature.tasks-test-max.tasks.test-max-setup]
-cmd = "pixi run pip-e--"
+cmd = "pixi run pip-whl--"
 description = "... install the package in an editable state for testing"
-inputs = ["pyproject.toml"]
+inputs = ["dist/*.whl"]
 outputs = ["build/reports/test-max/pip-freeze.txt"]
 
 [feature.tasks-test-max.tasks.test-max-pytest]
 cmd = """
-  rm -rf docs/pytest.html docs/coverage
+  rm --recursive --force docs/pytest.html docs/coverage
   && (
     pixi run pytest-- --cov-report=html:docs/coverage
     && cp build/reports/test-max/pytest.html docs/pytest.html
@@ -187,9 +187,9 @@ outputs = ["build/reports/test-max/pytest.html", "docs/coverage", "docs/pytest.h
 
 # test next-to-latest
 [feature.tasks-test-prev.tasks.test-prev-setup]
-cmd = "pixi run pip-e--"
+cmd = "pixi run pip-whl--"
 description = "... install the package in an editable state for testing"
-inputs = ["pyproject.toml"]
+inputs = ["dist/*.whl"]
 outputs = ["build/reports/test-prev/pip-freeze.txt"]
 
 [feature.tasks-test-prev.tasks.test-prev-pytest]
@@ -266,7 +266,7 @@ outputs = ["build/reports/test-pypy/pytest.html"]
 
 # docs #########################################################################
 [feature.tasks-docs.tasks.docs-setup]
-cmd = "pixi run -e docs pip-whl--"
+cmd = "pixi run pip-whl--"
 depends-on = ["build-pypi"]
 description = "... install the built package for documentation"
 inputs = ["dist/*.whl"]
@@ -297,8 +297,8 @@ cmd = """
   import os;
   assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadTheDocs'
   "
-  && mkdir -p "$READTHEDOCS_OUTPUT"
-  && cp -r site "$READTHEDOCS_OUTPUT/html"
+  && mkdir --parents "$READTHEDOCS_OUTPUT"
+  && cp --recursive site "$READTHEDOCS_OUTPUT/html"
   && cd "$READTHEDOCS_OUTPUT"
   && ls html"""
 depends-on = ["docs-mkdocs"]
@@ -319,7 +319,7 @@ outputs = ["build/lite/SHA256SUMS"]
 
 # lint #########################################################################
 [feature.tasks-lint.tasks.lint-setup]
-cmd = "pixi run -e lint pip-e--"
+cmd = "pixi run pip-e--"
 description = "... install the package in an editable state for static analysis"
 inputs = ["pyproject.toml"]
 outputs = ["build/reports/lint/pip-freeze.txt"]
@@ -351,8 +351,8 @@ inputs = ["*.toml"]
 
 [feature.tasks-lint.tasks.lint-mypy-src]
 cmd = """
-  rm -rf docs/mypy
-  && mypy -p importnb --html-report docs/mypy"""
+  rm --recursive --force docs/mypy
+  && mypy --package importnb --html-report docs/mypy"""
 depends-on = ["lint-setup"]
 description = "... check python type hints for the shipped source code"
 inputs = [
@@ -387,13 +387,13 @@ inputs = [".github/workflows"]
 
 # check ########################################################################
 [feature.tasks-check.tasks.check-links]
-cmd = """rm -rf build/reports/check-links
-  && mkdir -p build/reports/check-links
+cmd = """rm --recursive --force build/reports/check-links
+  && mkdir --parents build/reports/check-links
   && cd build/reports/check-links
   && touch pytest.ini
   && pytest
     -vv
-    -c pytest.ini
+    --config-file pytest.ini
     -p no:warnings
     --rootdir=.
     --check-links
@@ -430,7 +430,7 @@ inputs = ["dist/"]
 
 # dev ##########################################################################
 [feature.tasks-dev.tasks.dev-setup]
-cmd = "pixi run -e dev pip-e--"
+cmd = "pixi run pip-e--"
 description = "... prepare for interactive development"
 inputs = ["pyproject.toml"]
 outputs = ["build/reports/dev/pip-freeze.txt"]
@@ -564,7 +564,6 @@ lint = [
 ]
 lite = ["deps-lab", "deps-lite", "tasks-lite"]
 test-max = [
-  "deps-build",
   "deps-run",
   "deps-run-interactive",
   "deps-run-interactive-max",
@@ -573,7 +572,6 @@ test-max = [
   "tasks-test-max",
 ]
 test-min = [
-  "deps-build",
   "deps-run",
   "deps-run-interactive",
   "deps-run-interactive-min",
@@ -583,7 +581,6 @@ test-min = [
   "tasks-test-min",
 ]
 test-min-noipy = [
-  "deps-build",
   "deps-run",
   "deps-run-min",
   "deps-test",
@@ -591,7 +588,6 @@ test-min-noipy = [
   "tasks-test-min-noipy",
 ]
 test-prev = [
-  "deps-build",
   "deps-run",
   "deps-run-interactive",
   "deps-run-interactive-prev",
@@ -599,5 +595,5 @@ test-prev = [
   "deps-test",
   "tasks-test-prev",
 ]
-test-pypy = ["deps-build", "deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
+test-pypy = ["deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
 uv = ["deps-uv"]
