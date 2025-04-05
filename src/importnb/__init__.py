@@ -12,7 +12,11 @@ if TYPE_CHECKING:
 
 
 def is_ipython() -> bool:
-    return "IPython" in sys.modules
+    if "IPython" in sys.modules:
+        from IPython.core.interactiveshell import InteractiveShell
+
+        return InteractiveShell._instance is not None
+    return False
 
 
 def get_ipython(force: bool | None = True) -> InteractiveShell | None:

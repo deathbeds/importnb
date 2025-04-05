@@ -54,9 +54,6 @@ toml = "importnb.loaders:Toml"
 yaml = "importnb.loaders:Yaml"
 yml = "importnb.loaders:Yaml"
 
-[project.entry-points.pytest11]
-importnb = "importnb.utils.pytest_importnb"
-
 # hatch ########################################################################
 [tool.hatch.version]
 source = "vcs"
@@ -132,9 +129,6 @@ module = [
   "importlib._bootstrap",
   "importlib._bootstrap_external",
   "tomllib",
-  # interactive
-  "IPython.core.inputsplitter",
-  "IPython.core.inputtransformer",
   # contrib
   "doit",
   "doit.*",

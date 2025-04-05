@@ -35,17 +35,19 @@ class AlternativeModule(pytest.Module):
         return self.loader.load_file(str(self.path), False)
 
     @classmethod
-    def pytest_collect_file(cls, parent: pytest.Collector, path: Path) -> pytest.Collector | None:
-        if not parent.session.isinitpath(path):
+    def pytest_collect_file(
+        cls, parent: pytest.Collector, file_path: Path
+    ) -> pytest.Collector | None:
+        if not parent.session.isinitpath(file_path):
             for pat in get_file_patterns(cls, parent):
-                if fnmatch(str(path), pat):
+                if fnmatch(str(file_path), pat):
                     break
             else:
                 return None
 
         if hasattr(cls, "from_parent"):
-            return cls.from_parent(parent=parent, path=Path(path))
-        return cls(path, parent)
+            return cls.from_parent(parent=parent, path=Path(file_path))
+        return cls(file_path, parent)
 
 
 class NotebookModule(AlternativeModule):

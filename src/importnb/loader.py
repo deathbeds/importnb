@@ -556,21 +556,10 @@ def main_argv(prog: str, args: list[str] | None = None) -> Generator[None, None,
 
 
 try:
-    from IPython.core.inputsplitter import IPythonInputSplitter
-    from IPython.core.inputtransformer import (
-        cellmagic,
-        ipy_prompt,
-        leading_indent,
-    )
+    from IPython.core.inputtransformer2 import TransformerManager
 
-    dedent: Callable[[str], str] = IPythonInputSplitter(
-        line_input_checker=False,
-        physical_line_transforms=[
-            leading_indent(),
-            ipy_prompt(),
-            cellmagic(end_on_blank_line=False),
-        ],
-    ).transform_cell
+    dedent: Callable[[str], str] = TransformerManager().transform_cell  # type: ignore[no-untyped-call]
+    del TransformerManager
 except ModuleNotFoundError:
 
     def dedent(body: str) -> str:

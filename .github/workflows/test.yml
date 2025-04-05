@@ -58,12 +58,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-env: [test-min, test-prev, test-max, test-pypy]
+        test-env: [test-min-noipy, test-min, test-prev, test-max, test-pypy]
         vm: [ubuntu-latest, macos-latest, windows-latest]
         exclude:
+          - {test-env: test-min-noipy, vm: macos-latest}
           - {test-env: test-min, vm: macos-latest}
           - {test-env: test-pypy, vm: macos-latest}
         include:
+          - {test-env: test-min-noipy, vm: macos-13}
           - {test-env: test-min, vm: macos-13}
           - {test-env: test-pypy, vm: macos-13}
     steps:
@@ -85,6 +87,7 @@ jobs:
             inb-${{ github.run_number }}-${{ matrix.vm }}-${{ matrix.test-env }}
           path: |
             docs
+            build/reports
 
   docs:
     runs-on: ubuntu-latest

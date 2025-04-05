@@ -56,7 +56,9 @@ lint = {description = """✅ apply ALL static analysis tools""", depends-on = [
 ], cmd = "echo ✅ lint OK"}
 
 test = {description = """🧪 run ALL tests""", depends-on = [
-  # ... don't break the oldest
+  # ... don't break the oldest vanilla environment
+  "test-min-noipy-pytest",
+  # ... don't break the oldest interactive environment
   "test-min-pytest",
   # ... don't break the next-to-latest
   "test-prev-pytest",
@@ -105,11 +107,11 @@ pip-- = """
     --offline
     --link-mode copy"""
 pip-check-- = """
-  export FREEZES=build/reports/pip-freeze
-  && export FROZEN=$FREEZES/$PIXI_ENVIRONMENT_NAME.txt
+  export ENV_REPORTS=build/reports/$PIXI_ENVIRONMENT_NAME
+  && export FROZEN=$ENV_REPORTS/pip-freeze.txt
   && rm -rf $FROZEN
   && pixi run uv-- check
-  && mkdir -p $FREEZES
+  && mkdir -p $ENV_REPORTS
   && pixi run -q uv-- list --format=freeze > $FROZEN"""
 pip-e-- = """
   export $(pixi run -q this-python--)
@@ -120,12 +122,17 @@ pip-whl-- = """
   && pixi run pip-- --find-links=dist --no-index importnb
   && pixi run pip-check--"""
 pytest-- = """
-  pytest
+  export COVERAGE_FILE=build/reports/$PIXI_ENVIRONMENT_NAME/.coverage
+  && pytest
+    -Werror
     --cov importnb
     --cov-branch
     --cov-context test
     --cov-report term-missing:skip-covered
-    --no-cov-on-fail"""
+    --no-cov-on-fail
+    --self-contained-html
+    --html=build/reports/$PIXI_ENVIRONMENT_NAME/pytest.html
+    -o generate_report_on_test=true"""
 this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
 uv-- = "pixi run -q -e uv uv pip"
 
@@ -156,51 +163,53 @@ outputs = ["dist/*.{whl,tar.gz}"]
 cmd = "pixi run pip-e--"
 description = "... install the package in an editable state for testing"
 inputs = ["pyproject.toml"]
-outputs = ["build/reports/pip-freeze/test-max.txt"]
+outputs = ["build/reports/test-max/pip-freeze.txt"]
 
 [feature.tasks-test-max.tasks.test-max-pytest]
-cmd = """pixi run pytest--
-  --cov-report=html:docs/coverage
-  --self-contained-html
-  --html=docs/pytest.html
-  -o generate_report_on_test=true"""
+cmd = """
+  rm -rf docs/pytest.html docs/coverage
+  && (
+    pixi run pytest-- --cov-report=html:docs/coverage
+    && cp build/reports/test-max/pytest.html docs/pytest.html
+  ) || (
+    cp build/reports/test-max/pytest.html docs/pytest.html
+    && exit 1
+  )"""
 depends-on = ["test-max-setup"]
 description = "... run unit tests with coverage"
 inputs = [
   "!**/.ipynb_checkpoints",
-  "build/reports/pip-freeze/test-max.txt",
+  "build/reports/test-max/pip-freeze.txt",
   "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
+outputs = ["build/reports/test-max/pytest.html", "docs/coverage", "docs/pytest.html"]
 
 # test next-to-latest
 [feature.tasks-test-prev.tasks.test-prev-setup]
 cmd = "pixi run pip-e--"
 description = "... install the package in an editable state for testing"
 inputs = ["pyproject.toml"]
-outputs = ["build/reports/pip-freeze/test-prev.txt"]
+outputs = ["build/reports/test-prev/pip-freeze.txt"]
 
 [feature.tasks-test-prev.tasks.test-prev-pytest]
-cmd = """pixi run pytest--
-  --cov-report=html:docs/coverage
-  --self-contained-html
-  --html=docs/pytest.html
-  -o generate_report_on_test=true"""
+cmd = """pixi run pytest--"""
 depends-on = ["test-prev-setup"]
 description = "... run unit tests with coverage"
 inputs = [
   "!**/.ipynb_checkpoints",
-  "build/reports/pip-freeze/test-prev.txt",
+  "build/reports/test-prev/pip-freeze.txt",
   "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
+outputs = ["build/reports/test-prev/pytest.html"]
 
 # test oldest ##################################################################
 [feature.tasks-test-min.tasks.test-min-setup]
 cmd = "pixi run pip-whl--"
 description = "... install the built wheel for testing in the oldest supported environment"
 inputs = ["dist/*.whl"]
-outputs = ["build/reports/pip-freeze/test-min.txt"]
+outputs = ["build/reports/test-min/pip-freeze.txt"]
 
 [feature.tasks-test-min.tasks.test-min-pytest]
 cmd = "pixi run pytest--"
@@ -208,10 +217,30 @@ depends-on = ["test-min-setup"]
 description = "... run tests in the oldest supported environemnt"
 inputs = [
   "!**/.ipynb_checkpoints",
-  "build/reports/pip-freeze/test-min.txt",
+  "build/reports/test-min/pip-freeze.txt",
   "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
+outputs = ["build/reports/test-min/pytest.html"]
+
+# test oldest, no IPython ##################################################################
+[feature.tasks-test-min-noipy.tasks.test-min-noipy-setup]
+cmd = "pixi run pip-whl--"
+description = "... install the built wheel for testing in the oldest supported environment (no IPython)"
+inputs = ["dist/*.whl"]
+outputs = ["build/reports/test-min-noipy/pip-freeze.txt"]
+
+[feature.tasks-test-min-noipy.tasks.test-min-noipy-pytest]
+cmd = "pixi run pytest--"
+depends-on = ["test-min-noipy-setup"]
+description = "... run tests in the oldest supported environemnt (no IPython)"
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "build/reports/test-min-noipy/pip-freeze.txt",
+  "pyproject.toml",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
+]
+outputs = ["build/reports/test-min-noipy/pytest.html"]
 
 # test pypy ##################################################################
 [feature.tasks-test-pypy]
@@ -221,7 +250,7 @@ platforms = ["linux-64", "osx-64", "win-64"]
 cmd = "pixi run pip-whl--"
 description = "... install the built wheel for testing in a pypy environment"
 inputs = ["dist/*.whl"]
-outputs = ["build/reports/pip-freeze/test-pypy.txt"]
+outputs = ["build/reports/test-pypy/pip-freeze.txt"]
 
 [feature.tasks-test-pypy.tasks.test-pypy-pytest]
 cmd = "pixi run pytest--"
@@ -229,10 +258,11 @@ depends-on = ["test-pypy-setup"]
 description = "... run tests in a pypy environemnt"
 inputs = [
   "!**/.ipynb_checkpoints",
-  "build/reports/pip-freeze/test-min.txt",
+  "build/reports/test-min/pip-freeze.txt",
   "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
+outputs = ["build/reports/test-pypy/pytest.html"]
 
 # docs #########################################################################
 [feature.tasks-docs.tasks.docs-setup]
@@ -240,7 +270,7 @@ cmd = "pixi run -e docs pip-whl--"
 depends-on = ["build-pypi"]
 description = "... install the built package for documentation"
 inputs = ["dist/*.whl"]
-outputs = ["build/reports/pip-freeze/docs.txt"]
+outputs = ["build/reports/docs/pip-freeze.txt"]
 
 [feature.tasks-docs.tasks.docs-mkdocs]
 cmd = "pixi run mkdocs-- build"
@@ -292,7 +322,7 @@ outputs = ["build/lite/SHA256SUMS"]
 cmd = "pixi run -e lint pip-e--"
 description = "... install the package in an editable state for static analysis"
 inputs = ["pyproject.toml"]
-outputs = ["build/reports/pip-freeze/lint.txt"]
+outputs = ["build/reports/lint/pip-freeze.txt"]
 
 [feature.tasks-lint.tasks.fix-nbstripout]
 cmd = "nbstripout --keep-id --drop-empty-cells docs/*.ipynb"
@@ -327,7 +357,7 @@ depends-on = ["lint-setup"]
 description = "... check python type hints for the shipped source code"
 inputs = [
   "!**/.ipynb_checkpoints",
-  "build/reports/pip-freeze/lint.txt",
+  "build/reports/lint/pip-freeze.txt",
   "pyproject.toml",
   "src/**/*.py",
 ]
@@ -340,7 +370,7 @@ description = "... check python type hints for tests and tools"
 inputs = [
   "!**/.ipynb_checkpoints",
   "*.py",
-  "build/reports/pip-freeze/lint.txt",
+  "build/reports/lint/pip-freeze.txt",
   "pyproject.toml",
   "{docs,lite}/**/*.py",
 ]
@@ -403,7 +433,7 @@ inputs = ["dist/"]
 cmd = "pixi run -e dev pip-e--"
 description = "... prepare for interactive development"
 inputs = ["pyproject.toml"]
-outputs = ["build/reports/pip-freeze/dev.txt"]
+outputs = ["build/reports/dev/pip-freeze.txt"]
 
 [feature.tasks-dev.tasks.dev-lab]
 cmd = "jupyter lab --no-browser --debug --config=docs/jupyter_config.json"
@@ -551,6 +581,14 @@ test-min = [
   "deps-test",
   "deps-test-min",
   "tasks-test-min",
+]
+test-min-noipy = [
+  "deps-build",
+  "deps-run",
+  "deps-run-min",
+  "deps-test",
+  "deps-test-min",
+  "tasks-test-min-noipy",
 ]
 test-prev = [
   "deps-build",

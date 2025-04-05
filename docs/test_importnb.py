@@ -15,8 +15,6 @@ from typing import TYPE_CHECKING, Any
 from pytest import fixture, mark, raises
 
 import importnb
-from importnb import Notebook, get_ipython, imports
-from importnb.finder import FileModuleSpec
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -25,6 +23,9 @@ if TYPE_CHECKING:
     from _pytest.pytester import Pytester
     from pytest import CaptureFixture
 
+    from importnb import Notebook
+    from importnb.finder import FileModuleSpec
+
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
 HERE = locals().get("__file__", None)
@@ -32,13 +33,11 @@ HERE = (Path(HERE).parent if HERE else Path()).absolute()
 
 sys.path.insert(0, str(HERE))
 
-IPY = bool(get_ipython())
-print(88, IPY)
-ipy = mark.skipif(not IPY, reason="""Not IPython.""")
-
 
 @fixture(scope="session")
 def ref() -> ModuleType:
+    from importnb import Notebook
+
     return Notebook.load_file(HERE / "Untitled42.ipynb")
 
 
@@ -104,11 +103,15 @@ def test_ref(ref: ModuleType) -> None:
 
 def test_finder() -> None:
     assert not find_spec("Untitled42")
+    from importnb import Notebook
+
     with Notebook():
         assert find_spec("Untitled42")
 
 
 def test_basic(clean: None, ref: ModuleType) -> None:
+    from importnb import Notebook
+
     with Notebook():
         import Untitled42
 
@@ -120,17 +123,23 @@ def test_basic(clean: None, ref: ModuleType) -> None:
 
 
 def test_load_module(clean: None, ref: ModuleType) -> None:
+    from importnb import Notebook
+
     m = Notebook.load_module("Untitled42")
     assert m.__file__ == ref.__file__
     cant_reload(m)
 
 
 def test_load_module_package(clean: None, package: Path) -> None:
+    from importnb import Notebook
+
     m = Notebook.load_module("my_package.my_module")
     assert m
 
 
 def test_load_file(clean: None, ref: ModuleType) -> None:
+    from importnb import Notebook
+
     m = Notebook.load_file("docs/Untitled42.ipynb")
     assert m.__file__
     assert ref.__file__
@@ -139,6 +148,8 @@ def test_load_file(clean: None, ref: ModuleType) -> None:
 
 
 def test_load_code(clean: None) -> None:
+    from importnb import Notebook
+
     assert Notebook.load_code(""), "can't load an empty notebook"
     body = Path("docs/Untitled42.ipynb").read_text()
     m = Notebook.load_code(body)
@@ -146,6 +157,8 @@ def test_load_code(clean: None) -> None:
 
 
 def test_package(clean: None, package: Path) -> None:
+    from importnb import Notebook
+
     with Notebook():
         import my_package.my_module
 
@@ -160,13 +173,17 @@ def test_package(clean: None, package: Path) -> None:
 
 @mark.parametrize("magic", [True, False])
 def test_no_magic(capsys: CaptureFixture[str], clean: None, magic: bool, ref: ModuleType) -> None:
+    from importnb import Notebook, is_ipython
+
+    ipy = is_ipython()
+
     with Notebook(no_magic=not magic):
         import Untitled42
 
         assert Untitled42
 
         stdout = capsys.readouterr()[0]
-        if IPY:
+        if ipy:
             if magic:
                 assert ref.magic_slug.rstrip() in stdout
             else:
@@ -175,6 +192,8 @@ def test_no_magic(capsys: CaptureFixture[str], clean: None, magic: bool, ref: Mo
 
 @mark.parametrize("defs", [True, False])
 def test_defs_only(defs: bool, ref: ModuleType) -> None:
+    from importnb import Notebook
+
     known_defs = [
         k for k, v in vars(ref).items() if k[0] != "_" and isinstance(v, (type, FunctionType))
     ]
@@ -189,6 +208,8 @@ def test_defs_only(defs: bool, ref: ModuleType) -> None:
 
 
 def test_fuzzy_finder(clean: None, ref: ModuleType, capsys: CaptureFixture[str]) -> None:
+    from importnb import Notebook
+
     outs = []
     with Notebook():
         import __ed42
@@ -224,6 +245,9 @@ def test_fuzzy_finder(clean: None, ref: ModuleType, capsys: CaptureFixture[str])
 def as_file_spec_loader(
     spec: ModuleSpec | None,
 ) -> tuple[FileModuleSpec, Notebook]:
+    from importnb import Notebook
+    from importnb.finder import FileModuleSpec
+
     assert isinstance(spec, FileModuleSpec)
     loader = spec.loader
     assert isinstance(loader, Notebook)
@@ -231,6 +255,8 @@ def as_file_spec_loader(
 
 
 def test_fuzzy_finder_conflict(clean: None, ref: ModuleType) -> None:
+    from importnb import Notebook
+
     try:
         with Notebook():
             loader = as_file_spec_loader(find_spec("__d42"))[1]
@@ -249,6 +275,8 @@ def test_fuzzy_finder_conflict(clean: None, ref: ModuleType) -> None:
 
 
 def test_minified_json(ref: ModuleType, minified: None) -> None:
+    from importnb import Notebook
+
     with Notebook():
         import minified as minned
 
@@ -257,6 +285,8 @@ def test_minified_json(ref: ModuleType, minified: None) -> None:
 
 
 def test_docstrings(clean: None, ref: ModuleType) -> None:
+    from importnb import Notebook
+
     with Notebook():
         import Untitled42 as nb
 
@@ -289,6 +319,8 @@ def test_docstrings(clean: None, ref: ModuleType) -> None:
 
 
 def test_python_file_takes_precedent(clean: None, ref: ModuleType, untitled_py: None) -> None:
+    from importnb import Notebook
+
     with Notebook():
         import Untitled42
     assert f"{Untitled42.__file__}".endswith(".py")
@@ -296,6 +328,8 @@ def test_python_file_takes_precedent(clean: None, ref: ModuleType, untitled_py: 
 
 def test_lazy(capsys: CaptureFixture[str], clean: None) -> None:
     """Use ``stdout`` to test this, there probably being a better way"""
+    from importnb import Notebook
+
     with Notebook(lazy=True):
         import Untitled42 as module
     assert not capsys.readouterr()[0], capsys.readouterr()[0]
@@ -303,17 +337,27 @@ def test_lazy(capsys: CaptureFixture[str], clean: None) -> None:
     assert capsys.readouterr()[0]
 
 
-@ipy
 def test_import_ipy() -> None:
     """Import ``.ipy`` scripts, this won't really work without ``IPython``."""
+    from importnb import Notebook, is_ipython
+
+    if not is_ipython():
+        import pytest
+
+        pytest.skip("Not running under IPython")
     with Notebook():
         import ascript
 
     assert ascript.msg
 
 
-@ipy
 def test_cli(clean: None) -> None:
+    from importnb import Notebook, is_ipython
+
+    if not is_ipython():
+        import pytest
+
+        pytest.skip("Not running under IPython")
     with Notebook():
         import Untitled42 as module
     __import__("subprocess").check_call(
@@ -328,6 +372,8 @@ def test_cli(clean: None) -> None:
 
 @mark.filterwarnings("ignore::DeprecationWarning")
 def test_top_level_async() -> None:
+    from importnb import Notebook
+
     with Notebook():
         import async_cells
 
@@ -335,13 +381,15 @@ def test_top_level_async() -> None:
 
 
 def test_data_loaders(pytester: Pytester) -> None:
-    some_random_data: dict[str, list[dict[str, Any]]] = {"top": [{}]}
-
     import io
     import json
 
     import tomli_w
     from ruamel.yaml import YAML
+
+    from importnb import imports
+
+    some_random_data: dict[str, list[dict[str, Any]]] = {"top": [{}]}
 
     yaml = YAML(typ="safe", pure=True)
 
