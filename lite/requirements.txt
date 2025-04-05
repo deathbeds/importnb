@@ -1,2 +1,2 @@
-importnb
-ruaeml.yaml
+importnb[yaml]
+ipywidgets
