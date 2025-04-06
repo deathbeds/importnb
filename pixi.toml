@@ -20,13 +20,21 @@ all = {description = """🚢 run ALL non-interactive tasks to verify the project
   "lint",
   # ... the built artifact is more important to get right
   "build",
-  # ... test it all
-  "test",
+  # ... test just the modern environment
+  "test-max-pytest",
+  "test-max-pytest-i",
   # ... if it is not documented, it does not exist
   "docs",
   # ... check outputs for humans and machine consumption
   "check",
 ], cmd = "echo 🚢 all OK "}
+
+all-epochs = {description = """🚀 run all, including tests in the minimum/latest envs""", depends-on = [
+  # ... formatting is the cheapest
+  "all",
+  # ... test everything
+  "test",
+], cmd = "echo 🚀 all epochs OK"}
 
 fix = {description = """🧹 apply ALL source formatting tools""", depends-on = [
   # ... this might change this file
@@ -227,9 +235,6 @@ inputs = [
 outputs = ["build/reports/test-prev/pytest.html"]
 
 # test oldest ##################################################################
-[feature.tasks-test-min]
-platforms = ["linux-64", "osx-64", "win-64"]
-
 [feature.tasks-test-min.tasks.test-min-setup]
 cmd = "pixi run pip-whl--"
 description = "... install the built wheel for testing in the oldest supported environment"

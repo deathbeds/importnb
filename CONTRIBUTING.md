@@ -24,10 +24,22 @@ pytest
 `importnb` uses [`pixi`][pixi] to `fix`, `lint`, `test`, `build`, build `docs`,
 and `check` that it is ready to release.
 
+see all of the tasks with:
+
+```bash
+pixi task list
+```
+
 run `all` of them with:
 
 ```bash
 pixi run all
+```
+
+or _really_ run all of them, including tests of the oldest supported environment:
+
+```bash
+pixi run all-epochs
 ```
 
 ## interactive
