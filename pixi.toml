@@ -330,14 +330,14 @@ description = "... serve the documentation site"
 
 [feature.tasks-docs.tasks.docs-rtd]
 cmd = """
-  python -c "
-  import os;
-  assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadTheDocs'
-  "
-  && mkdir --parents "$READTHEDOCS_OUTPUT"
-  && cp --recursive site "$READTHEDOCS_OUTPUT/html"
-  && cd "$READTHEDOCS_OUTPUT"
-  && ls html"""
+python -c "
+import os;
+assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadTheDocs'
+"
+&& mkdir --parents "$READTHEDOCS_OUTPUT"
+&& cp --recursive site "$READTHEDOCS_OUTPUT/html"
+&& cd "$READTHEDOCS_OUTPUT"
+&& ls html"""
 depends-on = ["docs-mkdocs"]
 description = "... copy the documentation site to where ReadTheDocs wants it"
 
