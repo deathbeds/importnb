@@ -5,14 +5,14 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from IPython import paths
-from IPython.core import profiledir
-
 if TYPE_CHECKING:
     from IPython.core.profiledir import ProfileDir
 
 
 def get_config(profile: str | None = "default") -> Path:
+    from IPython import paths
+    from IPython.core import profiledir
+
     profile_dir = profiledir.ProfileDir()
     find_profile_dir_by_name: Any = profile_dir.find_profile_dir_by_name
     profile_: ProfileDir | None = None
