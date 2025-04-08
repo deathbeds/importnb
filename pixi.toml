@@ -336,8 +336,8 @@ description = "... serve the documentation site"
 [feature.tasks-docs.tasks.docs-rtd]
 cmd = """
   python -c "
-  import os;
-  assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadTheDocs'
+import os;
+assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadTheDocs'
   "
   && mkdir --parents "$READTHEDOCS_OUTPUT"
   && cp --recursive site "$READTHEDOCS_OUTPUT/html"

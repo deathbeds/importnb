@@ -153,8 +153,8 @@ module = [
 addopts = [
   "--color=yes",
   "--tb=long",
-  "-p importnb.utils.pytest_importnb",
-  "-p pytester",
+  "-pimportnb.utils.pytest_importnb",
+  "-ppytester",
   "-vv",
 ]
 cache_dir = "build/.cache/pytest"

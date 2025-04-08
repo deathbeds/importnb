@@ -194,7 +194,7 @@ since `importnb` transforms notebooks to python documents we can use these as so
 - call the `pytest` CLI with the plugin enabled
 
   ```bash
-  pytest -p=importnb.utils.pytest_importnb
+  pytest -pimportnb.utils.pytest_importnb
   ```
 
 - set the `PYTEST_PLUGINS` environment variable
@@ -207,7 +207,7 @@ since `importnb` transforms notebooks to python documents we can use these as so
 
   ```toml
   [tool.pytest.ini_options]
-  addopts = ["-p=importnb.utils.pytest_importnb"]
+  addopts = ["-pimportnb.utils.pytest_importnb"]
   ```
 
 - add to `conftest.py`
