@@ -29,7 +29,6 @@ from pathlib import Path
 from types import CodeType, ModuleType
 from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
-from . import get_ipython
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
 from .finder import (
@@ -38,6 +37,7 @@ from .finder import (
     get_loader_details,
     get_loader_index,
 )
+from .utils.ipython import get_ipython
 
 A = TypeVar("A", bound=ast.AST)
 

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from IPython.core.interactiveshell import InteractiveShell
     from IPython.core.profiledir import ProfileDir
 
 
@@ -27,6 +29,33 @@ def get_config(profile: str | None = "default") -> Path:
         raise RuntimeError("IPython profile could not be found or created.")
 
     return Path(profile_.location, "ipython_config.json")
+
+
+def get_ipython(force: bool | None = True) -> InteractiveShell | None:
+    shell: InteractiveShell | None = None
+    if force or is_ipython():
+        try:
+            from IPython.core import getipython
+        except ModuleNotFoundError:
+            return None
+        shell = getipython.get_ipython()  # type: ignore[no-untyped-call]
+        if shell is None:
+            from IPython.core.interactiveshell import InteractiveShell
+
+            shell = InteractiveShell.instance()
+
+    if TYPE_CHECKING:
+        assert isinstance(shell, InteractiveShell)
+
+    return shell
+
+
+def is_ipython() -> bool:
+    if "IPython" in sys.modules:
+        from IPython.core.interactiveshell import InteractiveShell
+
+        return InteractiveShell._instance is not None
+    return False
 
 
 def load_config() -> tuple[dict[str, Any], Path]:
