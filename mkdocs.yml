@@ -5,6 +5,7 @@ site_dir: site
 nav:
   - importing notebooks: README.md
   - demo: demo.md
+  - changelog: changelog.md
   - contributing: contributing.md
   - tests:
     - importnb test notebook: Untitled42.ipynb

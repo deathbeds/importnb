@@ -10,6 +10,8 @@ args
 AST
 async
 built-in
+changelog
+CLI
 coroutine
 DIR
 docstrings?

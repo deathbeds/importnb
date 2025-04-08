@@ -45,6 +45,7 @@ Source = "https://github.com/deathbeds/importnb"
 
 [project.scripts]
 importnb = "importnb.__main__:main"
+
 [project.entry-points.importnb]
 ipy = "importnb.loader:Notebook"
 ipynb = "importnb.loader:Notebook"
@@ -149,10 +150,17 @@ module = [
 
 ## pytest ######################################################################
 [tool.pytest.ini_options]
-addopts = ["--color=yes", "--tb=long", "-ppytester", "-vv"]
+addopts = [
+  "--color=yes",
+  "--tb=long",
+  "-p importnb.utils.pytest_importnb",
+  "-p pytester",
+  "-vv",
+]
 cache_dir = "build/.cache/pytest"
 filterwarnings = ["error"]
 testpaths = ["docs", "src"]
+
 
 ## ruff ########################################################################
 [tool.ruff]

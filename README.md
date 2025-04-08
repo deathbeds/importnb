@@ -2,9 +2,9 @@
 
 if you're here, then there is a chance you have a notebook (`.ipynb`) in a directory saved as `Untitled.ipynb`. it is just sitting there, but what if it could be used as a python module? `importnb` is here to answer that question.
 
-
 ## basic example
-use `importnb`'s  `Notebook` finder and loader to import notebooks as modules
+
+use `importnb`'s `Notebook` finder and loader to import notebooks as modules
 
 ```python
 import importnb
@@ -53,27 +53,27 @@ mamba install -c conda-forge importnb
 
 ## `importnb` features
 
-* `importnb.Notebook` offers parameters to customize how modules are imported
-* imports Jupyter notebooks as python modules
-  * fuzzy finding conventions for finding files that are not valid python names
-* works with top-level await statements
-* integration with `pytest`
-* extensible machinery and entry points
-* translates Jupyter notebook files (i.e. `.ipynb` files) line-for-line to python source providing natural error messages
-* command line interface for running notebooks as python scripts
-* has no required dependencies
+- `importnb.Notebook` offers parameters to customize how modules are imported
+- imports Jupyter notebooks as python modules
+  - fuzzy finding conventions for finding files that are not valid python names
+- works with top-level await statements
+- integration with `pytest`
+- extensible machinery and entry points
+- translates Jupyter notebook files (i.e. `.ipynb` files) line-for-line to python source providing natural error messages
+- command line interface for running notebooks as python scripts
+- has no required dependencies
 
 ### customizing parameters
 
 the `Notebook` object has a few features that can be toggled:
 
-* `lazy:bool=False` lazy load the module, the namespace is populated when the module is access the first time.
-* `position:int=0` the relative position of the import loader in the `sys.path_hooks`
-* `fuzzy:bool=True` use fuzzy searching syntax when underscores are encountered.
-* `include_markdown_docstring:bool=True` markdown blocks preceding a `class` or `def` become docstrings.
-* `include_magic:bool=True` ignore any `IPython` magic syntaxes
-* `only_defs:bool=False` import only function and class definitions. ignore intermediate * expressions.
-* `no_magic:bool=False` execute `IPython` magic statements from the loader.
+- `lazy:bool=False` lazy load the module, the namespace is populated when the module is access the first time.
+- `position:int=0` the relative position of the import loader in the `sys.path_hooks`
+- `fuzzy:bool=True` use fuzzy searching syntax when underscores are encountered.
+- `include_markdown_docstring:bool=True` markdown blocks preceding a `class` or `def` become docstrings.
+- `include_magic:bool=True` ignore any `IPython` magic syntaxes
+- `only_defs:bool=False` import only function and class definitions. ignore intermediate \* expressions.
+- `no_magic:bool=False` execute `IPython` magic statements from the loader.
 
 these features are defined in the `importnb.loader.Interface` class and they can be controlled through the command line interface.
 
@@ -121,7 +121,7 @@ Untitled = Notebook.load("Untitled.ipynb")
 
 ### fuzzy finding
 
-often notebooks have names that are not valid python files names that are restricted alphanumeric characters and an `_`.  the `importnb` fuzzy finder converts python's import convention into globs that will find modules matching specific patters. consider the statement:
+often notebooks have names that are not valid python files names that are restricted alphanumeric characters and an `_`. the `importnb` fuzzy finder converts python's import convention into globs that will find modules matching specific patters. consider the statement:
 
 ```python
 import importnb
@@ -185,9 +185,40 @@ with importnb.Notebook():
 #### `pytest`
 
 since `importnb` transforms notebooks to python documents we can use these as source for tests.
-`importnb`s `pytest` extension is not fancy, it only allows for conventional `pytest` test discovery.
+`importnb`s `pytest` extension is not fancy, it only allows for conventional `pytest` test discovery, and must be explicitly enabled.
 
-`nbval` is alternative testing tools that validates notebook outputs. this style is near to using notebooks as `doctest` while `importnb` primarily adds the ability to write `unittest`s in notebooks. adding tests to notebooks help preserve them over time.
+<details>
+
+<summary>to discover tests with <code>importnb</code> installed, add one of:</summary>
+
+- call the `pytest` CLI with the plugin enabled
+
+  ```bash
+  pytest -p=importnb.utils.pytest_importnb
+  ```
+
+- set the `PYTEST_PLUGINS` environment variable
+
+  ```bash
+  PYTEST_PLUGINS=importnb.utils.pytest_importnb pytest
+  ```
+
+- add to `[tool.pytest.ini_options]` in `pyproject.toml`
+
+  ```toml
+  [tool.pytest.ini_options]
+  addopts = ["-p=importnb.utils.pytest_importnb"]
+  ```
+
+- add to `conftest.py`
+
+  ```python
+  pytest_plugins = [
+      "importnb.utils.pytest_importnb",
+  ]
+  ```
+
+</details>
 
 #### extensible
 
@@ -202,8 +233,8 @@ class MyLoader(importnb.Notebook):
 
 ---
 
-
 ## appendix
+
 ### line-for-line translation and natural error messages
 
 a challenge with Jupyter notebooks is that they are `json` data. this poses problems:
@@ -219,10 +250,10 @@ python's `json` module is not pluggable in the way we need to find line numbers.
 
 the need for line numbers is enough that we ship a stand-alone `json` grammar parser. to do this without extra dependencies we use the `lark` grammar package at build time:
 
-* we've defined a minimal grammar in `json.g`
-* we use `hatch` hooks to invoke `lark-standalone` that generates a stand-alone parser for the grammar.
-  * the generated file is shipped with the package.
-  * this code is licensed under the Mozilla Public License 2.0
+- we've defined a minimal grammar in `json.g`
+- we use `hatch` hooks to invoke `lark-standalone` that generates a stand-alone parser for the grammar.
+  - the generated file is shipped with the package.
+  - this code is licensed under the Mozilla Public License 2.0
 
 the result of `importnb` is `json` data translated into vertically sparse, valid python code.
 
