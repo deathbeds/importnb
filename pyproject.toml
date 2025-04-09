@@ -146,6 +146,8 @@ module = [
   "my_package.*",
   "toml_data",
   "yaml_data",
+  # docs
+  "jupyterlite_pyodide_kernel.*",
 ]
 
 ## pytest ######################################################################
@@ -262,4 +264,5 @@ select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "Untitled42.ipynb" = ["ANN001", "ANN201"]
+"lite/*" = ["S310"]
 "test_cli.py" = ["D207", "D208", "D415"]

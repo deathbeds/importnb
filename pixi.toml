@@ -165,7 +165,7 @@ outputs = ["src/importnb/_json_parser.py"]
 
 [feature.tasks-build.tasks.build-pypi]
 cmd = """
-  rm --recursive --force dist/
+  rm --recursive --force dist/ build/.cache/lite
   && pyproject-build . --no-isolation"""
 depends-on = ["build-lark"]
 description = "... build the source and wheel distributions for PyPI"
@@ -308,10 +308,9 @@ outputs = ["build/reports/test-pypy/pytest.html"]
 
 # docs #########################################################################
 [feature.tasks-docs.tasks.docs-setup]
-cmd = "pixi run pip-whl--"
-depends-on = ["build-pypi"]
+cmd = "pixi run pip-e--"
 description = "... install the built package for documentation"
-inputs = ["dist/*.whl"]
+inputs = ["pyproject.toml", "src/**/*.py"]
 outputs = ["build/reports/docs/pip-freeze.txt"]
 
 [feature.tasks-docs.tasks.docs-mkdocs]
@@ -347,14 +346,27 @@ depends-on = ["docs-mkdocs"]
 description = "... copy the documentation site to where ReadTheDocs wants it"
 
 # lite #########################################################################
+[feature.tasks-lite.tasks.docs-lite-setup]
+cmd = "pixi run pip-whl--"
+description = "... install the built package for demo building"
+inputs = ["dist"]
+outputs = ["build/reports/lite/pip-freeze.txt"]
+
+[feature.tasks-lite.tasks.docs-lite-lock]
+cmd = """python lite/lock.py"""
+depends-on = ["docs-lite-setup"]
+inputs = ["dist/*.whl", "lite/lock.py"]
+outputs = ["build/pyodide-core.tar.bz2", "lite/files/pyodide-lock.json"]
+
 [feature.tasks-lite.tasks.docs-lite]
 cmd = """
   export SOURCE_DATE_EPOCH=17302488620
+  && rm --force --recursive build/lite lite/.jupyterlite.doit.db
   && cd lite
   && jupyter lite build
   && jupyter lite doit -- pre_archive:report:SHA256SUMS
 """
-depends-on = ["build-pypi"]
+depends-on = ["build-pypi", "docs-lite-lock"]
 description = "... build the JupyterLite demo"
 inputs = ["!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}", "dist/*.whl", "lite/"]
 outputs = ["build/lite/SHA256SUMS"]
@@ -377,7 +389,7 @@ description = "... fix python source in notebooks and python files"
 inputs = [
   "!**/.ipynb_checkpoints",
   "pyproject.toml",
-  "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "{docs,src,lite}/**/*.{g,ipy,ipynb,py}",
 ]
 
 [feature.tasks-lint.tasks.fix-taplo]

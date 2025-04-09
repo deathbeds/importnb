@@ -12,8 +12,11 @@
     "showLastModifiedColumn": false,
     "showFileSizeColumn": false,
     "showHiddenFiles": false,
-    "showFileCheckboxes": true,
+    "showFileCheckboxes": false,
     "showFullPath": false,
     "sortNotebooksFirst": false
+  },
+  "@jupyter-notebook/application-extension:top": {
+    "visible": "no"
   }
 }

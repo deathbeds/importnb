@@ -15,4 +15,4 @@ The demo is loading.
   }
 </style>
 
-<iframe src="../lite/lab/index.html?path=__init__.ipynb"></iframe>
+<iframe src="../lite/notebooks/?path=__init__.ipynb"></iframe>

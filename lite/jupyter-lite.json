@@ -13,6 +13,14 @@
         ],
         "name": "ipy"
       }
+    },
+    "litePluginSettings": {
+      "@jupyterlite/pyodide-kernel-extension:kernel": {
+        "loadPyodideOptions": {
+          "packages": ["importnb"],
+          "lockFileURL": "./files/pyodide-lock.json"
+        }
+      }
     }
   },
   "jupyter-lite-schema-version": 0
