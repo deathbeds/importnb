@@ -189,7 +189,7 @@ since `importnb` transforms notebooks to python documents we can use these as so
 
 <details>
 
-<summary>...to discover tests with <code>importnb</code> installed...</summary>
+<summary>... to discover tests with <code>importnb</code> installed...</summary>
 
 add one of:
 
