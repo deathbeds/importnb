@@ -9,6 +9,8 @@ build:
     - git fetch --tags
     - mamba install -c conda-forge -c nodefaults pixi==0.44.0
     - pixi run build
+    - pixi run test-max-pytest
+    - pixi run docs-mypy
     - pixi run docs-lite
     - pixi run docs-mkdocs
     - pixi run -v docs-rtd

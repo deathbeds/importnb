@@ -95,6 +95,7 @@ PIP_PRE = "1"
 ## coverage ####################################################################
 [tool.coverage.run]
 data_file = "build/.coverage"
+plugins = ["importnb.utils.coverage"]
 
 [tool.coverage.report]
 exclude_lines = [

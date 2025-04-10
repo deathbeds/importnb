@@ -6,9 +6,9 @@ from hashlib import sha256
 from pathlib import Path
 from urllib.request import urlopen
 
+import pkginfo
+import pyodide_lock
 from jupyterlite_pyodide_kernel.constants import PYODIDE_LOCK, PYODIDE_VERSION
-
-from importnb import __version__
 
 PYODIDE_GH = "https://github.com/pyodide/pyodide"
 PYODIDE_CORE_URL = (
@@ -21,6 +21,7 @@ DIST = HERE / "../dist"
 CORE_TARBALL = HERE / "../build/pyodide-core.tar.bz2"
 WHL = next(DIST.glob("*.whl"))
 WHL_SHA = sha256(WHL.read_bytes()).hexdigest()
+WHL_INFO = pkginfo.Wheel(str(WHL))
 
 
 def main() -> int:
@@ -42,8 +43,9 @@ def main() -> int:
         "package_type": "package",
         "sha256": WHL_SHA,
         "unvendored_tests": False,
-        "version": __version__,
+        "version": WHL_INFO.version,
     }
+    pyodide_lock.PyodideLockSpec.from_json(LOCK)
     LOCK.write_text(json.dumps(lock, indent=2, sort_keys=True), encoding="utf-8")
     return 0
 

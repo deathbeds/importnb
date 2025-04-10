@@ -145,6 +145,7 @@ cmd = """
   && $TEST_RUNNER
     --pythonwarnings error
     --cov importnb
+    --cov docs
     --cov-branch
     --cov-context test
     --cov-report term-missing:skip-covered
@@ -577,6 +578,7 @@ jupyterlite-core = "0.5.*"
 jupyterlite-core-with-libarchive = "*"
 jupyterlite-core-with-translation = "*"
 jupyterlite-pyodide-kernel = "0.5.*"
+pyodide-lock = "*"
 
 [feature.deps-check.dependencies]
 check-wheel-contents = "*"
@@ -597,6 +599,7 @@ dev = [
   "deps-docs",
   "deps-lab",
   "deps-lint",
+  "deps-lite",
   "deps-run",
   "deps-run-interactive",
   "deps-run-interactive-max",
@@ -609,6 +612,7 @@ lint = [
   "deps-build",
   "deps-docs",
   "deps-lint",
+  "deps-lite",
   "deps-run",
   "deps-run-interactive",
   "deps-run-interactive-max",
