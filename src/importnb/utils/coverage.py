@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from coverage.plugin import CoveragePlugin, FileReporter, FileTracer
 
@@ -22,7 +22,7 @@ START_CODE_C, START_SOURCE, NEWLINE, CLOSE_SOURCE, CLOSE_CODE_C = (
 )
 
 
-def coverage_init(reg: Plugins) -> None:
+def coverage_init(reg: Plugins, options: Any) -> None:
     plugin = NotebookPlugin()
     reg.add_file_tracer(plugin)
 
