@@ -93,7 +93,16 @@ PIP_PRE = "1"
 
 # tools in alphabetical order ##################################################
 ## coverage ####################################################################
+[tool.coverage.paths]
+source = [
+  # this must come first
+  "src",
+  # unix
+  ".pixi/envs/*/lib/python*/site-packages",
+]
+
 [tool.coverage.run]
+disable_warnings = ["module-not-measured"]
 plugins = ["importnb.utils.coverage"]
 
 [tool.coverage.report]
@@ -102,7 +111,13 @@ exclude_lines = [
   "if TYPE_CHECKING:",
   "pragma: no cover",
 ]
-omit = ["_json_parser.py"]
+omit = [
+  "Untitled42.py",
+  "_json_parser.py",
+  "coverage.py",
+  "minified.ipynb",
+  "my_module.ipynb",
+]
 
 ## mypy ########################################################################
 [tool.coverage.html]

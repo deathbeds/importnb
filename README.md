@@ -189,7 +189,9 @@ since `importnb` transforms notebooks to python documents we can use these as so
 
 <details>
 
-<summary>to discover tests with <code>importnb</code> installed, add one of:</summary>
+<summary>...to discover tests with <code>importnb</code> installed...</summary>
+
+add one of:
 
 - call the `pytest` CLI with the plugin enabled
 
@@ -216,6 +218,24 @@ since `importnb` transforms notebooks to python documents we can use these as so
   pytest_plugins = [
       "importnb.utils.pytest_importnb",
   ]
+  ```
+
+</details>
+
+#### `coverage`
+
+`coverage` can tell you how much of your code runs.
+
+<details>
+
+<summary>... to gather <code>coverage</code> from notebooks ...</summary>
+
+
+- add to `[tool.coverage.run]` in `pyproject.toml`
+
+  ```toml
+  [tool.coverage.run]
+  plugins = ["importnb.utils.coverage"]
   ```
 
 </details>
