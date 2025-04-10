@@ -45,8 +45,8 @@ def main() -> int:
         "unvendored_tests": False,
         "version": WHL_INFO.version,
     }
-    pyodide_lock.PyodideLockSpec.from_json(LOCK)
     LOCK.write_text(json.dumps(lock, indent=2, sort_keys=True), encoding="utf-8")
+    pyodide_lock.PyodideLockSpec.from_json(LOCK)
     return 0
 
 

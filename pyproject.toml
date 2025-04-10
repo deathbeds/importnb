@@ -94,7 +94,6 @@ PIP_PRE = "1"
 # tools in alphabetical order ##################################################
 ## coverage ####################################################################
 [tool.coverage.run]
-data_file = "build/.coverage"
 plugins = ["importnb.utils.coverage"]
 
 [tool.coverage.report]
