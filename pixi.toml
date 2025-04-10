@@ -265,7 +265,7 @@ inputs = [
 outputs = ["build/reports/test-min/pytest.html"]
 
 [feature.tasks-test-min.tasks.test-min-pytest-i]
-cmd = """pixi run pytest-cov-i--"""
+cmd = """pixi run pytest-i-cov--"""
 depends-on = ["test-min-setup"]
 description = "... run unit tests in the oldest supported environment (under ipython)"
 inputs = [
