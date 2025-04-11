@@ -180,12 +180,14 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         nodes = self.source_to_nodes(source, path, _optimize=_optimize)
         return self.nodes_to_code(nodes, path, _optimize=_optimize)
 
-    def get_data(self, path: str) -> str:  # type: ignore[override]
+    def get_data(self, path: str) -> bytes:
         """Inject an input transformation before the raw text.
 
         this method allows notebook json to be transformed line for line into vertically sparse python code.
         """
-        return self.raw_to_source(decode_source(super().get_data(self.path or path)))
+        return self.raw_to_source(decode_source(super().get_data(self.path or path))).encode(
+            "utf-8"
+        )
 
     def create_module(self, spec: ModuleSpec) -> ModuleType:
         """An overloaded ``create_module`` method injecting fuzzy finder setup logic."""
@@ -251,7 +253,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         if TYPE_CHECKING:
             assert self.path
 
-        nodes = self.source_to_nodes(self.get_data(self.path))
+        nodes = self.source_to_nodes(self.get_data(self.path).decode("utf-8"))
 
         # iterate through the nodes and compile individual statements
         for node in nodes.body:
