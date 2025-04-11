@@ -13,4 +13,4 @@ build:
     - pixi run lint-mypy-src
     - pixi run docs-lite
     - pixi run docs-mkdocs
-    - pixi run -v docs-rtd
+    - pixi run --skip-deps docs-rtd
