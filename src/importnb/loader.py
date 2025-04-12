@@ -359,7 +359,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
     @classmethod
     def load_argv(
         cls,
-        argv: list[str] | None = None,
+        argv: str | list[str] | None = None,
         *,
         parser: ArgumentParser | None = None,
     ) -> ModuleType | None:
@@ -376,11 +376,19 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
 
         if argv is None:
             argv = sys.argv[1:]
-
-        if isinstance(argv, str):
+        elif isinstance(argv, str):
             argv = shlex.split(argv)
 
+        extra_argv: list[str] = []
+
+        if "--" in argv:
+            dash_dash_index = argv.index("--")
+            extra_argv = argv[dash_dash_index + 1 :]
+            argv = argv[:dash_dash_index]
+
         parsed_args = parser.parse_args(argv)
+        parsed_args.args += extra_argv
+
         module = cls.load_ns(parsed_args)
         if module is None:
             parser.print_help()
@@ -449,7 +457,9 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         from importnb import __version__
 
         if parser is None:
-            parser = ArgumentParser("importnb", description="run notebooks as python code")
+            parser = ArgumentParser(
+                "importnb", description="run notebooks as python code", add_help=True
+            )
         parser.add_argument("file", nargs="?", help="run a file")
         parser.add_argument("args", nargs=REMAINDER, help="arguments to pass to script")
         parser.add_argument("-m", "--module", help="run a module")

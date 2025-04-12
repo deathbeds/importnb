@@ -553,6 +553,7 @@ taplo = "*"
 types-pyyaml = "*"
 
 [feature.deps-test.dependencies]
+ansi2html = "*"
 coverage = "*"
 doit = "*"
 pytest = "*"

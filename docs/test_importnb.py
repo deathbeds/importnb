@@ -185,9 +185,9 @@ def test_no_magic(capsys: CaptureFixture[str], clean: None, magic: bool, ref: Mo
         stdout = capsys.readouterr()[0]
         if ipy:
             if magic:
-                assert ref.magic_slug.rstrip() in stdout
+                assert ref.SLUG.rstrip() in stdout
             else:
-                assert ref.magic_slug.rstrip() not in stdout
+                assert ref.SLUG.rstrip() not in stdout
 
 
 @mark.parametrize("defs", [True, False])
@@ -333,7 +333,7 @@ def test_lazy(capsys: CaptureFixture[str], clean: None) -> None:
     with Notebook(lazy=True):
         import Untitled42 as module
     assert not capsys.readouterr()[0], capsys.readouterr()[0]
-    module.slug, "The function gets executed here"
+    module.SLUG, "The function gets executed here"
     assert capsys.readouterr()[0]
 
 
