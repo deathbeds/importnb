@@ -81,13 +81,17 @@ class Interface:
 
     name: str | None = None
     path: str | None = None
+    #: lazy load the module, the namespace is populated when the module is access the first time.
     lazy: bool = False
     extensions: tuple[str, ...] = field(default_factory=lambda: (".ipy", ".ipynb"))
     include_fuzzy_finder: bool = True
+    #: markdown blocks preceding a `class` or `def` become docstrings.
     include_markdown_docstring: bool = True
+    #: import only function and class definitions. ignore intermediate \* expressions.
     include_non_defs: bool = True
     include_await: bool = True
     module_type: type[ModuleType] = field(default_factory=lambda: SourceModule)
+    #: execute `IPython` magic statements from the loader.
     no_magic: bool = False
 
     _loader_hook_position: int | None = field(default=0, repr=False)
