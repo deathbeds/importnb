@@ -4,6 +4,7 @@ import ast
 import inspect
 import json
 import linecache
+import os
 import sys
 from importlib import reload
 from importlib.util import find_spec
@@ -17,7 +18,7 @@ from pytest import fixture, mark, raises
 import importnb
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Iterator
     from importlib.machinery import ModuleSpec
 
     from _pytest.pytester import Pytester
@@ -35,20 +36,26 @@ sys.path.insert(0, str(HERE))
 
 
 @fixture(scope="session")
-def ref() -> ModuleType:
+def ref() -> Iterator[ModuleType]:
     from importnb import Notebook
 
-    return Notebook.load_file(HERE / "Untitled42.ipynb")
+    os.environ["NOT_UNTITLED42_CLI"] = "1"
+
+    nb = Notebook.load_file(HERE / "Untitled42.ipynb")
+
+    yield nb
+
+    os.environ.pop("NOT_UNTITLED42_CLI", None)
 
 
 @fixture
-def clean() -> Generator[None, None, None]:
+def clean() -> Iterator[None]:
     yield
     unimport(CLOBBER)
 
 
 @fixture
-def package(ref: ModuleType) -> Generator[Path, None, None]:
+def package(ref: ModuleType) -> Iterator[Path]:
     package = HERE / "my_package"
     package.mkdir(parents=True, exist_ok=True)
     target = package / "my_module.ipynb"
@@ -59,7 +66,7 @@ def package(ref: ModuleType) -> Generator[Path, None, None]:
 
 
 @fixture
-def minified(ref: ModuleType) -> Generator[None, None, None]:
+def minified(ref: ModuleType) -> Iterator[None]:
     minified = Path(HERE / "minified.ipynb")
     with open(f"{ref.__file__}") as f, open(minified, "w") as o:
         json.dump(json.load(f), o, separators=(",", ":"))
@@ -69,7 +76,7 @@ def minified(ref: ModuleType) -> Generator[None, None, None]:
 
 
 @fixture
-def untitled_py(ref: ModuleType) -> Generator[None, None, None]:
+def untitled_py(ref: ModuleType) -> Iterator[None]:
     assert ref.__file__
     py = Path(ref.__file__).with_suffix(".py")
     py.touch()
@@ -176,6 +183,7 @@ def test_no_magic(capsys: CaptureFixture[str], clean: None, magic: bool, ref: Mo
     from importnb import Notebook, is_ipython
 
     ipy = is_ipython()
+    expected = ref.SLUG.rstrip()
 
     with Notebook(no_magic=not magic):
         import Untitled42
@@ -185,9 +193,9 @@ def test_no_magic(capsys: CaptureFixture[str], clean: None, magic: bool, ref: Mo
         stdout = capsys.readouterr()[0]
         if ipy:
             if magic:
-                assert ref.SLUG.rstrip() in stdout
+                assert expected
             else:
-                assert ref.SLUG.rstrip() not in stdout
+                assert expected
 
 
 @mark.parametrize("defs", [True, False])

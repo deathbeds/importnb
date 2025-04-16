@@ -16,7 +16,7 @@ else:
 from .loader import Loader  # noqa: TC001
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Iterator
 
 ENTRY_POINTS: dict[str, type[Loader] | str] = {}
 
@@ -56,7 +56,7 @@ def loader_from_ep(alias: str) -> type[Loader]:
 
 
 @contextmanager
-def imports(*names: str) -> Generator[Any, None, None]:
+def imports(*names: str) -> Iterator[Any]:
     """A shortcut to importnb loaders through entry points"""
     types = set()
     with ExitStack() as stack:

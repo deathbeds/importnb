@@ -14,15 +14,13 @@ import pytest
 from importnb import Notebook
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Iterator
     from types import ModuleType
 
     from importnb.loader import Loader
 
 
-def get_file_patterns(
-    cls: type[AlternativeModule], parent: pytest.Collector
-) -> Generator[str, None, None]:
+def get_file_patterns(cls: type[AlternativeModule], parent: pytest.Collector) -> Iterator[str]:
     for pat in parent.config.getini("python_files"):
         for e in cls.loader().extensions:
             yield f"""*{pat.rstrip(".py")}{e}"""

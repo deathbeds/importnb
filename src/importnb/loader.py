@@ -43,7 +43,7 @@ A = TypeVar("A", bound=ast.AST)
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
-    from collections.abc import Generator
+    from collections.abc import Iterator
     from importlib.abc import Loader as Loader_
 
 
@@ -381,10 +381,11 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
 
         extra_argv: list[str] = []
 
-        if "--" in argv:
-            dash_dash_index = argv.index("--")
-            extra_argv = argv[dash_dash_index + 1 :]
-            argv = argv[:dash_dash_index]
+        dash_dash = "--"
+
+        if dash_dash in argv:
+            dash_dash_index = argv.index(dash_dash)
+            argv, extra_argv = argv[:dash_dash_index], argv[dash_dash_index + 1 :]
 
         parsed_args = parser.parse_args(argv)
         parsed_args.args += extra_argv
@@ -558,7 +559,7 @@ def _dict_module(ns: dict[str, str]) -> ModuleType:
 
 
 @contextmanager
-def main_argv(prog: str, args: list[str] | None = None) -> Generator[None, None, None]:
+def main_argv(prog: str, args: list[str] | None = None) -> Iterator[None]:
     if args is not None:
         args = [prog] + list(args)
         prior, sys.argv = sys.argv, args

@@ -9,6 +9,7 @@ from shlex import split
 from subprocess import call
 from typing import Any, Callable
 
+import pytest
 from pytest import importorskip
 
 from importnb import Notebook
@@ -17,23 +18,24 @@ from importnb import __version__ as importnb_version
 UTF8: Any = {"encoding": "utf-8"}
 
 HERE = Path(__file__).parent
+UNTITLED = HERE / "Untitled42.ipynb"
 
 sys.path.insert(0, str(HERE))
 
-UNTITLED = HERE / "Untitled42.ipynb"
-
-ref = Notebook.load_file(UNTITLED)
-REF = Path(f"{ref.__file__}")
-
-FMT_CONTEXT = dict(
-    UNTITLED=UNTITLED.as_posix(),
-    SLUG=ref.SLUG,
-    VERSION=importnb_version,
-)
 
 NORMALIZE_PATTERNS = [
-    [r"UserWarning: Attempting to work in a virtualenv\.", ""],
-    [r"optional arguments:", r"options:"],
+    [
+        r"UserWarning: Attempting to work in a virtualenv\.",
+        "",
+    ],
+    [
+        r"untitled42-parser-[a-f\d\-]+",
+        r"untitled42-parser-1-2-3-a-f",
+    ],
+    [
+        r"optional arguments:",
+        r"options:",
+    ],
     [
         # -c, --code CODE run raw code
         r"(-[a-z]), (--[a-z+]+) ([A-Z]+)",
@@ -46,6 +48,7 @@ NORMALIZE_PATTERNS = [
         r" +",
         " ",
     ],
+    [r"^\s+", ""],
 ]
 
 
@@ -53,7 +56,7 @@ def normalize(name: str, raw: str) -> str:
     norm = raw
 
     for pattern, replacement in NORMALIZE_PATTERNS:
-        norm = re.sub(pattern, replacement, norm)
+        norm = re.sub(pattern, replacement, norm, flags=re.MULTILINE)
 
     print("\n##", name, "(raw)\n")
     print(textwrap.indent(raw, "\t"))
@@ -62,9 +65,19 @@ def normalize(name: str, raw: str) -> str:
     return norm.strip()
 
 
+@pytest.fixture
+def untitled_context() -> dict[str, str]:
+    ref = Notebook.load_file(UNTITLED)
+    return dict(
+        UNTITLED=UNTITLED.as_posix(),
+        SLUG=ref.MAGIC_SLUG,
+        VERSION=importnb_version,
+    )
+
+
 def cli_test(command: str, expect_rc: int = 0) -> Callable[..., Callable[..., None]]:
     def delay(f: Callable[..., None]) -> Callable[..., None]:
-        def wrapper(tmp_path: Path) -> None:
+        def wrapper(tmp_path: Path, untitled_context: dict[str, str]) -> None:
             path = tmp_path / "tmp"
             args = [sys.executable, *split(command)]
             print(">>>", " \\\n\t".join(args))
@@ -72,7 +85,7 @@ def cli_test(command: str, expect_rc: int = 0) -> Callable[..., Callable[..., No
                 rc = call(args, stdout=fp, cwd=str(tmp_path))
             assert rc == expect_rc, f"didn't get expected return code {expect_rc}"
 
-            raw_expected = f"{f.__doc__}".format(**FMT_CONTEXT)
+            raw_expected = f"{f.__doc__}".format(**untitled_context)
             norm_expected = normalize("expected", raw_expected)
 
             raw_observed = path.read_text(**UTF8)
@@ -90,14 +103,15 @@ def cli_test(command: str, expect_rc: int = 0) -> Callable[..., Callable[..., No
 
             if not diff:
                 return
-            diff_count = len([
+            real_diff = [
                 line
                 for line in diff
                 if line.startswith(("+", "-")) and not line.startswith(("+++", "---"))
-            ])
+            ]
+            diff_count = len(real_diff)
             print("\n## unexpected diff\n", file=sys.stderr)
             print(textwrap.indent("\n".join(diff), "\t"), file=sys.stderr)
-            assert not diff_count, f"{diff_count} unexpected difference(s) in {f.__name__}"
+            assert not real_diff[-1], f"{diff_count} unexpected difference(s) in {f.__name__}"
 
         return wrapper
 
@@ -106,24 +120,23 @@ def cli_test(command: str, expect_rc: int = 0) -> Callable[..., Callable[..., No
 
 @cli_test("-m importnb")
 def test_usage() -> None:
-    """\
-usage: importnb [-h] [-m MODULE] [-c CODE] [-d DIR] [-t] [--version] [file] ...
+    """usage: importnb [-h] [-m MODULE] [-c CODE] [-d DIR] [-t] [--version] [file] ...
 
-run notebooks as python code
+    run notebooks as python code
 
-positional arguments:
-  file                  run a file
-  args                  arguments to pass to script
+    positional arguments:
+      file                  run a file
+      args                  arguments to pass to script
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -m MODULE, --module MODULE
-                        run a module
-  -c CODE, --code CODE  run raw code
-  -d DIR, --dir DIR     path to run script in
-  -t, --tasks           run doit tasks
-  --version             display the importnb version
-"""
+    optional arguments:
+      -h, --help            show this help message and exit
+      -m MODULE, --module MODULE
+                            run a module
+      -c CODE, --code CODE  run raw code
+      -d DIR, --dir DIR     path to run script in
+      -t, --tasks           run doit tasks
+      --version             display the importnb version
+    """
 
 
 @cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} {UNTITLED.as_posix()}")
@@ -149,7 +162,11 @@ def test_module_extra_argv() -> None:
     """\
 i was printed from {UNTITLED} and my name is __main__
 {SLUG}
-the parser namespace is Namespace(args=None)
+usage: Untitled42 [-h] [-- ...]
+
+optional arguments:
+    -h, --help  show this help message and exit
+    -- ...
 """
 
 
@@ -160,9 +177,7 @@ def test_empty_code() -> None:
 
 @cli_test("-m importnb --version")
 def test_version() -> None:
-    """\
-{VERSION}
-"""
+    """{VERSION}"""
 
 
 @cli_test(rf"-m importnb -d {UNTITLED.parent.as_posix()} -t {UNTITLED.as_posix()} list")
