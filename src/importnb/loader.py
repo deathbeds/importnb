@@ -79,17 +79,21 @@ class SourceModule(ModuleType):
 class Interface:
     """a configuration python importing interface"""
 
+    #: a module name for the imported source
     name: str | None = None
+    #: a path to a source file
     path: str | None = None
     #: lazy load the module, the namespace is populated when the module is access the first time.
     lazy: bool = False
+    #: file extensions to be considered importable
     extensions: tuple[str, ...] = field(default_factory=lambda: (".ipy", ".ipynb"))
+    #: use fuzzy searching syntax when underscores are encountered.
     include_fuzzy_finder: bool = True
     #: markdown blocks preceding a `class` or `def` become docstrings.
     include_markdown_docstring: bool = True
     #: import only function and class definitions. ignore intermediate \* expressions.
     include_non_defs: bool = True
-    include_await: bool = True
+    #: the class used to store a module
     module_type: type[ModuleType] = field(default_factory=lambda: SourceModule)
     #: execute `IPython` magic statements from the loader.
     no_magic: bool = False

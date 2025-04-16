@@ -57,7 +57,7 @@ mamba install -c conda-forge importnb
 - imports Jupyter notebooks as python modules
   - fuzzy finding conventions for finding files that are not valid python names
 - works with top-level await statements
-- integration with `pytest`
+- integration with `pytest`, `IPython`, and `coverage`
 - extensible machinery and entry points
 - translates Jupyter notebook files (i.e. `.ipynb` files) line-for-line to python source providing natural error messages
 - command line interface for running notebooks as python scripts
@@ -69,11 +69,17 @@ the `Notebook` object has a few features that can be toggled:
 
 - `lazy:bool=False` lazy load the module, the namespace is populated when the module is access the first time.
 - `position:int=0` the relative position of the import loader in the `sys.path_hooks`
-- `fuzzy:bool=True` use fuzzy searching syntax when underscores are encountered.
+- `include_fuzzy_finder:bool=True` use fuzzy searching syntax when underscores are encountered.
 - `include_markdown_docstring:bool=True` markdown blocks preceding a `class` or `def` become docstrings.
-- `include_magic:bool=True` ignore any `IPython` magic syntaxes
-- `only_defs:bool=False` import only function and class definitions. ignore intermediate \* expressions.
+- `include_non_defs:bool=True` import only function and class definitions. ignore intermediate \* expressions.
 - `no_magic:bool=False` execute `IPython` magic statements from the loader.
+
+some identifying properties of the loader can be customized:
+
+- `name:str | None=None` a module name for the imported source
+- `path:str | None=None` a path to a source file
+- `extensions:tuple[str, ...]=(".ipy", ".ipynb")` file extensions to be considered importable
+- `module_type:type[ModuleType]=SourceModule` the class used to store a module
 
 these features are defined in the `importnb.loader.Interface` class and they can be controlled through the command line interface.
 

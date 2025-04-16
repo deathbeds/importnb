@@ -21,6 +21,7 @@ ROOT = HERE.parent
 README = ROOT / "README.md"
 
 INTERFACE_FIELDS = Interface.__dataclass_fields__
+FIELD_DEFAULTS = {"extensions": """(".ipy", ".ipynb")""", "module_type": "SourceModule"}
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def test_readme_params(
     the_readme: str, an_interface_param: str, the_loader_source: list[str]
 ) -> None:
     field = INTERFACE_FIELDS[an_interface_param]
-    spec = Interface.__annotations__[an_interface_param]
+    spec = Interface.__annotations__[an_interface_param].strip()
     doc = ""
     in_readme = ""
     for line in the_readme.splitlines():
@@ -60,9 +61,10 @@ def test_readme_params(
         assert doc.startswith("#: "), (
             f"`Interface.{an_interface_param}` should have a `#:` above it"
         )
-        doc = doc[3:]
+        doc = doc[2:].strip()
         break
     assert doc, f"Interface.{an_interface_param} has no docstring"
-    from_src = f"- `{an_interface_param}:{spec}={field.default}` {doc}"
+    default = FIELD_DEFAULTS.get(an_interface_param, field.default)
+    from_src = f"- `{an_interface_param}:{spec}={default}` {doc}"
     print(from_src)
     assert in_readme == from_src
