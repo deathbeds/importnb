@@ -6,7 +6,7 @@ import textwrap
 from difflib import unified_diff
 from pathlib import Path
 from shlex import split
-from subprocess import call
+from subprocess import STDOUT, call
 from typing import Any, Callable
 
 import pytest
@@ -82,7 +82,7 @@ def cli_test(command: str, expect_rc: int = 0) -> Callable[..., Callable[..., No
             args = [sys.executable, *split(command)]
             print(">>>", " \\\n\t".join(args))
             with path.open("w", **UTF8) as fp:
-                rc = call(args, stdout=fp, cwd=str(tmp_path))
+                rc = call(args, stdout=fp, stderr=STDOUT, cwd=str(tmp_path))
             assert rc == expect_rc, f"didn't get expected return code {expect_rc}"
 
             raw_expected = f"{f.__doc__}".format(**untitled_context)
