@@ -79,7 +79,7 @@ some identifying properties of the loader can be customized:
 - `name:str | None=None` a module name for the imported source
 - `path:str | None=None` a path to a source file
 - `extensions:tuple[str, ...]=(".ipy", ".ipynb")` file extensions to be considered importable
-- `module_type:type[ModuleType]=SourceModule` the class used to store a module
+- `module_type:type[M]=SourceModule` the class used to store a module
 
 these features are defined in the `importnb.loader.Interface` class and they can be controlled through the command line interface.
 

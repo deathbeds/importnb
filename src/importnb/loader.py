@@ -27,7 +27,7 @@ from importlib.machinery import FileFinder, ModuleSpec, SourceFileLoader
 from importlib.util import LazyLoader, find_spec
 from pathlib import Path
 from types import CodeType, ModuleType
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
 from .decoder import LineCacheNotebookDecoder, quote
 from .docstrings import update_docstring
@@ -39,12 +39,13 @@ from .finder import (
 )
 from .utils.ipython import get_ipython
 
-A = TypeVar("A", bound=ast.AST)
-
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
     from collections.abc import Iterator
     from importlib.abc import Loader as Loader_
+
+A = TypeVar("A", bound=ast.AST)
+M = TypeVar("M", bound=ModuleType, default=ModuleType)
 
 
 __all__ = "Notebook", "reload"
@@ -76,7 +77,7 @@ class SourceModule(ModuleType):
 
 
 @dataclass
-class Interface:
+class Interface(Generic[M]):
     """a configuration python importing interface"""
 
     #: a module name for the imported source
@@ -94,20 +95,22 @@ class Interface:
     #: import only function and class definitions. ignore intermediate \* expressions.
     include_non_defs: bool = True
     #: the class used to store a module
-    module_type: type[ModuleType] = field(default_factory=lambda: SourceModule)
+    module_type: type[M] = field(default_factory=lambda: SourceModule)  # type: ignore[assignment]
     #: execute `IPython` magic statements from the loader.
     no_magic: bool = False
 
     _loader_hook_position: int | None = field(default=0, repr=False)
 
-    def __new__(cls, name: str | None = None, path: str | None = None, **kwargs: Any) -> Interface:
+    def __new__(
+        cls, name: str | None = None, path: str | None = None, **kwargs: Any
+    ) -> Interface[M]:
         kwargs.update(name=name, path=path)
         self = super().__new__(cls)
         self.__init__(**kwargs)  # type: ignore[misc]
         return self
 
 
-class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
+class Loader(Interface[M], SourceFileLoader, Generic[M]):  # type: ignore[misc]
     """The simplest implementation of a Notebook Source File Loader.
     This class breaks down the loading process into finer steps.
     """
@@ -197,7 +200,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
             "utf-8"
         )
 
-    def create_module(self, spec: ModuleSpec) -> ModuleType:
+    def create_module(self, spec: ModuleSpec) -> M:
         """An overloaded ``create_module`` method injecting fuzzy finder setup logic."""
         module = self.module_type(str(spec.name))
         _init_module_attrs(spec, module)
@@ -301,7 +304,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
             return True
         return super().is_package(fullname)
 
-    def __enter__(self) -> Loader:
+    def __enter__(self) -> Loader[M]:
         path_id, loader_id, details = get_loader_index(".py")
         for _, e in details:
             if all(map(e.__contains__, self.extensions)):
@@ -326,7 +329,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         filename: str | Path | None,
         main: bool = True,
         **kwargs: Any,
-    ) -> ModuleType:
+    ) -> M:
         """Import a notebook as a module from a filename.
 
         ``dir``: The directory to load the file from.
@@ -342,7 +345,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         return module
 
     @classmethod
-    def load_module(cls, name: str, main: bool = False, **kwargs: Any) -> ModuleType:  # type: ignore[override]
+    def load_module(cls, name: str, main: bool = False, **kwargs: Any) -> M:  # type: ignore[override]
         """Import a notebook as a module.
 
         ``main``: Load the module in the ``__main__`` context.
@@ -362,7 +365,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
                 sys.modules["__main__"] = module
                 module.__name__ = "__main__"
             spec.loader.exec_module(module)
-            return module
+            return module  # type: ignore[return-value]
 
     @classmethod
     def load_argv(
@@ -370,7 +373,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         argv: str | list[str] | None = None,
         *,
         parser: ArgumentParser | None = None,
-    ) -> ModuleType | None:
+    ) -> M | None:
         """Load a module based on python arguments
 
         load a notebook from its file name
@@ -406,7 +409,7 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         return module
 
     @classmethod
-    def load_ns(cls, ns: Namespace) -> ModuleType | None:
+    def load_ns(cls, ns: Namespace) -> M | None:
         """Load a module from a namespace, used when loading module from ``sys.argv`` parameters."""
         if ns.tasks:
             # i don't quite why we need to do this here, but we do. so don't move it
@@ -444,14 +447,14 @@ class Loader(Interface, SourceFileLoader):  # type: ignore[misc]
         mod_name: str | None = None,
         script_name: str | None = None,
         main: bool = False,
-    ) -> ModuleType:
+    ) -> M:
         """Load a module from raw source code"""
         from runpy import _run_module_code  # type: ignore[attr-defined]
 
         self = cls()
         name = (main and "__main__") or mod_name or "<raw code>"
 
-        return _dict_module(
+        return _dict_module(  # type: ignore[return-value]
             _run_module_code(
                 self.raw_to_source(code),
                 mod_name=name,

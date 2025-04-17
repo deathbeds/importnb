@@ -21,10 +21,10 @@ class DataModule(SourceModule):
 
 
 @dataclass
-class DataStreamLoader(Loader):
+class DataStreamLoader(Loader[DataModule]):
     """an import loader for data streams"""
 
-    module_type: type[DataModule] = field(default=DataModule)
+    module_type: type[DataModule] = field(default_factory=lambda: DataModule)
 
     def exec_module(self, module: ModuleType) -> None:
         if TYPE_CHECKING:

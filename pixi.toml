@@ -209,8 +209,8 @@ description = "... run unit tests with coverage"
 inputs = [
   "!**/.ipynb_checkpoints",
   "build/reports/test-max/pip-freeze.txt",
-  "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
 ]
 outputs = ["build/reports/test-max/pytest.html", "docs/coverage", "docs/pytest.html"]
 
@@ -221,8 +221,8 @@ description = "... run unit tests with coverage (under ipython)"
 inputs = [
   "!**/.ipynb_checkpoints",
   "build/reports/test-max/pip-freeze.txt",
-  "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
 ]
 outputs = ["build/reports/test-max/pytest-i.html"]
 
@@ -240,8 +240,8 @@ description = "... run unit tests with coverage"
 inputs = [
   "!**/.ipynb_checkpoints",
   "build/reports/test-prev/pip-freeze.txt",
-  "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
 ]
 outputs = ["build/reports/test-prev/pytest.html"]
 
@@ -259,7 +259,8 @@ description = "... run tests in the oldest supported environemnt"
 inputs = [
   "!**/.ipynb_checkpoints",
   "build/reports/test-min/pip-freeze.txt",
-  "pyproject.toml",
+  "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
+
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 outputs = ["build/reports/test-min/pytest.html"]
@@ -271,8 +272,8 @@ description = "... run unit tests in the oldest supported environment (under ipy
 inputs = [
   "!**/.ipynb_checkpoints",
   "build/reports/test-min/pip-freeze.txt",
-  "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
 ]
 outputs = ["build/reports/test-min/pytest-i.html"]
 
@@ -290,8 +291,8 @@ description = "... run tests in the oldest supported environemnt (no IPython)"
 inputs = [
   "!**/.ipynb_checkpoints",
   "build/reports/test-min-noipy/pip-freeze.txt",
-  "pyproject.toml",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
 ]
 outputs = ["build/reports/test-min-noipy/pytest.html"]
 
@@ -312,7 +313,8 @@ description = "... run tests in a pypy environemnt"
 inputs = [
   "!**/.ipynb_checkpoints",
   "build/reports/test-min/pip-freeze.txt",
-  "pyproject.toml",
+  "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
+
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 outputs = ["build/reports/test-pypy/pytest.html"]
@@ -508,9 +510,10 @@ description = "... launch JupyterLab"
 # deps #########################################################################
 [feature.deps-run.dependencies]
 importlib-metadata = ">=4.8.3"
+python = ">=3.9"
 
 [feature.deps-run-interactive.dependencies]
-ipython = "*"
+ipython = ">=7.16.1"
 
 [feature.deps-run-interactive-min.dependencies]
 ipython = "7.16.1.*"

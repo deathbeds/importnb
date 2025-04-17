@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import inspect
+from functools import partial
+from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import pytest
 
 from importnb.loader import Interface
+from importnb.loaders import DataStreamLoader, Toml, Yaml
+
+HAS_YAML = find_spec("ruamel.yaml")
+HAS_TOML = find_spec("tomllib") or find_spec("tomli")
+
 
 if TYPE_CHECKING:
     T = TypeVar("T")
@@ -19,9 +26,17 @@ UTF8: Any = {"encoding": "utf-8"}
 HERE = Path(__file__).parent
 ROOT = HERE.parent
 README = ROOT / "README.md"
+PXT = ROOT / "pixi.toml"
+PPT = ROOT / "pyproject.toml"
+CI = ROOT / ".github/workflows/test.yml"
+RTD = ROOT / ".readthedocs.yml"
 
 INTERFACE_FIELDS = Interface.__dataclass_fields__
 FIELD_DEFAULTS = {"extensions": """(".ipy", ".ipynb")""", "module_type": "SourceModule"}
+
+SKIP = partial(pytest.skip, "not running in the repo, or missing optional parser")
+
+TDict = dict[str, Any]
 
 
 @pytest.fixture
@@ -29,6 +44,31 @@ def the_readme() -> str | None:
     if not README.exists():
         return pytest.skip("not running in the importnb repo")
     return README.read_text(**UTF8)
+
+
+def _import_or_skip(path: Path, has_dep: Any, loader: type[DataStreamLoader]) -> TDict | None:
+    return loader().load_file(path).data if path.exists() and has_dep else SKIP()
+
+
+@pytest.fixture
+def the_pixi() -> TDict | None:
+    return _import_or_skip(PXT, HAS_TOML, Toml)
+
+
+@pytest.fixture
+def the_pyproject() -> TDict | None:
+    return _import_or_skip(PPT, HAS_TOML, Toml)
+
+
+@pytest.fixture
+def the_ci() -> TDict | None:
+    return _import_or_skip(CI, HAS_YAML, Yaml)
+
+
+@pytest.fixture
+def the_rtd() -> TDict | None:
+    (HAS_YAML and RTD.exists()) or SKIP()
+    return dict(Yaml().load_file(RTD).data)
 
 
 @pytest.fixture(params=[f for f in INTERFACE_FIELDS if not f.startswith("_")])
@@ -68,3 +108,26 @@ def test_readme_params(
     from_src = f"- `{an_interface_param}:{spec}={default}` {doc}"
     print(from_src)
     assert in_readme == from_src
+
+
+def assert_deps_match(label: str, pxt_feat: dict[str, Any], ppt_deps: list[str]) -> None:
+    ppt_deps = {line.split(";")[0].replace(" ", "") for line in ppt_deps}
+    pxt_deps = {f"{dep}{spec}" for dep, spec in pxt_feat["dependencies"].items()}
+    assert ppt_deps == pxt_deps, f"{label} dependencies don't match"
+
+
+def test_deps(the_pyproject: TDict, the_pixi: TDict) -> None:
+    pyproj = the_pyproject["project"]
+    optional = pyproj["optional-dependencies"]
+    feats = the_pixi["feature"]
+    assert_deps_match(
+        "run", feats["deps-run"], [f"python{pyproj['requires-python']}", *pyproj["dependencies"]]
+    )
+    assert_deps_match("interactive", feats["deps-run-interactive"], optional["interactive"])
+
+
+def test_pixi_versions(the_ci: TDict, the_pixi: TDict, the_rtd: TDict) -> None:
+    pixi_schema = the_pixi["$schema"]
+    gha_version = the_ci["env"]["INB_PIXI_VERSION"]
+    assert f"/v{gha_version}/" in pixi_schema
+    assert any(f"pixi=={gha_version}" in line for line in the_rtd["build"]["commands"])
