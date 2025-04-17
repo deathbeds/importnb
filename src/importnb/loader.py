@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from importlib.abc import Loader as Loader_
 
 A = TypeVar("A", bound=ast.AST)
-M = TypeVar("M", bound=ModuleType, default=ModuleType)
+M = TypeVar("M", bound=ModuleType)
 
 
 __all__ = "Notebook", "reload"
@@ -513,7 +513,7 @@ class DefsOnly(ast.NodeTransformer):
         return ast.Module(*args)
 
 
-class Notebook(Loader):
+class Notebook(Loader[SourceModule]):
     """Notebook is a user friendly file finder and module loader for notebook source code.
 
     > Remember, restart and run all or it didn't happen.

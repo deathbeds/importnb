@@ -15,9 +15,8 @@ from importnb import Notebook
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from types import ModuleType
 
-    from importnb.loader import Loader
+    from importnb.loader import Loader, SourceModule
 
 
 def get_file_patterns(cls: type[AlternativeModule], parent: pytest.Collector) -> Iterator[str]:
@@ -27,9 +26,9 @@ def get_file_patterns(cls: type[AlternativeModule], parent: pytest.Collector) ->
 
 
 class AlternativeModule(pytest.Module):
-    loader: type[Loader]
+    loader: type[Loader[SourceModule]]
 
-    def _getobj(self) -> ModuleType:
+    def _getobj(self) -> SourceModule:
         return self.loader.load_file(str(self.path), False)
 
     @classmethod
