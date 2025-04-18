@@ -15,6 +15,8 @@ SRC = ROOT / "src"
 CHECK_PATHS = {
     SITE / "index.html",
     SITE / "contributing/index.html",
+    SITE / "changelog/index.html",
+    SITE / "demo/index.html",
     *sorted(p for p in [*SRC.rglob("*.py"), *DOCS.rglob("*.py")] if "checkpoint" not in str(p)),
 }
 
