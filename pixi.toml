@@ -7,10 +7,13 @@
 "$schema" = "https://pixi.sh/v0.44.0/schema/manifest/schema.json"
 
 [project]
-channels = ["conda-forge"]
+channels = [
+  "conda-forge",
+  "conda-forge/label/jupyterlite_core_alpha",
+  "conda-forge/label/jupyterlite_pyodide_kernel_alpha",
+]
 name = "importnb"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
-requires-pixi = "0.44.0.*"
 
 [tasks]
 all = {description = """🚢 run ALL non-interactive tasks to verify the project is ready to release""", depends-on = [
@@ -131,6 +134,7 @@ pip-whl-- = """
   export $(pixi run --quiet this-python--)
   && pixi run pip-- --find-links=dist --no-index importnb
   && pixi run pip-check--"""
+pixi-get-json-- = "taplo get --output-format json --file-path pixi.toml"
 pytest-- = "pixi run test--"
 pytest-cov-- = "pixi run test-cov--"
 pytest-i-- = """
@@ -204,7 +208,11 @@ cmd = """
     cp build/reports/test-max/pytest.html docs/pytest.html
     && exit 1
   )"""
-depends-on = ["test-max-setup"]
+depends-on = [
+  # {task =
+  "test-max-setup",
+  #, args=["foo"], environment="foo"}
+]
 description = "... run unit tests with coverage"
 inputs = [
   "!**/.ipynb_checkpoints",
@@ -380,7 +388,7 @@ cmd = """
   && jupyter lite doit -- pre_archive:report:SHA256SUMS
 """
 depends-on = ["build-pypi", "docs-lite-lock"]
-description = "... build the JupyterLite demo"
+description = "... build the jupyter lite demo"
 inputs = ["!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}", "dist/*.whl", "lite/"]
 outputs = ["build/lite/SHA256SUMS"]
 
@@ -496,16 +504,41 @@ description = "... check the built distributions for PyPI"
 inputs = ["dist/"]
 
 # dev ##########################################################################
-[feature.tasks-dev.tasks.dev-setup]
-cmd = "pixi run pip-e--"
-description = "... prepare for interactive development"
+[feature.tasks-dev.tasks.dev-pip]
+cmd = """pixi run pip-e--"""
+description = "... prepare for interactive python development"
 inputs = ["pyproject.toml"]
 outputs = ["build/reports/dev/pip-freeze.txt"]
 
+[feature.tasks-dev.tasks.dev-overrides]
+cmd = """
+  mkdir -p build/jp/app-settings
+  && pixi run pixi-get-json-- tool.jp.overrides > build/jp/app-settings/overrides.json
+"""
+description = "... build jupyter client app overrides from [tool.jp.overrides]"
+inputs = ["pixi.toml"]
+outputs = ["build/jp/app-settings"]
+
 [feature.tasks-dev.tasks.dev-lab]
-cmd = "jupyter lab --no-browser --debug --config=docs/jupyter_config.json"
-depends-on = ["dev-setup"]
-description = "... launch JupyterLab"
+cmd = """
+  jupyter lab
+    --no-browser
+    --debug
+    --config=docs/jupyter_config.json
+    --LabApp.app_settings_dir=build/jp/app-settings
+"""
+depends-on = ["dev-overrides", "dev-pip"]
+description = "... launch jupyter lab in the dev environment"
+
+[feature.tasks-dev.tasks.dev-nb]
+cmd = """
+  jupyter notebook
+    --no-browser
+    --config=docs/jupyter_config.json
+    --LabApp.app_settings_dir=build/jp/app-settings
+"""
+depends-on = ["dev-overrides", "dev-pip"]
+description = "... launch jupyter notebook in the dev environment"
 
 # deps #########################################################################
 [feature.deps-run.dependencies]
@@ -588,10 +621,10 @@ python-lsp-ruff = "*"
 vale-ls = "*"
 
 [feature.deps-lite.dependencies]
-jupyterlite-core = "0.5.*"
-jupyterlite-core-with-libarchive = "*"
-jupyterlite-core-with-translation = "*"
-jupyterlite-pyodide-kernel = "0.5.*"
+jupyterlite-core = {version = ">=0.6.0a9", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-core-with-libarchive = {version = "*", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-core-with-translation = {version = "*", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-pyodide-kernel = {version = ">=0.6.0a5", channel = "conda-forge/label/jupyterlite_pyodide_kernel_alpha"}
 pyodide-lock = "*"
 
 [feature.deps-check.dependencies]
@@ -669,3 +702,18 @@ test-prev = [
 ]
 test-pypy = ["deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
 uv = ["deps-uv"]
+
+# random tool data #############################################################
+
+## jupyter client settings overrides ###########################################
+[tool.jp.overrides."@jupyterlab/apputils-extension:notification"]
+checkForUpdates = false
+doNotDisturbMode = true
+fetchNews = false
+[tool.jp.overrides."@jupyterlab/extensionmanager-extension:plugin"]
+enabled = false
+[tool.jp.overrides."@jupyterlab/notebook-extension:tracker"]
+codeCellConfig = {autoClosingBrackets = true}
+markdownCellConfig = {autoClosingBrackets = true}
+rawCellConfig = {autoClosingBrackets = true}
+windowingMode = "none"

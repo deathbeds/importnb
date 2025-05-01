@@ -48,7 +48,15 @@ the `dev` environment, a superset of most other environments, is available
 with extras tools for interactive development.
 
 ```bash
-pixi run dev
+pixi run dev-lab    # start jupyterlab
+pixi run dev-nb     # start notebook
+```
+
+to use another editor in the `dev` environment with an editable install of `importnb`:
+
+```bash
+pixi run dev-pip
+pixi run --environment dev path-to-your-editor .
 ```
 
 ## continuous integration
