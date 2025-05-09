@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json
+schema_version: 1
+
+context:
+  version: ${{ env.get("INB_VERSION") }}
+  python_min: "3.9"
+  python_check_max: "3.13"
+  name: importnb
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  - path: ../dist/importnb-${{ version }}.tar.gz
+
+build:
+  number: 0
+  noarch: python
+  script:
+    - ${{ PYTHON }} -m pip install . --no-deps --no-build-isolation --disable-pip-version-check
+  python:
+    entry_points:
+      - ${{ name }} = ${{ name }}.__main__:main
+
+requirements:
+  host:
+    - hatch-vcs
+    - hatchling
+    - lark
+    - pip
+    - python ${{ python_min }}.*
+  run:
+    - importlib-metadata >=4.8.3
+    - python >=${{ python_min }}
+
+tests:
+  - python:
+      imports: ${{ name }}
+      pip_check: true
+      python_version:
+        - ${{ python_min }}.*
+        - ${{ python_check_max }}.*
+  - script:
+    - ${{ name }} --version
+    - ${{ name }} --help
+    - python -c "assert __import__('${{ name }}').__version__ == '${{ version }}'"
+
+about:
+  summary: import jupyter notebooks as python modules and scripts.
+  documentation: https://github.com/deathbeds/${{ name }}
+  license: BSD-3-Clause AND MPL-2.0
+  license_file:
+    - LICENSE
+    - LICENSE-MPL-2.0

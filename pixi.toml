@@ -4,7 +4,7 @@
 #
 # - taplo will aggressively format this file and other TOML files
 #   - if you have arrays that need to be kept in order, use comments
-"$schema" = "https://pixi.sh/v0.44.0/schema/manifest/schema.json"
+"$schema" = "https://pixi.sh/v0.46.0/schema/manifest/schema.json"
 
 [project]
 channels = [
@@ -53,6 +53,8 @@ build = {description = """📦 build ALL distributions""", depends-on = [
   "build-lark",
   # ... only care about PyPI distributions
   "build-pypi",
+  # ... finally validate source (re-)packaging
+  "build-conda",
 ], cmd = "echo 📦 build OK"}
 
 lint = {description = """✅ apply ALL static analysis tools""", depends-on = [
@@ -190,6 +192,23 @@ inputs = [
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 outputs = ["dist/*.{whl,tar.gz}"]
+
+[feature.tasks-build-conda.tasks.build-conda]
+cmd = """
+  rm --recursive --force dist/conda build/conda
+  && export INB_VERSION=$(python -c "print(next(__import__('pathlib').Path('dist').glob('*.tar.gz')).name.replace('importnb-', '').replace('.tar.gz', ''))") 
+  && echo "version $INB_VERSION"
+  && rattler-build build 
+    --recipe docs
+    --channel conda-forge 
+    --color always
+    --output-dir build/conda
+  && mkdir -p dist/conda
+  && cp -r build/conda/noarch dist/conda/noarch"""
+depends-on = ["build-pypi"]
+description = "... build a conda package with rattler-build"
+inputs = ["dist/*.tar.gz", "docs/recipe.yaml"]
+outputs = ["dist/conda/noarch"]
 
 # test #########################################################################
 [feature.tasks-test-max.tasks.test-max-setup]
@@ -621,10 +640,10 @@ python-lsp-ruff = "*"
 vale-ls = "*"
 
 [feature.deps-lite.dependencies]
-jupyterlite-core = {version = ">=0.6.0a9", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-core = {version = ">=0.6.0a10", channel = "conda-forge/label/jupyterlite_core_alpha"}
 jupyterlite-core-with-libarchive = {version = "*", channel = "conda-forge/label/jupyterlite_core_alpha"}
 jupyterlite-core-with-translation = {version = "*", channel = "conda-forge/label/jupyterlite_core_alpha"}
-jupyterlite-pyodide-kernel = {version = ">=0.6.0a5", channel = "conda-forge/label/jupyterlite_pyodide_kernel_alpha"}
+jupyterlite-pyodide-kernel = {version = ">=0.6.0a6", channel = "conda-forge/label/jupyterlite_pyodide_kernel_alpha"}
 pyodide-lock = "*"
 
 [feature.deps-check.dependencies]
@@ -635,9 +654,13 @@ twine = "*"
 vale = ">=3.8,<3.9"
 vale-spelling-aoo-mozilla-en-dict-us = "*"
 
+[feature.deps-build-conda.dependencies]
+rattler-build = "*"
+
 # envs #########################################################################
 [environments]
 build = ["deps-build", "tasks-build"]
+build-conda = ["deps-build-conda", "tasks-build-conda"]
 check = ["deps-check", "tasks-check"]
 dev = [
   "deps-build",

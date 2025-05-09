@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  INB_PIXI_VERSION: 0.44.0
+  INB_PIXI_VERSION: 0.46.0
 
 jobs:
   build:
@@ -24,7 +24,7 @@ jobs:
           pixi-version: v${{ env.INB_PIXI_VERSION }}
           cache: true
           environments: build
-      - run: pixi run build
+      - run: pixi run build-pypi
       - uses: actions/upload-artifact@v4
         with:
           name: inb-${{ github.run_number }}-dist
@@ -104,6 +104,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: inb-${{ github.run_number }}-dist
+      - run: pixi run build
       - run: pixi run docs
       - run: pixi run check
       - if: always()
