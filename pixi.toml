@@ -4,7 +4,7 @@
 #
 # - taplo will aggressively format this file and other TOML files
 #   - if you have arrays that need to be kept in order, use comments
-"$schema" = "https://pixi.sh/v0.46.0/schema/manifest/schema.json"
+"$schema" = "https://pixi.sh/v0.47.0/schema/manifest/schema.json"
 
 [project]
 channels = [
@@ -132,10 +132,6 @@ pip-e-- = """
   export $(pixi run --quiet this-python--)
   && pixi run pip-- --editable .
   && pixi run pip-check--"""
-pip-whl-- = """
-  export $(pixi run --quiet this-python--)
-  && pixi run pip-- --find-links=dist --no-index importnb
-  && pixi run pip-check--"""
 pixi-get-json-- = "taplo get --output-format json --file-path pixi.toml"
 pytest-- = "pixi run test--"
 pytest-cov-- = "pixi run test-cov--"
@@ -149,6 +145,16 @@ pytest-i-cov-- = """
   && pixi r test-cov--"""
 this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
 uv-- = "pixi run --quiet --environment uv uv pip"
+
+# template tasks ###############################################################
+[tasks.pip-whl--]
+cmd = """
+  export $(pixi run --quiet this-python--)
+  && pixi run pip-- --find-links=dist --no-index importnb
+  && pixi run pip-check--"""
+inputs = ["dist/*.whl"]
+outputs = ["build/reports/{{ env }}/pip-freeze.txt"]
+args = [{arg="env"}]
 
 [tasks.test-cov--]
 cmd = """
@@ -173,9 +179,7 @@ env = {TEST_RUNNER = "pytest", TEST_REPORT = "pytest"}
 
 # build ########################################################################
 [feature.tasks-build.tasks.build-lark]
-cmd = """
-  python hatch_build.py
-  > src/importnb/_json_parser.py"""
+cmd = """python hatch_build.py > src/importnb/_json_parser.py"""
 description = "... build the standalone JSON parser"
 inputs = ["src/importnb/json.g"]
 outputs = ["src/importnb/_json_parser.py"]
@@ -212,10 +216,8 @@ outputs = ["dist/conda/noarch"]
 
 # test #########################################################################
 [feature.tasks-test-max.tasks.test-max-setup]
-cmd = "pixi run pip-whl--"
-description = "... install the package in an editable state for testing"
-inputs = ["dist/*.whl"]
-outputs = ["build/reports/test-max/pip-freeze.txt"]
+depends-on = [{task = "pip-whl--", args=["test-max"]}]
+description = "... install the package in the latest test environment"
 
 [feature.tasks-test-max.tasks.test-max-pytest]
 cmd = """
@@ -227,11 +229,7 @@ cmd = """
     cp build/reports/test-max/pytest.html docs/pytest.html
     && exit 1
   )"""
-depends-on = [
-  # {task =
-  "test-max-setup",
-  #, args=["foo"], environment="foo"}
-]
+depends-on = ["test-max-setup"]
 description = "... run unit tests with coverage"
 inputs = [
   "!**/.ipynb_checkpoints",
@@ -255,10 +253,8 @@ outputs = ["build/reports/test-max/pytest-i.html"]
 
 # test next-to-latest
 [feature.tasks-test-prev.tasks.test-prev-setup]
-cmd = "pixi run pip-whl--"
-description = "... install the package in an editable state for testing"
-inputs = ["dist/*.whl"]
-outputs = ["build/reports/test-prev/pip-freeze.txt"]
+depends-on = [{task = "pip-whl--", args=["test-prev"]}]
+description = "... install the package in the next-to-latest test environment"
 
 [feature.tasks-test-prev.tasks.test-prev-pytest]
 cmd = """pixi run pytest-cov--"""
@@ -274,10 +270,8 @@ outputs = ["build/reports/test-prev/pytest.html"]
 
 # test oldest ##################################################################
 [feature.tasks-test-min.tasks.test-min-setup]
-cmd = "pixi run pip-whl--"
+depends-on = [{task = "pip-whl--", args=["test-min"]}]
 description = "... install the built wheel for testing in the oldest supported environment"
-inputs = ["dist/*.whl"]
-outputs = ["build/reports/test-min/pip-freeze.txt"]
 
 [feature.tasks-test-min.tasks.test-min-pytest]
 cmd = "pixi run pytest-cov--"
@@ -306,10 +300,8 @@ outputs = ["build/reports/test-min/pytest-i.html"]
 
 # test oldest, no IPython ##################################################################
 [feature.tasks-test-min-noipy.tasks.test-min-noipy-setup]
-cmd = "pixi run pip-whl--"
+depends-on = [{task = "pip-whl--", args=["test-min-noipy"]}]
 description = "... install the built wheel for testing in the oldest supported environment (no IPython)"
-inputs = ["dist/*.whl"]
-outputs = ["build/reports/test-min-noipy/pip-freeze.txt"]
 
 [feature.tasks-test-min-noipy.tasks.test-min-noipy-pytest]
 cmd = "pixi run pytest-cov--"
@@ -328,10 +320,8 @@ outputs = ["build/reports/test-min-noipy/pytest.html"]
 platforms = ["linux-64", "osx-64", "win-64"]
 
 [feature.tasks-test-pypy.tasks.test-pypy-setup]
-cmd = "pixi run pip-whl--"
+depends-on = [{task = "pip-whl--", args=["test-pypy"]}]
 description = "... install the built wheel for testing in a pypy environment"
-inputs = ["dist/*.whl"]
-outputs = ["build/reports/test-pypy/pip-freeze.txt"]
 
 [feature.tasks-test-pypy.tasks.test-pypy-pytest]
 cmd = "pixi run pytest--"
@@ -387,10 +377,8 @@ description = "... copy the documentation site to where ReadTheDocs wants it"
 
 # lite #########################################################################
 [feature.tasks-lite.tasks.docs-lite-setup]
-cmd = "pixi run pip-whl--"
+depends-on = [{task = "pip-whl--", args=["lite"]}]
 description = "... install the built package for demo building"
-inputs = ["dist"]
-outputs = ["build/reports/lite/pip-freeze.txt"]
 
 [feature.tasks-lite.tasks.docs-lite-lock]
 cmd = """python lite/lock.py"""
