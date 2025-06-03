@@ -73,7 +73,7 @@ test-pypy-pytest-maybe = {cmd = """(
       echo "can't install pypy on this platform"
       && exit 0
     )
-  ) && pixi run --environment=test-pypy test-pypy-pytest""", description = """
+  ) && pixi run test-pypy-pytest""", description = """
 ... run unit tests against pypy (if possible)"""}
 
 # fragments ####################################################################
@@ -123,20 +123,19 @@ args = [
   {arg = "cov", default = ""},
   {arg = "extra", default = ""},
 ]
-cmd = """{{ report if report == "pytest" else "ipython -m pytest --" }}
+cmd = """pixi run --environment={{ env }} 
+  {{ report if report == "pytest" else "ipython -m pytest --" }}
     --self-contained-html
     --html build/reports/{{ env }}/{{ report }}.html
-    --override-ini generate_report_on_test=true
-    {% if cov == "cov" -%}
+    --override-ini generate_report_on_test=true {{ extra }}
+    {%- if cov == "cov" -%}
     --cov importnb
     --cov docs
     --cov-branch
     --cov-context test
     --cov-report term-missing:skip-covered
     --no-cov-on-fail
-    {%- endif %}
-    {{ extra }}
-    """
+    {%- endif %}"""
 inputs = [
   "!**/.ipynb_checkpoints",
   "build/reports/{{ env }}/pip-freeze.txt",
