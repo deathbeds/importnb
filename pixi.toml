@@ -101,12 +101,12 @@ dev = {description = """🎮 start an interactive development environment""", de
 
 test-pypy-pytest-maybe = {cmd = """
   (
-    pixi install --environment test-pypy
+    pixi install --environment=test-pypy
     || (
       echo "can't install pypy on this platform"
       && exit 0
     )
-  ) && pixi run --environment test-pypy test-pypy-pytest""", description = """
+  ) && pixi run --environment=test-pypy test-pypy-pytest""", description = """
 run unit tests against pypy (if possible)"""}
 
 # fragments ####################################################################
@@ -148,7 +148,7 @@ pytest-i-cov-- = """
   && export TEST_REPORT=pytest-i
   && pixi r test-cov--"""
 this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
-uv-- = "pixi run --quiet --environment uv uv pip"
+uv-- = "pixi run --quiet --environment=uv uv pip"
 
 [tasks.test-cov--]
 cmd = """
