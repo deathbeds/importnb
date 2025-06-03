@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.1
+      - uses: prefix-dev/setup-pixi@v0.8.8
         with:
           pixi-version: v${{ env.INB_PIXI_VERSION }}
           cache: true
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: prefix-dev/setup-pixi@v0.8.1
+    - uses: prefix-dev/setup-pixi@v0.8.8
       with:
         pixi-version: v${{ env.INB_PIXI_VERSION }}
         cache: true
@@ -70,7 +70,7 @@ jobs:
           - {test-env: test-pypy, vm: macos-13}
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.1
+      - uses: prefix-dev/setup-pixi@v0.8.8
         with:
           pixi-version: v${{ env.INB_PIXI_VERSION }}
           cache: true
@@ -96,7 +96,7 @@ jobs:
     needs: [build]
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.1
+      - uses: prefix-dev/setup-pixi@v0.8.8
         with:
           pixi-version: v${{ env.INB_PIXI_VERSION }}
           cache: true
