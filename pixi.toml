@@ -1,9 +1,4 @@
-# # repo automation for `importnb`
-#
-# ## conventions
-#
-# - taplo will aggressively format this file and other TOML files
-#   - if you have arrays that need to be kept in order, use comments
+# repo automation for `importnb`
 "$schema" = "https://pixi.sh/v0.48.0/schema/manifest/schema.json"
 
 [project]
@@ -13,69 +8,46 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [tasks]
 all = {description = """🚢 run ALL non-interactive tasks to verify the project is ready to release""", depends-on = [
-  # ... formatting is the cheapest
   "fix",
-  # ... linting takes a bit longer, but is still cheaper than failing tests
   "lint",
-  # ... the built artifact is more important to get right
   "build",
-  # ... test just the modern environment
   "test-max-pytest",
   "test-max-pytest-i",
-  # ... if it is not documented, it does not exist
   "docs",
-  # ... check outputs for humans and machine consumption
   "check",
 ], cmd = "echo 🚢 all OK "}
 
 all-epochs = {description = """🚀 run all, including tests in the minimum/latest envs""", depends-on = [
-  # ... formatting is the cheapest
   "all",
-  # ... test everything
   "test",
 ], cmd = "echo 🚀 all epochs OK"}
 
 fix = {description = """🧹 apply ALL source formatting tools""", depends-on = [
-  # ... this might change this file
   "fix-taplo",
-  # ... this might change scripts
   "fix-ruff",
-  # ... this might change tests
   "fix-nbstripout",
 ], cmd = "echo 🧹 fix OK"}
 
 build = {description = """📦 build ALL distributions""", depends-on = [
-  # ... need the grammar
   "build-lark",
-  # ... only care about PyPI distributions
   "build-pypi",
-  # ... finally validate source (re-)packaging
   "build-conda",
 ], cmd = "echo 📦 build OK"}
 
 lint = {description = """✅ apply ALL static analysis tools""", depends-on = [
-  # ... ruff is fast
   "lint-ruff",
-  # ... source types are inherited by users
   "lint-mypy-src",
-  # ... test types keep us honest
   "lint-mypy-dev",
-  # ... ci keeps the whole thing going
   "lint-actionlint",
 ], cmd = "echo ✅ lint OK"}
 
 test = {description = """🧪 run ALL tests""", depends-on = [
-  # ... don't break the oldest vanilla environment
   "test-min-noipy-pytest",
-  # ... don't break the oldest interactive environment
   "test-min-pytest",
   "test-min-pytest-i",
-  # ... don't break the next-to-latest
   "test-prev-pytest",
-  # ... don't break the latest
   "test-max-pytest",
   "test-max-pytest-i",
-  # ... try not to break pypy
   "test-pypy-pytest-maybe",
 ], cmd = "echo 🧪 test OK"}
 
@@ -95,15 +67,14 @@ dev = {description = """🎮 start an interactive development environment""", de
   "dev-lab",
 ], cmd = "echo 🎮"}
 
-test-pypy-pytest-maybe = {cmd = """
-  (
+test-pypy-pytest-maybe = {cmd = """(
     pixi install --environment=test-pypy
     || (
       echo "can't install pypy on this platform"
       && exit 0
     )
   ) && pixi run --environment=test-pypy test-pypy-pytest""", description = """
-run unit tests against pypy (if possible)"""}
+... run unit tests against pypy (if possible)"""}
 
 # fragments ####################################################################
 mkdocs-- = """
@@ -130,33 +101,31 @@ uv-- = "pixi run --quiet --environment=uv uv pip"
 
 # template tasks ###############################################################
 [tasks.pip-e--]
-cmd = """
-  export $(pixi run --quiet this-python--)
-  && pixi run pip-- --editable .
-  && pixi run pip-check--"""
+args = [{arg = "env"}]
+cmd = """export $(pixi run --quiet --environment={{ env }} this-python--)
+  && pixi run --environment={{ env }} pip-- --editable .
+  && pixi run --environment={{ env }} pip-check--"""
 inputs = ["pyproject.toml"]
-outputs = ["build/reports/$PIXI_ENVIRONMENT_NAME/pip-freeze.txt"]
+outputs = ["build/reports/{{ env }}/pip-freeze.txt"]
 
 [tasks.pip-whl--]
-cmd = """
-  export $(pixi run --quiet this-python--)
-  && pixi run pip-- --find-links=dist --no-index importnb
-  && pixi run pip-check--"""
+args = [{arg = "env"}]
+cmd = """export $(pixi run --quiet --environment={{ env }} this-python--)
+  && pixi run --environment={{ env }} pip-- --find-links=dist --no-index importnb
+  && pixi run --environment={{ env }} pip-check--"""
 inputs = ["dist/*.whl"]
-outputs = ["build/reports/$PIXI_ENVIRONMENT_NAME/pip-freeze.txt"]
-
+outputs = ["build/reports/{{ env }}/pip-freeze.txt"]
 
 [tasks.test--]
 args = [
-  {arg = "cov", default = "cov"},
-  {arg = "extra", default = ""},
+  {arg = "env"},
   {arg = "report", default = "pytest"},
+  {arg = "cov", default = ""},
+  {arg = "extra", default = ""},
 ]
-cmd = """
-  {{ report if report == "pytest" else "ipython -m pytest --" }}
-    --pythonwarnings error
+cmd = """{{ report if report == "pytest" else "ipython -m pytest --" }}
     --self-contained-html
-    --html build/reports/$PIXI_ENVIRONMENT_NAME/{{ report }}.html
+    --html build/reports/{{ env }}/{{ report }}.html
     --override-ini generate_report_on_test=true
     {% if cov == "cov" -%}
     --cov importnb
@@ -170,20 +139,24 @@ cmd = """
     """
 inputs = [
   "!**/.ipynb_checkpoints",
-  "build/reports/$PIXI_ENVIRONMENT_NAME/pip-freeze.txt",
+  "build/reports/{{ env }}/pip-freeze.txt",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
   "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
 ]
-outputs = ["build/reports/$PIXI_ENVIRONMENT_NAME/{{ report }}.html"]
+outputs = ["build/reports/{{ env }}/{{ report }}.html"]
 
 [tasks.test-cov--]
-args = [{arg = "extra", default = ""}, {arg = "report", default = "pytest"}]
-cmd = """
-  export COVERAGE_FILE=build/reports/$PIXI_ENVIRONMENT_NAME/.{{ report }}.coverage
-  && pixi run test-- "{{ report }}" "cov" {{ extra }}"""
+args = [
+  {arg = "env"},
+  {arg = "report", default = "pytest"},
+  {arg = "extra", default = ""},
+]
+cmd = """export COVERAGE_FILE=build/reports/{{ env }}/.{{ report }}.coverage
+  && pixi run --environment={{ env }}
+    test-- {{ env }} {{ report }} cov '{{ extra }}'"""
 outputs = [
-  "build/reports/$PIXI_ENVIRONMENT_NAME/.{{ report }}.coverage",
-  "build/reports/$PIXI_ENVIRONMENT_NAME/{{ report }}.html",
+  "build/reports/{{ env }}/.{{ report }}.coverage",
+  "build/reports/{{ env }}/{{ report }}.html",
 ]
 
 # build ########################################################################
@@ -194,8 +167,7 @@ inputs = ["src/importnb/json.g"]
 outputs = ["src/importnb/_json_parser.py"]
 
 [feature.tasks-build.tasks.build-pypi]
-cmd = """
-  rm --recursive --force dist/ build/.cache/lite
+cmd = """rm --recursive --force dist/ build/.cache/lite
   && pyproject-build . --no-isolation"""
 depends-on = ["build-lark"]
 description = "... build the source and wheel distributions for PyPI"
@@ -207,8 +179,7 @@ inputs = [
 outputs = ["dist/*.{whl,tar.gz}"]
 
 [feature.tasks-build-conda.tasks.build-conda]
-cmd = """
-  rm --recursive --force dist/conda build/conda
+cmd = """rm --recursive --force dist/conda build/conda
   && export INB_VERSION=$(python -c "print(next(__import__('pathlib').Path('dist').glob('*.tar.gz')).name.replace('importnb-', '').replace('.tar.gz', ''))") 
   && echo "version $INB_VERSION"
   && rattler-build build 
@@ -225,14 +196,13 @@ outputs = ["dist/conda/noarch"]
 
 # test #########################################################################
 [feature.tasks-test-max.tasks.test-max-setup]
-depends-on = [{task = "pip-whl--", environment = "test-max"}]
+depends-on = [{task = "pip-whl--", args = ["test-max"]}]
 description = "... install the package in the latest test environment"
 
 [feature.tasks-test-max.tasks.test-max-pytest]
-cmd = """
-  rm --recursive --force docs/pytest.html docs/coverage
+cmd = """rm --recursive --force docs/pytest.html docs/coverage
   && (
-    pixi run test-cov-- pytest --cov-report=html:docs/coverage
+    pixi run test-cov-- test-max pytest --cov-report=html:docs/coverage
     && cp build/reports/test-max/pytest.html docs/pytest.html
   ) || (
     cp build/reports/test-max/pytest.html docs/pytest.html
@@ -240,67 +210,48 @@ cmd = """
   )"""
 depends-on = ["test-max-setup"]
 description = "... run unit tests with coverage, deploy to docs"
-outputs = ["docs/coverage", "docs/pytest.html"]
+outputs = ["docs/coverage", "docs/pytest.html", "build/reports/test-max/pytest.html"]
 
 [feature.tasks-test-max.tasks.test-max-pytest-i]
-depends-on = ["test-max-setup", {task = "test-cov--", args = ["pytest-i"]}]
+depends-on = ["test-max-setup", {task = "test-cov--", args = ["test-max", "pytest-i"]}]
 description = "... run unit tests with coverage (under ipython)"
 
 # test next-to-latest
-[feature.tasks-test-prev.tasks]
-test-prev-pytest = {description = "... run unit tests with coverage", depends-on = [
-  "test-prev-setup",
-  {task = "test-cov--", args = [
-    "test-prev",
-  ]},
-]}
-test-prev-setup = {description = "... install in the next-to-latest test environment", depends-on = [
-  {task = "pip-whl--", args = [
-    "test-prev",
-  ]},
-]}
+[feature.tasks-test-prev.tasks.test-prev-pytest]
+depends-on = ["test-prev-setup", {task = "test-cov--", args = ["test-prev"]}]
+description = "... run unit tests with coverage"
+[feature.tasks-test-prev.tasks.test-prev-setup]
+depends-on = [{task = "pip-whl--", args = ["test-prev"]}]
+description = "... install in the next-to-latest test environment"
 
 # test oldest ##################################################################
-[feature.tasks-test-min.tasks]
-test-min-pytest = {description = "... pytest in the oldest environemnt", depends-on = [
-  "test-min-setup",
-  {task = "test-cov--", args = [
-    "test-min",
-  ]},
-]}
-test-min-pytest-i = {description = "... ipython pytest in the oldest supported environment", depends-on = [
-  "test-min-setup",
-  {task = "test-cov--", args = [
-    "pytest-i",
-    "test-min",
-  ]},
-]}
-test-min-setup = {description = "... install in the oldest environment", depends-on = [
-  {task = "pip-whl--", args = [
-    "test-min",
-  ]},
-]}
+[feature.tasks-test-min.tasks.test-min-pytest]
+depends-on = ["test-min-setup", {task = "test-cov--", args = ["test-min"]}]
+description = "... pytest in the oldest environment"
+
+[feature.tasks-test-min.tasks.test-min-pytest-i]
+depends-on = ["test-min-setup", {task = "test-cov--", args = ["test-min", "pytest-i"]}]
+description = "... ipython pytest in the oldest supported environment"
+
+[feature.tasks-test-min.tasks.test-min-setup]
+depends-on = [{task = "pip-whl--", args = ["test-min"]}]
+description = "... install in the oldest environment"
 
 # test oldest, no IPython ##################################################################
-[feature.tasks-test-min-noipy.tasks]
-test-min-noipy-pytest = {description = "... run tests in the oldest plain environemnt", depends-on = [
-  "test-min-noipy-setup",
-  {task = "test-cov--", args = [
-    "test-min-noipy",
-  ]},
-]}
-test-min-noipy-setup = {description = "... install in the oldest plain environment", depends-on = [
-  {task = "pip-whl--", args = [
-    "test-min-noipy",
-  ]},
-]}
+[feature.tasks-test-min-noipy.tasks.test-min-noipy-pytest]
+depends-on = ["test-min-noipy-setup", {task = "test-cov--", args = ["test-min-noipy"]}]
+description = "... run tests in the oldest plain environment"
+
+[feature.tasks-test-min-noipy.tasks.test-min-noipy-setup]
+depends-on = [{task = "pip-whl--", args = ["test-min-noipy"]}]
+description = "... install in the oldest plain environment"
 
 # test pypy ##################################################################
 [feature.tasks-test-pypy]
 platforms = ["linux-64", "osx-64", "win-64"]
 
 [feature.tasks-test-pypy.tasks]
-test-pypy-pytest = {description = "... run tests in a pypy environemnt", depends-on = [
+test-pypy-pytest = {description = "... run tests in a pypy environment", depends-on = [
   "test-pypy-setup",
   {task = "test--", args = [
     "test-pypy",
@@ -314,7 +265,7 @@ test-pypy-setup = {description = "... install in a pypy environment", depends-on
 
 # docs #########################################################################
 [feature.tasks-docs.tasks.docs-setup]
-depends-on = [{task = "pip-e--", environment = "docs"}]
+depends-on = [{task = "pip-e--", args = ["docs"]}]
 description = "... install for documentation"
 
 [feature.tasks-docs.tasks.docs-mkdocs]
@@ -337,8 +288,7 @@ depends-on = ["docs-mkdocs"]
 description = "... serve the documentation site"
 
 [feature.tasks-docs.tasks.docs-rtd]
-cmd = """
-  python -c "
+cmd = """python -c "
 import os;
 assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadTheDocs'
   "
@@ -361,13 +311,11 @@ inputs = ["dist/*.whl", "lite/lock.py"]
 outputs = ["build/pyodide-core.tar.bz2", "lite/files/pyodide-lock.json"]
 
 [feature.tasks-lite.tasks.docs-lite]
-cmd = """
-  export SOURCE_DATE_EPOCH=17302488620
+cmd = """export SOURCE_DATE_EPOCH=17302488620
   && rm --force --recursive build/lite lite/.jupyterlite.doit.db
   && cd lite
   && jupyter lite build
-  && jupyter lite doit -- pre_archive:report:SHA256SUMS
-"""
+  && jupyter lite doit -- pre_archive:report:SHA256SUMS"""
 depends-on = ["build-pypi", "docs-lite-lock"]
 description = "... build the jupyter lite demo"
 inputs = ["!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}", "dist/*.whl", "lite/"]
@@ -375,7 +323,7 @@ outputs = ["build/lite/SHA256SUMS"]
 
 # lint #########################################################################
 [feature.tasks-lint.tasks.lint-setup]
-depends-on = [{task = "pip-e--", args = ["lint"], environment = "lint"}]
+depends-on = [{task = "pip-e--", args = ["lint"]}]
 description = "... editable install for static analysis"
 
 [feature.tasks-lint.tasks.fix-nbstripout]
@@ -393,19 +341,16 @@ inputs = [
 ]
 
 [feature.tasks-lint.tasks.fix-taplo]
-cmd = """taplo fmt
-  *.toml
+cmd = """taplo format *.toml 
   --option=array_auto_collapse=true
   --option=compact_inline_tables=true
   --option=reorder_keys=true
-  --option=reorder_arrays=true
   --option=column_width=88"""
 description = "... fix toml files"
 inputs = ["*.toml"]
 
 [feature.tasks-lint.tasks.lint-mypy-src]
-cmd = """
-  rm --recursive --force docs/mypy
+cmd = """rm --recursive --force docs/mypy
   && mypy --package importnb --html-report docs/mypy"""
 depends-on = ["lint-setup"]
 description = "... check python type hints for the shipped source code"
@@ -484,77 +429,61 @@ inputs = ["dist/"]
 
 # dev ##########################################################################
 [feature.tasks-dev.tasks.dev-pip]
-depends-on = [{task = "pip-e--", args = ["dev"], environment = "dev"}]
+depends-on = [{task = "pip-e--", args = ["dev"]}]
 description = "... prepare for interactive python development"
 
 [feature.tasks-dev.tasks.dev-overrides]
-cmd = """
-  mkdir -p build/jp/app-settings
-  && pixi run pixi-get-json-- tool.jp.overrides > build/jp/app-settings/overrides.json
-"""
+cmd = """mkdir -p build/jp/app-settings
+  && pixi run pixi-get-json-- tool.jp.overrides > build/jp/app-settings/overrides.json"""
 description = "... build jupyter client app overrides from [tool.jp.overrides]"
 inputs = ["pixi.toml"]
 outputs = ["build/jp/app-settings"]
 
-[feature.tasks-dev.tasks.dev-lab]
-cmd = """
-  jupyter lab
+[feature.tasks-dev.tasks.dev-app--]
+args = ["app"]
+cmd = """jupyter {{ app }}
     --no-browser
     --debug
     --config=docs/jupyter_config.json
-    --LabApp.app_settings_dir=build/jp/app-settings
-"""
+    --LabApp.app_settings_dir=build/jp/app-settings"""
 depends-on = ["dev-overrides", "dev-pip"]
-description = "... launch jupyter lab in the dev environment"
+
+[feature.tasks-dev.tasks.dev-lab]
+depends-on = [{task = "dev-app--", args = ["lab"]}]
+description = "... launch jupyterlab in the dev environment"
 
 [feature.tasks-dev.tasks.dev-nb]
-cmd = """
-  jupyter notebook
-    --no-browser
-    --config=docs/jupyter_config.json
-    --LabApp.app_settings_dir=build/jp/app-settings
-"""
-depends-on = ["dev-overrides", "dev-pip"]
+depends-on = [{task = "dev-app--", args = ["notebook"]}]
 description = "... launch jupyter notebook in the dev environment"
 
 # deps #########################################################################
+## singletons ##################################################################
+[feature]
+deps-build-conda.dependencies.rattler-build = "*"
+deps-run-interactive.dependencies.ipython = ">=7.16.1"
+deps-run-interactive-max.dependencies.ipython = ">=9"
+deps-run-interactive-min.dependencies.ipython = "7.16.1.*"
+deps-run-interactive-prev.dependencies.ipython = "<9"
+deps-run-max.dependencies.python = "3.13.*"
+deps-run-prev.dependencies.python = "3.12.*"
+deps-run-pypy.dependencies.pypy = "*"
+deps-test-min.dependencies.pytest = "7.0.*"
+deps-uv.dependencies.uv = "*"
+
+## compounds ###################################################################
 [feature.deps-run.dependencies]
 importlib-metadata = ">=4.8.3"
 python = ">=3.9"
 
-[feature.deps-run-interactive.dependencies]
-ipython = ">=7.16.1"
-
-[feature.deps-run-interactive-min.dependencies]
-ipython = "7.16.1.*"
-
-[feature.deps-run-interactive-prev.dependencies]
-ipython = "<9"
-
-[feature.deps-run-interactive-max.dependencies]
-ipython = ">=9"
-
 [feature.deps-run-min.dependencies]
 importlib-metadata = "4.8.3.*"
 python = "3.9.*"
-
-[feature.deps-run-max.dependencies]
-python = "3.13.*"
-
-[feature.deps-run-prev.dependencies]
-python = "3.12.*"
-
-[feature.deps-run-pypy.dependencies]
-pypy = "*"
 
 [feature.deps-build.dependencies]
 hatch-vcs = "*"
 hatchling = "*"
 lark = "*"
 python-build = "*"
-
-[feature.deps-uv.dependencies]
-uv = "*"
 
 [feature.deps-lint.dependencies]
 actionlint-with-all = "*"
@@ -575,9 +504,6 @@ pytest-html = "*"
 pytest-xdist = "*"
 "ruamel.yaml" = "*"
 tomli-w = "*"
-
-[feature.deps-test-min.dependencies]
-pytest = "7.0.*"
 
 [feature.deps-docs.dependencies]
 mkdocs-jupyter = "*"
@@ -611,9 +537,6 @@ pytest-html = "*"
 twine = "*"
 vale = ">=3.8,<3.9"
 vale-spelling-aoo-mozilla-en-dict-us = "*"
-
-[feature.deps-build-conda.dependencies]
-rattler-build = "*"
 
 # envs #########################################################################
 [environments]
@@ -685,7 +608,6 @@ test-pypy = ["deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
 uv = ["deps-uv"]
 
 # random tool data #############################################################
-
 ## jupyter client settings overrides ###########################################
 [tool.jp.overrides."@jupyterlab/apputils-extension:notification"]
 checkForUpdates = false

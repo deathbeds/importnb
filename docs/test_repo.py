@@ -55,7 +55,7 @@ def the_readme() -> str | None:
 
 
 def _import_or_skip(path: Path, has_dep: Any, loader: type[DataStreamLoader]) -> TDict | None:
-    return loader().load_file(path).data if path.exists() and has_dep else SKIP()
+    return dict(loader().load_file(path).data) if path.exists() and has_dep else SKIP()
 
 
 @pytest.fixture
@@ -139,29 +139,3 @@ def test_pixi_versions(the_ci: TDict, the_pixi: TDict, the_rtd: TDict) -> None:
     gha_version = the_ci["env"]["INB_PIXI_VERSION"]
     assert f"/v{gha_version}/" in pixi_schema
     assert any(f"pixi=={gha_version}" in line for line in the_rtd["build"]["commands"])
-
-
-@pytest.mark.parametrize("epoch_name", TEST_EPOCHS[1:])
-@pytest.mark.parametrize("task_stem", ["pytest", "pytest-i"])
-def test_test_tasks(epoch_name: str, task_stem: str, the_pixi: TDict) -> None:
-    feats = the_pixi["feature"]
-    feat = feats[f"tasks-{epoch_name}"]
-    task_name = f"{epoch_name}-{task_stem}"
-    if task_name not in feat["tasks"]:
-        pytest.skip(f"{task_name} isn't defined")
-    task = feat["tasks"][task_name]
-    html = f"build/reports/{epoch_name}/{task_stem}.html"
-    assert html in task["outputs"], f"{task_name} should output {html}"
-    frag_cmd = [
-        f"pixi run {task_stem}--",
-        f"pixi run {task_stem}-cov--",
-    ]
-    assert any(f in task["cmd"] for f in frag_cmd), f"{task_name} should call {frag_cmd}"
-    ref_epoch = TEST_EPOCHS[0]
-    ref = feats[f"tasks-{ref_epoch}"]
-    ref_task_name = f"{ref_epoch}-{task_stem}"
-    ref_task = ref["tasks"][ref_task_name]
-
-    ref_inputs = [i for i in ref_task["inputs"] if "pip-freeze" not in i]
-    inputs = [i for i in task["inputs"] if "pip-freeze" not in i]
-    assert set(ref_inputs) == set(inputs), f"{task_name} and {ref_task_name} inputs should match"

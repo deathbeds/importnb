@@ -175,7 +175,13 @@ addopts = [
   "-vv",
 ]
 cache_dir = "build/.cache/pytest"
-filterwarnings = ["error"]
+filterwarnings = [
+  # treat all warnings as errors ...
+  "error",
+  # ... except for resource warnings on py3.13 from pytest-cov
+  "ignore:.*unclosed database.*:ResourceWarning",
+  "ignore:.*Exception ignored in.*:pytest.PytestUnraisableExceptionWarning",
+]
 testpaths = ["docs", "src"]
 
 
