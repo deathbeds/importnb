@@ -76,7 +76,7 @@ test-pypy-pytest-maybe = {cmd = """(
   ) && pixi run test-pypy-pytest""", description = """
 ... run unit tests against pypy (if possible)"""}
 
-# fragments ####################################################################
+# fragments #######################################################################################
 mkdocs-- = """
   export JUPYTER_PLATFORM_DIRS=1
   && mkdocs"""
@@ -99,7 +99,7 @@ pixi-get-json-- = "taplo get --output-format json --file-path pixi.toml"
 this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
 uv-- = "pixi run --quiet --environment=uv uv pip"
 
-# template tasks ###############################################################
+# template tasks ##################################################################################
 [tasks.pip-e--]
 args = ["env"]
 cmd = """export $(pixi run --quiet --environment={{ env }} this-python--)
@@ -153,7 +153,7 @@ outputs = [
   "build/reports/{{ env }}/{{ report }}.html",
 ]
 
-# build ########################################################################
+# build ###########################################################################################
 [feature.tasks-build.tasks.build-lark]
 cmd = """python hatch_build.py > src/importnb/_json_parser.py"""
 description = "... build the standalone JSON parser"
@@ -188,7 +188,7 @@ description = "... build a conda package with rattler-build"
 inputs = ["dist/*.tar.gz", "docs/recipe.yaml"]
 outputs = ["dist/conda/noarch"]
 
-# test #########################################################################
+# test ############################################################################################
 [feature.tasks-test-max.tasks.test-max-setup]
 depends-on = [{task = "pip-whl--", args = ["test-max"]}]
 description = "... install the package in the latest test environment"
@@ -218,7 +218,7 @@ description = "... run unit tests with coverage"
 depends-on = [{task = "pip-whl--", args = ["test-prev"]}]
 description = "... install in the next-to-latest test environment"
 
-# test oldest ##################################################################
+# test oldest #####################################################################################
 [feature.tasks-test-min.tasks.test-min-pytest]
 depends-on = ["test-min-setup", {task = "test-cov--", args = ["test-min"]}]
 description = "... pytest in the oldest environment"
@@ -231,7 +231,7 @@ description = "... ipython pytest in the oldest supported environment"
 depends-on = [{task = "pip-whl--", args = ["test-min"]}]
 description = "... install in the oldest environment"
 
-# test oldest, no IPython ##################################################################
+# test oldest, no IPython #########################################################################
 [feature.tasks-test-min-noipy.tasks.test-min-noipy-pytest]
 depends-on = ["test-min-noipy-setup", {task = "test-cov--", args = ["test-min-noipy"]}]
 description = "... run tests in the oldest plain environment"
@@ -257,7 +257,7 @@ test-pypy-setup = {description = "... install in a pypy environment", depends-on
   ]},
 ]}
 
-# docs #########################################################################
+# docs ############################################################################################
 [feature.tasks-docs.tasks.docs-setup]
 depends-on = [{task = "pip-e--", args = ["docs"]}]
 description = "... install for documentation"
@@ -293,7 +293,7 @@ assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadT
 depends-on = ["docs-mkdocs"]
 description = "... copy the documentation site to where ReadTheDocs wants it"
 
-# lite #########################################################################
+# lite ############################################################################################
 [feature.tasks-lite.tasks.docs-lite-setup]
 depends-on = [{task = "pip-whl--", args = ["lite"]}]
 description = "... install the built package for demo building"
@@ -315,7 +315,7 @@ description = "... build the jupyter lite demo"
 inputs = ["!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}", "dist/*.whl", "lite/"]
 outputs = ["build/lite/SHA256SUMS"]
 
-# lint #########################################################################
+# lint ############################################################################################
 [feature.tasks-lint.tasks.lint-setup]
 depends-on = [{task = "pip-e--", args = ["lint"]}]
 description = "... editable install for static analysis"
@@ -328,18 +328,14 @@ inputs = ["!**/.ipynb_checkpoints", "docs/**/*.ipynb"]
 [feature.tasks-lint.tasks.fix-ruff]
 cmd = "ruff format && ruff check --fix-only"
 description = "... fix python source in notebooks and python files"
-inputs = [
-  "!**/.ipynb_checkpoints",
-  "pyproject.toml",
-  "{docs,src,lite}/**/*.{g,ipy,ipynb,py}",
-]
+inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{docs,src,lite}/**/*.{g,ipy,ipynb,py}"]
 
 [feature.tasks-lint.tasks.fix-taplo]
 cmd = """taplo format *.toml 
   --option=array_auto_collapse=true
   --option=compact_inline_tables=true
   --option=reorder_keys=true
-  --option=column_width=88"""
+  --option=column_width=100"""
 description = "... fix toml files"
 inputs = ["*.toml"]
 
@@ -378,7 +374,7 @@ cmd = "actionlint -shellcheck=shellcheck -pyflakes=pyflakes"
 description = "... check github actions workflows"
 inputs = [".github/workflows"]
 
-# check ########################################################################
+# check ###########################################################################################
 [feature.tasks-check.tasks.check-links]
 cmd = """rm --recursive --force build/reports/check-links
   && mkdir --parents build/reports/check-links
@@ -402,12 +398,7 @@ inputs = ["site/**/*.html"]
 cmd = "python docs/vale/check.py"
 depends-on = ["docs-mkdocs"]
 description = "... check spelling in documentation"
-inputs = [
-  "!**/.ipynb_checkpoints",
-  "docs/vale",
-  "site/{index,contributing/}.html",
-  "src/**/*.py",
-]
+inputs = ["!**/.ipynb_checkpoints", "docs/vale", "site/{index,contributing/}.html", "src/**/*.py"]
 
 [feature.tasks-check.tasks.check-wheel]
 cmd = "check-wheel-contents dist/*.whl"
@@ -421,7 +412,7 @@ depends-on = ["build-pypi"]
 description = "... check the built distributions for PyPI"
 inputs = ["dist/"]
 
-# dev ##########################################################################
+# dev #############################################################################################
 [feature.tasks-dev.tasks.dev-pip]
 depends-on = [{task = "pip-e--", args = ["dev"]}]
 description = "... prepare for interactive python development"
@@ -450,8 +441,8 @@ description = "... launch jupyterlab in the dev environment"
 depends-on = [{task = "dev-app--", args = ["notebook"]}]
 description = "... launch jupyter notebook in the dev environment"
 
-# deps #########################################################################
-## singletons ##################################################################
+# deps ############################################################################################
+## singletons #####################################################################################
 [feature]
 deps-build-conda.dependencies.rattler-build = "*"
 deps-run-interactive.dependencies.ipython = ">=7.16.1"
@@ -464,7 +455,7 @@ deps-run-pypy.dependencies.pypy = "*"
 deps-test-min.dependencies.pytest = "7.0.*"
 deps-uv.dependencies.uv = "*"
 
-## compounds ###################################################################
+## compounds ######################################################################################
 [feature.deps-run.dependencies]
 importlib-metadata = ">=4.8.3"
 python = ">=3.9"
@@ -532,7 +523,7 @@ twine = "*"
 vale = ">=3.8,<3.9"
 vale-spelling-aoo-mozilla-en-dict-us = "*"
 
-# envs #########################################################################
+# envs ############################################################################################
 [environments]
 build = ["deps-build", "tasks-build"]
 build-conda = ["deps-build-conda", "tasks-build-conda"]
@@ -583,13 +574,7 @@ test-min = [
   "deps-test-min",
   "tasks-test-min",
 ]
-test-min-noipy = [
-  "deps-run",
-  "deps-run-min",
-  "deps-test",
-  "deps-test-min",
-  "tasks-test-min-noipy",
-]
+test-min-noipy = ["deps-run", "deps-run-min", "deps-test", "deps-test-min", "tasks-test-min-noipy"]
 test-prev = [
   "deps-run",
   "deps-run-interactive",
@@ -601,8 +586,8 @@ test-prev = [
 test-pypy = ["deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
 uv = ["deps-uv"]
 
-# random tool data #############################################################
-## jupyter client settings overrides ###########################################
+# random tool data ################################################################################
+## jupyter client settings overrides ##############################################################
 [tool.jp.overrides."@jupyterlab/apputils-extension:notification"]
 checkForUpdates = false
 doNotDisturbMode = true

@@ -55,7 +55,7 @@ toml = "importnb.loaders:Toml"
 yaml = "importnb.loaders:Yaml"
 yml = "importnb.loaders:Yaml"
 
-# hatch ########################################################################
+# hatch ###########################################################################################
 [tool.hatch.version]
 source = "vcs"
 
@@ -73,15 +73,7 @@ targets.sdist.exclude = [
 
 [tool.hatch.envs.released]
 # test a release on test-pypi
-dependencies = [
-  "doit",
-  "importnb",
-  "ipython",
-  "pytest",
-  "pytest-cov",
-  "ruamel.yaml",
-  "tomli-w",
-]
+dependencies = ["doit", "importnb", "ipython", "pytest", "pytest-cov", "ruamel.yaml", "tomli-w"]
 
 [tool.hatch.envs.released.scripts]
 test = "pytest"
@@ -91,8 +83,8 @@ PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
 PIP_INDEX_URL = "https://test.pypi.org/simple/"
 PIP_PRE = "1"
 
-# tools in alphabetical order ##################################################
-## coverage ####################################################################
+# tools in alphabetical order #####################################################################
+## coverage #######################################################################################
 [tool.coverage.paths]
 source = [
   # this must come first
@@ -106,20 +98,10 @@ disable_warnings = ["module-not-measured"]
 plugins = ["importnb.utils.coverage"]
 
 [tool.coverage.report]
-exclude_lines = [
-  """if __name__ == "__main__":""",
-  "if TYPE_CHECKING:",
-  "pragma: no cover",
-]
-omit = [
-  "Untitled42.py",
-  "_json_parser.py",
-  "coverage.py",
-  "minified.ipynb",
-  "my_module.ipynb",
-]
+exclude_lines = ["""if __name__ == "__main__":""", "if TYPE_CHECKING:", "pragma: no cover"]
+omit = ["Untitled42.py", "_json_parser.py", "coverage.py", "minified.ipynb", "my_module.ipynb"]
 
-## mypy ########################################################################
+## mypy ###########################################################################################
 [tool.coverage.html]
 show_contexts = true
 
@@ -165,15 +147,9 @@ module = [
   "jupyterlite_pyodide_kernel.*",
 ]
 
-## pytest ######################################################################
+## pytest #########################################################################################
 [tool.pytest.ini_options]
-addopts = [
-  "--color=yes",
-  "--tb=long",
-  "-pimportnb.utils.pytest_importnb",
-  "-ppytester",
-  "-vv",
-]
+addopts = ["--color=yes", "--tb=long", "-pimportnb.utils.pytest_importnb", "-ppytester", "-vv"]
 cache_dir = "build/.cache/pytest"
 filterwarnings = [
   # treat all warnings as errors ...
@@ -185,7 +161,7 @@ filterwarnings = [
 testpaths = ["docs", "src"]
 
 
-## ruff ########################################################################
+## ruff ###########################################################################################
 [tool.ruff]
 cache-dir = "build/.cache/ruff"
 extend-exclude = ["**/_json_parser.py", ".github", ".pixi/**", "build", "dist", "site"]
