@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  INB_PIXI_VERSION: 0.47.0
+  INB_PIXI_VERSION: 0.48.0
 
 jobs:
   build:
