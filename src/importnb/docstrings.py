@@ -99,9 +99,12 @@ class TestStrings(ast.NodeTransformer):
     def visit_Expr(self, node: ast.Expr) -> ast.Expr:
         """`TestStrings.visit_Expr` appends the `str_nodes` to `TestStrings.strings` to append to the `ast.Module`."""
         if isinstance(node.value, str_nodes):
+            value = node.value.value
+            if TYPE_CHECKING:
+                assert isinstance(value, str)
             self.strings.append(
                 ast.copy_location(
-                    ast.Constant(node.value.value.replace("\n```", "\n")),
+                    ast.Constant(value.replace("\n```", "\n")),
                     node,
                 ),
             )

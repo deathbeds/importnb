@@ -1,10 +1,11 @@
 # repo automation for `importnb`
-"$schema" = "https://pixi.sh/v0.48.0/schema/manifest/schema.json"
+"$schema" = "https://raw.githubusercontent.com/bollwyvl/pixi/refs/heads/gh-4148-named-arg-schema/schema/schema.json"
 
 [project]
 channels = ["conda-forge"]
 name = "importnb"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+requires-pixi = ">=0.51.0"
 
 [tasks]
 all = {description = """🚢 run ALL non-interactive tasks to verify the project is ready to release""", depends-on = [
@@ -190,7 +191,7 @@ outputs = ["dist/conda/noarch"]
 
 # test ############################################################################################
 [feature.tasks-test-max.tasks.test-max-setup]
-depends-on = [{task = "pip-whl--", args = ["test-max"]}]
+depends-on = [{task = "pip-whl--", args = [{env = "test-max"}]}]
 description = "... install the package in the latest test environment"
 
 [feature.tasks-test-max.tasks.test-max-pytest]
@@ -207,37 +208,49 @@ description = "... run unit tests with coverage, deploy to docs"
 outputs = ["docs/coverage", "docs/pytest.html", "build/reports/test-max/pytest.html"]
 
 [feature.tasks-test-max.tasks.test-max-pytest-i]
-depends-on = ["test-max-setup", {task = "test-cov--", args = ["test-max", "pytest-i"]}]
+depends-on = [
+  "test-max-setup",
+  {task = "test-cov--", args = [
+    {env = "test-max"},
+    {report = "pytest-i"},
+  ]},
+]
 description = "... run unit tests with coverage (under ipython)"
 
 # test next-to-latest
 [feature.tasks-test-prev.tasks.test-prev-pytest]
-depends-on = ["test-prev-setup", {task = "test-cov--", args = ["test-prev"]}]
+depends-on = ["test-prev-setup", {task = "test-cov--", args = [{env = "test-prev"}]}]
 description = "... run unit tests with coverage"
 [feature.tasks-test-prev.tasks.test-prev-setup]
-depends-on = [{task = "pip-whl--", args = ["test-prev"]}]
+depends-on = [{task = "pip-whl--", args = [{env = "test-prev"}]}]
 description = "... install in the next-to-latest test environment"
 
 # test oldest #####################################################################################
 [feature.tasks-test-min.tasks.test-min-pytest]
-depends-on = ["test-min-setup", {task = "test-cov--", args = ["test-min"]}]
+depends-on = ["test-min-setup", {task = "test-cov--", args = [{env = "test-min"}]}]
 description = "... pytest in the oldest environment"
 
 [feature.tasks-test-min.tasks.test-min-pytest-i]
-depends-on = ["test-min-setup", {task = "test-cov--", args = ["test-min", "pytest-i"]}]
+depends-on = [
+  "test-min-setup",
+  {task = "test-cov--", args = [
+    {env = "test-min"},
+    {report = "pytest-i"},
+  ]},
+]
 description = "... ipython pytest in the oldest supported environment"
 
 [feature.tasks-test-min.tasks.test-min-setup]
-depends-on = [{task = "pip-whl--", args = ["test-min"]}]
+depends-on = [{task = "pip-whl--", args = [{env = "test-min"}]}]
 description = "... install in the oldest environment"
 
 # test oldest, no IPython #########################################################################
 [feature.tasks-test-min-noipy.tasks.test-min-noipy-pytest]
-depends-on = ["test-min-noipy-setup", {task = "test-cov--", args = ["test-min-noipy"]}]
+depends-on = ["test-min-noipy-setup", {task = "test-cov--", args = [{env = "test-min-noipy"}]}]
 description = "... run tests in the oldest plain environment"
 
 [feature.tasks-test-min-noipy.tasks.test-min-noipy-setup]
-depends-on = [{task = "pip-whl--", args = ["test-min-noipy"]}]
+depends-on = [{task = "pip-whl--", args = [{env = "test-min-noipy"}]}]
 description = "... install in the oldest plain environment"
 
 # test pypy ##################################################################
@@ -248,18 +261,18 @@ platforms = ["linux-64", "osx-64", "win-64"]
 test-pypy-pytest = {description = "... run tests in a pypy environment", depends-on = [
   "test-pypy-setup",
   {task = "test--", args = [
-    "test-pypy",
+    {env = "test-pypy"},
   ]},
 ]}
 test-pypy-setup = {description = "... install in a pypy environment", depends-on = [
   {task = "pip-whl--", args = [
-    "test-pypy",
+    {env = "test-pypy"},
   ]},
 ]}
 
 # docs ############################################################################################
 [feature.tasks-docs.tasks.docs-setup]
-depends-on = [{task = "pip-e--", args = ["docs"]}]
+depends-on = [{task = "pip-e--", args = [{env = "docs"}]}]
 description = "... install for documentation"
 
 [feature.tasks-docs.tasks.docs-mkdocs]
@@ -295,7 +308,7 @@ description = "... copy the documentation site to where ReadTheDocs wants it"
 
 # lite ############################################################################################
 [feature.tasks-lite.tasks.docs-lite-setup]
-depends-on = [{task = "pip-whl--", args = ["lite"]}]
+depends-on = [{task = "pip-whl--", args = [{env = "lite"}]}]
 description = "... install the built package for demo building"
 
 [feature.tasks-lite.tasks.docs-lite-lock]
@@ -317,7 +330,7 @@ outputs = ["build/lite/SHA256SUMS"]
 
 # lint ############################################################################################
 [feature.tasks-lint.tasks.lint-setup]
-depends-on = [{task = "pip-e--", args = ["lint"]}]
+depends-on = [{task = "pip-e--", args = [{env = "lint"}]}]
 description = "... editable install for static analysis"
 
 [feature.tasks-lint.tasks.fix-nbstripout]
@@ -414,7 +427,7 @@ inputs = ["dist/"]
 
 # dev #############################################################################################
 [feature.tasks-dev.tasks.dev-pip]
-depends-on = [{task = "pip-e--", args = ["dev"]}]
+depends-on = [{task = "pip-e--", args = [{env = "dev"}]}]
 description = "... prepare for interactive python development"
 
 [feature.tasks-dev.tasks.dev-overrides]
@@ -434,11 +447,11 @@ cmd = """jupyter {{ app }}
 depends-on = ["dev-overrides", "dev-pip"]
 
 [feature.tasks-dev.tasks.dev-lab]
-depends-on = [{task = "dev-app--", args = ["lab"]}]
+depends-on = [{task = "dev-app--", args = [{app = "lab"}]}]
 description = "... launch jupyterlab in the dev environment"
 
 [feature.tasks-dev.tasks.dev-nb]
-depends-on = [{task = "dev-app--", args = ["notebook"]}]
+depends-on = [{task = "dev-app--", args = [{app = "notebook"}]}]
 description = "... launch jupyter notebook in the dev environment"
 
 # deps ############################################################################################
@@ -509,10 +522,10 @@ python-lsp-ruff = "*"
 vale-ls = "*"
 
 [feature.deps-lite.dependencies]
-jupyterlite-core = "0.6.0.*"
+jupyterlite-core = "0.6.4.*"
 jupyterlite-core-with-libarchive = "*"
 jupyterlite-core-with-translation = "*"
-jupyterlite-pyodide-kernel = "0.6.0.*"
+jupyterlite-pyodide-kernel = "0.6.1.*"
 pyodide-lock = "*"
 
 [feature.deps-check.dependencies]
