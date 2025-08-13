@@ -519,6 +519,9 @@ ipywidgets = "*"
 jupyterlab = "*"
 notebook = "*"
 
+[feature.deps-ipykernel.dependencies]
+ipykernel = "!=7.0.0a2"
+
 [feature.deps-dev.dependencies]
 jupyterlab-lsp = "*"
 pylsp-mypy = "*"
@@ -551,6 +554,7 @@ dev = [
   "deps-dev",
   "deps-docs",
   "deps-lab",
+  "deps-ipykernel",
   "deps-lint",
   "deps-lite",
   "deps-run",
@@ -560,10 +564,11 @@ dev = [
   "deps-test",
   "tasks-dev",
 ]
-docs = ["deps-build", "deps-docs", "deps-run", "tasks-docs"]
+docs = ["deps-build", "deps-docs", "deps-ipykernel", "deps-run", "tasks-docs"]
 lint = [
   "deps-build",
   "deps-docs",
+  "deps-ipykernel",
   "deps-lint",
   "deps-lite",
   "deps-run",
@@ -573,7 +578,7 @@ lint = [
   "deps-test",
   "tasks-lint",
 ]
-lite = ["deps-lab", "deps-lite", "tasks-lite"]
+lite = ["deps-lab", "deps-ipykernel", "deps-lite", "tasks-lite"]
 test-max = [
   "deps-run",
   "deps-run-interactive",
