@@ -2,7 +2,11 @@
 "$schema" = "https://raw.githubusercontent.com/bollwyvl/pixi/refs/heads/gh-4148-named-arg-schema/schema/schema.json"
 
 [project]
-channels = ["conda-forge"]
+channels = [
+  "conda-forge",
+  "conda-forge/label/jupyterlite_core_alpha",
+  "conda-forge/label/jupyterlite_pyodide_kernel_alpha",
+]
 name = "importnb"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 requires-pixi = ">=0.51.0"
@@ -522,10 +526,10 @@ python-lsp-ruff = "*"
 vale-ls = "*"
 
 [feature.deps-lite.dependencies]
-jupyterlite-core = "0.6.4.*"
-jupyterlite-core-with-libarchive = "*"
-jupyterlite-core-with-translation = "*"
-jupyterlite-pyodide-kernel = "0.6.1.*"
+jupyterlite-core = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-core-with-libarchive = {version = "*", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-core-with-translation = {version = "*", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-pyodide-kernel = {version = ">=0.7.0a1", channel = "conda-forge/label/jupyterlite_pyodide_kernel_alpha"}
 pyodide-lock = "*"
 
 [feature.deps-check.dependencies]
