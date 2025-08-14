@@ -36,7 +36,7 @@ def main() -> int:
     }
     lock["packages"]["importnb"] = {
         "depends": [],
-        "file_name": f"../../pypi/{WHL.name}",
+        "file_name": f"../pypi/{WHL.name}",
         "imports": ["importnb"],
         "install_dir": "site",
         "name": "importnb",
