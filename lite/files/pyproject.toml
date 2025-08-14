@@ -23,12 +23,12 @@ filterwarnings = [
 # coverage #####################################################################
 [tool.coverage.run]
 data_file = "/tmp/.coverage"
-exclude_lines = ["""if __name__ == "__main__":""", "if TYPE_CHECKING:", "pragma: no cover"]
 plugins = ["importnb.utils.coverage"]
 
 [tool.coverage.html]
 show_contexts = true
 
 [tool.coverage.report]
+exclude_lines = ["""if __name__ == "__main__":""", "if TYPE_CHECKING:", "pragma: no cover"]
 show_missing = true
 skip_covered = true
