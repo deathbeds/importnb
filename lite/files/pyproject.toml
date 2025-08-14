@@ -1,0 +1,34 @@
+# pytest #######################################################################
+[tool.pytest.ini_options]
+addopts = [
+  # this is required to work with importnb
+  "-pimportnb.utils.pytest_importnb",
+  # print a line per test
+  "-vv",
+  # in the event of an error, print long tracebacks
+  "--tb=long",
+  # pretty
+  "--color=yes",
+  # concise
+  "--no-header",
+  # 💡 avoid race conditions in `/drive`
+  "-pno:cacheprovider",
+]
+filterwarnings = [
+  # ignore warnings from coverage
+  "ignore:.*unclosed database.*:ResourceWarning",
+  "ignore:.*Exception ignored in.*:pytest.PytestUnraisableExceptionWarning",
+]
+
+# coverage #####################################################################
+[tool.coverage.run]
+data_file = "/tmp/.coverage"
+exclude_lines = ["""if __name__ == "__main__":""", "if TYPE_CHECKING:", "pragma: no cover"]
+plugins = ["importnb.utils.coverage"]
+
+[tool.coverage.html]
+show_contexts = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

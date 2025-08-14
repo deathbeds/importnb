@@ -338,9 +338,9 @@ depends-on = [{task = "pip-e--", args = [{env = "lint"}]}]
 description = "... editable install for static analysis"
 
 [feature.tasks-lint.tasks.fix-nbstripout]
-cmd = "nbstripout --keep-id --drop-empty-cells docs/*.ipynb"
+cmd = "nbstripout --keep-id --drop-empty-cells docs/*.ipynb lite/files/*.ipynb"
 description = "... fix notebook JSON"
-inputs = ["!**/.ipynb_checkpoints", "docs/**/*.ipynb"]
+inputs = ["!**/.ipynb_checkpoints", "{docs,lite}/**/*.ipynb"]
 
 [feature.tasks-lint.tasks.fix-ruff]
 cmd = "ruff format && ruff check --fix-only"
@@ -348,13 +348,13 @@ description = "... fix python source in notebooks and python files"
 inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{docs,src,lite}/**/*.{g,ipy,ipynb,py}"]
 
 [feature.tasks-lint.tasks.fix-taplo]
-cmd = """taplo format *.toml 
+cmd = """taplo format *.toml lite/files/*.toml
   --option=array_auto_collapse=true
   --option=compact_inline_tables=true
   --option=reorder_keys=true
   --option=column_width=100"""
 description = "... fix toml files"
-inputs = ["*.toml"]
+inputs = ["*.toml", "lite/files/*.toml"]
 
 [feature.tasks-lint.tasks.lint-mypy-src]
 cmd = """rm --recursive --force docs/mypy

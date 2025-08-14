@@ -1,12 +1,7 @@
 {
   "LiteBuildConfig": {
     "output_dir": "../build/lite",
-    "cache_dir": "../build/.cache/lite/",
-    "contents": [
-      "files",
-      "../pixi.toml",
-      "../pyproject.toml"
-    ]
+    "cache_dir": "../build/.cache/lite/"
   },
   "PipliteAddon": {
     "piplite_urls": [
