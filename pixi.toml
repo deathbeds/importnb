@@ -1,5 +1,5 @@
 # repo automation for `importnb`
-"$schema" = "https://raw.githubusercontent.com/bollwyvl/pixi/refs/heads/gh-4148-named-arg-schema/schema/schema.json"
+"$schema" = "https://pixi.sh/v0.52.0/schema/manifest/schema.json"
 
 [project]
 channels = [
@@ -9,7 +9,7 @@ channels = [
 ]
 name = "importnb"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
-requires-pixi = ">=0.51.0"
+requires-pixi = ">=0.52.0"
 
 [tasks]
 all = {description = """🚢 run ALL non-interactive tasks to verify the project is ready to release""", depends-on = [
