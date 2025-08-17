@@ -32,3 +32,9 @@ show_contexts = true
 exclude_lines = ["""if __name__ == "__main__":""", "if TYPE_CHECKING:", "pragma: no cover"]
 show_missing = true
 skip_covered = true
+
+# sphinx #######################################################################
+## this gets loaded in `conf.py` ###############################################
+[tool.sphinx]
+extensions = ["myst_parser", "sphinx.ext.autodoc", "sphinx_autodoc_typehints"]
+project = "importnb demo"
