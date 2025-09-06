@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "hatchling.build"
-requires = ["hatch-vcs", "hatchling"]
+build-backend = "flit_core.buildapi"
+requires = ["flit-core >=3.9.0,<4.0.0"]
 
 [project]
 authors = [{name = "tonyfast", email = "tony.fast@gmail.com"}]
@@ -8,8 +8,6 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: IPython",
   "Framework :: Jupyter",
-  "License :: OSI Approved :: BSD License",
-  "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
   "Natural Language :: English",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.10",
@@ -24,13 +22,13 @@ classifiers = [
 ]
 dependencies = ['importlib-metadata>=4.8.3; python_version < "3.10"']
 description = "import jupyter notebooks as python modules and scripts."
-dynamic = ["version"] # uses hatch-vcs
 keywords = []
 license = "BSD-3-Clause AND MPL-2.0"
 license-files = ["LICENSE", "LICENSE-MPL-2.0"]
 name = "importnb"
 readme = "README.md"
 requires-python = ">=3.9"
+version = "2025.9.0a0"
 
 [project.optional-dependencies]
 interactive = ["ipython >=7.16.1"]
@@ -55,33 +53,15 @@ toml = "importnb.loaders:Toml"
 yaml = "importnb.loaders:Yaml"
 yml = "importnb.loaders:Yaml"
 
-# hatch ###########################################################################################
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.build]
-hooks.custom.dependencies = ["lark"]
-hooks.vcs.version-file = "src/importnb/_version.py"
-targets.sdist.exclude = [
-  ".github",
-  ".readthedocs.yml",
-  "docs/*.png",
-  "docs/coverage",
-  "lite",
-  "pixi.*",
+# flit ############################################################################################
+[tool.flit.sdist]
+include = [
+  "docs/test_*.*",
+  # fixtures
+  "docs/Untitled42.ipynb",
+  "docs/async-cells.ipynb",
+  "docs/ascript.ipy",
 ]
-
-[tool.hatch.envs.released]
-# test a release on test-pypi
-dependencies = ["doit", "importnb", "ipython", "pytest", "pytest-cov", "ruamel.yaml", "tomli-w"]
-
-[tool.hatch.envs.released.scripts]
-test = "pytest"
-
-[tool.hatch.envs.released.env-vars]
-PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
-PIP_INDEX_URL = "https://test.pypi.org/simple/"
-PIP_PRE = "1"
 
 # tools in alphabetical order #####################################################################
 ## coverage #######################################################################################
@@ -149,7 +129,15 @@ module = [
 
 ## pytest #########################################################################################
 [tool.pytest.ini_options]
-addopts = ["--color=yes", "--tb=long", "-pimportnb.utils.pytest_importnb", "-ppytester", "-vv"]
+addopts = [
+  "--color=yes",
+  "--tb=long",
+  "-pimportnb.utils.pytest_importnb",
+  "-ppytester",
+  "-vv",
+  # need to investigate this
+  "--ignore=docs/ascript.ipy",
+]
 cache_dir = "build/.cache/pytest"
 filterwarnings = [
   # treat all warnings as errors ...

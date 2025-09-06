@@ -160,9 +160,9 @@ outputs = [
 
 # build ###########################################################################################
 [feature.tasks-build.tasks.build-lark]
-cmd = """python hatch_build.py > src/importnb/_json_parser.py"""
+cmd = """python build_parser.py > src/importnb/_json_parser.py"""
 description = "... build the standalone JSON parser"
-inputs = ["src/importnb/json.g"]
+inputs = ["build_parser.py", "src/importnb/json.g"]
 outputs = ["src/importnb/_json_parser.py"]
 
 [feature.tasks-build.tasks.build-pypi]
@@ -172,7 +172,7 @@ depends-on = ["build-lark"]
 description = "... build the source and wheel distributions for PyPI"
 inputs = [
   "!**/coverage",
-  "{README.md,LICENSE*,hatch_build.py,pyproject.toml}",
+  "{README.md,LICENSE*,build_parser.py,pyproject.toml}",
   "{docs,src}/**/*.{g,ipy,ipynb,py}",
 ]
 outputs = ["dist/*.{whl,tar.gz}"]
@@ -295,7 +295,7 @@ outputs = ["!site/lite/", "site/"]
 
 [feature.tasks-docs.tasks.docs-serve]
 cmd = "pixi run mkdocs-- serve"
-depends-on = ["docs-mkdocs"]
+depends-on = ["docs-lite", "docs-setup"]
 description = "... serve the documentation site"
 
 [feature.tasks-docs.tasks.docs-rtd]
@@ -482,8 +482,7 @@ importlib-metadata = "4.8.3.*"
 python = "3.9.*"
 
 [feature.deps-build.dependencies]
-hatch-vcs = "*"
-hatchling = "*"
+flit-core = ">=3.9,<4"
 lark = "*"
 python-build = "*"
 

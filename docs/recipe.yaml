@@ -3,7 +3,7 @@ schema_version: 1
 
 context:
   version: ${{ env.get("INB_VERSION") }}
-  python_min: "3.9"
+  python_min: "3.10"
   python_check_max: "3.13"
   name: importnb
 
@@ -25,8 +25,7 @@ build:
 
 requirements:
   host:
-    - hatch-vcs
-    - hatchling
+    - flit-core >=3.9.0,<4
     - lark
     - pip
     - python ${{ python_min }}.*
@@ -41,10 +40,19 @@ tests:
       python_version:
         - ${{ python_min }}.*
         - ${{ python_check_max }}.*
-  - script:
+  - files:
+      source:
+        - docs/
+        - pyproject.toml
+    requirements:
+      run:
+        - pytest
+        - python ${{ python_min }}.*
+    script:
     - ${{ name }} --version
     - ${{ name }} --help
     - python -c "assert __import__('${{ name }}').__version__ == '${{ version }}'"
+    - pytest -k "not doit"
 
 about:
   summary: import jupyter notebooks as python modules and scripts.

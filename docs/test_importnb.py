@@ -13,7 +13,7 @@ from shutil import copyfile, rmtree
 from types import FunctionType, ModuleType
 from typing import TYPE_CHECKING, Any
 
-from pytest import fixture, mark, raises
+from pytest import fixture, mark, raises, skip
 
 import importnb
 
@@ -388,30 +388,42 @@ def test_top_level_async() -> None:
     assert async_cells
 
 
-def test_data_loaders(pytester: Pytester) -> None:
+@mark.parametrize(
+    ("data_loader", "data_writer"), [("yaml", "ruamel"), ("toml", "tomli_w"), ("json", "json")]
+)
+def test_data_loaders(data_loader: str, data_writer: str, pytester: Pytester) -> None:
     import io
-    import json
 
-    import tomli_w
-    from ruamel.yaml import YAML
+    sys.path.insert(0, str(pytester._path))
 
     from importnb import imports
 
     some_random_data: dict[str, list[dict[str, Any]]] = {"top": [{}]}
 
-    yaml = YAML(typ="safe", pure=True)
+    if not find_spec(data_writer):
+        skip(f"{data_writer} not available")
 
-    sys.path.insert(0, str(pytester._path))
-    pytester.makefile(".json", json_data=json.dumps(some_random_data))
-    pytester.makefile(".toml", toml_data=tomli_w.dumps(some_random_data))
-    y = io.StringIO()
-    yaml.dump(some_random_data, y)
-    pytester.makefile(".yaml", yaml_data=y.getvalue())
+    if data_loader == "json":
+        import json
 
-    with imports("json", "yaml", "toml"):
-        import json_data
-        import toml_data
-        import yaml_data
-    assert f"{json_data.__file__}".endswith(".json")
-    assert f"{toml_data.__file__}".endswith(".toml")
-    assert f"{yaml_data.__file__}".endswith(".yaml")
+        data_text = json.dumps(some_random_data)
+
+    if data_loader == "toml":
+        import tomli_w
+
+        data_text = tomli_w.dumps(some_random_data)
+
+    if data_loader == "yaml":
+        from ruamel.yaml import YAML
+
+        yaml = YAML(typ="safe", pure=True)
+        y = io.StringIO()
+        yaml.dump(some_random_data, y)
+        data_text = y.getvalue()
+
+    pytester.makefile(f".{data_loader}", some_data_module=data_text)
+
+    with imports(data_loader):
+        import some_data_module  # type: ignore[import-not-found]
+
+    assert f"{some_data_module.__file__}".endswith(f".{data_loader}")

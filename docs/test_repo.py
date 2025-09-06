@@ -11,7 +11,7 @@ import pytest
 from importnb.loader import Interface
 from importnb.loaders import DataStreamLoader, Toml, Yaml
 
-HAS_YAML = find_spec("ruamel.yaml")
+HAS_YAML = find_spec("ruamel")
 HAS_TOML = find_spec("tomllib") or find_spec("tomli")
 
 
