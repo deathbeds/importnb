@@ -152,7 +152,7 @@ testpaths = ["docs", "src"]
 ## ruff ###########################################################################################
 [tool.ruff]
 cache-dir = "build/.cache/ruff"
-extend-exclude = ["**/_json_parser.py", ".github", ".pixi/**", "build", "dist", "site"]
+extend-exclude = ["_json_parser.py", ".github", ".pixi/**", "build", "dist", "site"]
 extend-include = ["*.ipynb"]
 line-length = 100
 preview = true
@@ -249,6 +249,6 @@ select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "Untitled42.ipynb" = ["ANN001", "ANN201"]
-"lite/*" = ["S310"]
+"lite/*" = ["S310", "PD901", "RET504"]
 "lite/files/*" = ["ANN201", "ANN001", "PT015", "S108", "B011"]
 "test_cli.py" = ["D207", "D208", "D415"]

@@ -1,5 +1,5 @@
 # repo automation for `importnb`
-"$schema" = "https://pixi.sh/v0.52.0/schema/manifest/schema.json"
+"$schema" = "https://pixi.sh/v0.54.1/schema/manifest/schema.json"
 
 [project]
 channels = [
@@ -9,7 +9,7 @@ channels = [
 ]
 name = "importnb"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
-requires-pixi = ">=0.52.0"
+requires-pixi = ">=0.54.1"
 
 [tasks]
 all = {description = """🚢 run ALL non-interactive tasks to verify the project is ready to release""", depends-on = [
@@ -158,9 +158,20 @@ outputs = [
   "build/reports/{{ env }}/{{ report }}.html",
 ]
 
+[tasks.ruff--]
+args = [{arg = "fix", default = ""}]
+cmd = """
+  ruff format {{ "" if fix else "--check" }} 
+  && ruff check {{ "--fix-only" if fix else "" }}"""
+inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{docs,src,lite}/**/*.{g,ipy,ipynb,py}"]
+
+
 # build ###########################################################################################
 [feature.tasks-build.tasks.build-lark]
-cmd = """python build_parser.py > src/importnb/_json_parser.py"""
+cmd = """
+  python build_parser.py > src/importnb/_json_parser.py
+  && ruff format src/importnb/_json_parser.py
+"""
 description = "... build the standalone JSON parser"
 inputs = ["build_parser.py", "src/importnb/json.g"]
 outputs = ["src/importnb/_json_parser.py"]
@@ -343,9 +354,8 @@ description = "... fix notebook JSON"
 inputs = ["!**/.ipynb_checkpoints", "{docs,lite}/**/*.ipynb"]
 
 [feature.tasks-lint.tasks.fix-ruff]
-cmd = "ruff format && ruff check --fix-only"
+depends-on = [{task = "ruff--", environment = "lint", args = [{fix = "1"}]}]
 description = "... fix python source in notebooks and python files"
-inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{docs,src,lite}/**/*.{g,ipy,ipynb,py}"]
 
 [feature.tasks-lint.tasks.fix-taplo]
 cmd = """taplo format *.toml lite/files/*.toml
@@ -382,9 +392,8 @@ inputs = [
 ]
 
 [feature.tasks-lint.tasks.lint-ruff]
-cmd = "ruff format --check && ruff check"
+depends-on = [{task = "ruff--", environment = "lint"}]
 description = "... check python and notebook source code style"
-inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{src,docs}/**/*.{py,ipynb}"]
 
 [feature.tasks-lint.tasks.lint-actionlint]
 cmd = "actionlint -shellcheck=shellcheck -pyflakes=pyflakes"
@@ -485,6 +494,7 @@ python = "3.9.*"
 flit-core = ">=3.9,<4"
 lark = "*"
 python-build = "*"
+ruff = "*"
 
 [feature.deps-lint.dependencies]
 actionlint-with-all = "*"
