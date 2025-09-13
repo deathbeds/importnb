@@ -20,6 +20,7 @@ all = {description = """🚢 run ALL non-interactive tasks to verify the project
   "test-max-pytest-i",
   "docs",
   "check",
+  "atest-lite",
 ], cmd = "echo 🚢 all OK "}
 
 all-epochs = {description = """🚀 run all, including tests in the minimum/latest envs""", depends-on = [
@@ -31,6 +32,7 @@ fix = {description = """🧹 apply ALL source formatting tools""", depends-on = 
   "fix-taplo",
   "fix-ruff",
   "fix-nbstripout",
+  "fix-robocop",
 ], cmd = "echo 🧹 fix OK"}
 
 build = {description = """📦 build ALL distributions""", depends-on = [
@@ -44,6 +46,7 @@ lint = {description = """✅ apply ALL static analysis tools""", depends-on = [
   "lint-mypy-src",
   "lint-mypy-dev",
   "lint-actionlint",
+  "lint-robocop",
 ], cmd = "echo ✅ lint OK"}
 
 test = {description = """🧪 run ALL tests""", depends-on = [
@@ -165,6 +168,10 @@ cmd = """
   && ruff check {{ "--fix-only" if fix else "" }}"""
 inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{docs,src,lite}/**/*.{g,ipy,ipynb,py}"]
 
+[tasks.robocop--]
+args = [{arg = "fix", default = ""}]
+cmd = """robocop {{ "format" if fix else "check" }} docs"""
+inputs = ["docs/**/*.{robot,resource}", "pyproject.toml"]
 
 # build ###########################################################################################
 [feature.tasks-build.tasks.build-lark]
@@ -400,6 +407,27 @@ cmd = "actionlint -shellcheck=shellcheck -pyflakes=pyflakes"
 description = "... check github actions workflows"
 inputs = [".github/workflows"]
 
+[feature.tasks-lint.tasks.lint-robocop]
+depends-on = [{task = "robocop--", environment = "lint"}]
+description = "... check robot with robocop"
+
+[feature.tasks-lint.tasks.fix-robocop]
+depends-on = [{task = "robocop--", args = [{fix = "1"}], environment = "lint"}]
+description = "... fix robot with robocop"
+
+# atest ###########################################################################################
+[feature.tasks-atest.tasks.atest-lite]
+args = [{arg = "out", default = "build/reports/robot"}]
+cmd = """
+  rm -rf {{ out }}
+  && mkdir -p {{ out }}
+  && cd {{ out }}
+  && robot --name=importnb $PIXI_PROJECT_ROOT/docs
+"""
+depends-on = ["docs-lite"]
+inputs = ["build/lite", "docs/*.{robot,resource}"]
+outputs = ["{{ out }}"]
+
 # check ###########################################################################################
 [feature.tasks-check.tasks.check-links]
 cmd = """rm --recursive --force build/reports/check-links
@@ -501,6 +529,7 @@ actionlint-with-all = "*"
 lxml = "*"
 mypy = "*"
 nbstripout = "*"
+robotframework-robocop = "*"
 ruff = "*"
 taplo = "*"
 types-pyyaml = "*"
@@ -515,6 +544,14 @@ pytest-html = "*"
 pytest-xdist = "*"
 "ruamel.yaml" = "*"
 tomli-w = "*"
+
+[feature.deps-robot.dependencies]
+robotframework = "*"
+robotframework-seleniumlibrary = "*"
+
+[feature.deps-firefox.dependencies]
+firefox = "*"
+geckodriver = "*"
 
 [feature.deps-docs.dependencies]
 mkdocs-jupyter = "*"
@@ -554,6 +591,7 @@ vale-spelling-aoo-mozilla-en-dict-us = "*"
 
 # envs ############################################################################################
 [environments]
+atest = ["deps-robot", "deps-firefox", "tasks-atest"]
 build = ["deps-build", "tasks-build"]
 build-conda = ["deps-build-conda", "tasks-build-conda"]
 check = ["deps-check", "tasks-check"]
@@ -566,6 +604,7 @@ dev = [
   "deps-ipykernel",
   "deps-lint",
   "deps-lite",
+  "deps-robot",
   "deps-run",
   "deps-run-interactive",
   "deps-run-interactive-max",
