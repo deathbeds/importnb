@@ -20,13 +20,17 @@ all = {description = """🚢 run ALL non-interactive tasks to verify the project
   "test-max-pytest-i",
   "docs",
   "check",
-  "atest-lite",
 ], cmd = "echo 🚢 all OK "}
 
 all-epochs = {description = """🚀 run all, including tests in the minimum/latest envs""", depends-on = [
   "all",
   "test",
+  "atest",
 ], cmd = "echo 🚀 all epochs OK"}
+
+atest = {description = "🤖 run acceptance tests", depends-on = [
+  "atest-lite",
+], cmd = "echo 🤖 atest OK "}
 
 fix = {description = """🧹 apply ALL source formatting tools""", depends-on = [
   "fix-taplo",
@@ -47,6 +51,7 @@ lint = {description = """✅ apply ALL static analysis tools""", depends-on = [
   "lint-mypy-dev",
   "lint-actionlint",
   "lint-robocop",
+  "lint-robot",
 ], cmd = "echo ✅ lint OK"}
 
 test = {description = """🧪 run ALL tests""", depends-on = [
@@ -172,6 +177,22 @@ inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{docs,src,lite}/**/*.{g,i
 args = [{arg = "fix", default = ""}]
 cmd = """robocop {{ "format" if fix else "check" }} docs"""
 inputs = ["docs/**/*.{robot,resource}", "pyproject.toml"]
+
+[tasks.robot--]
+args = ["out"]
+cmd = """
+  rm -rf {{ out }} 
+  && mkdir -p {{ out }} 
+  && cd {{ out }}
+  && robot {{ "--dryrun" if "dryrun" in out }}
+    --randomize all
+    --name importnb
+    --console-width 100
+    $PIXI_PROJECT_ROOT/docs
+"""
+depends-on = ["docs-lite"]
+inputs = ["build/lite", "docs/*.{robot,resource}"]
+outputs = ["{{ out }}"]
 
 # build ###########################################################################################
 [feature.tasks-build.tasks.build-lark]
@@ -303,7 +324,7 @@ depends-on = ["docs-lite", "docs-setup"]
 description = "... build the documentation site"
 inputs = [
   "!**/{.ipynb_checkpoints,__pycache__,coverage,vale,mypy}/",
-  "!docs/pytest.html",
+  "!docs/{pytest.html,atest.robot,atest.html}",
   "build/lite/SHA256SUMS",
   "docs/",
   "src/",
@@ -349,6 +370,11 @@ depends-on = ["build-pypi", "docs-lite-lock"]
 description = "... build the jupyter lite demo"
 inputs = ["!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}", "dist/*.whl", "lite/"]
 outputs = ["build/lite/SHA256SUMS"]
+
+[feature.tasks-lite.tasks.docs-lite-serve]
+cmd = "cd build/lite && python -m http.server -b 127.0.0.1 7777"
+depends-on = ["docs-lite"]
+description = "... serve the jupyterlite demo"
 
 # lint ############################################################################################
 [feature.tasks-lint.tasks.lint-setup]
@@ -411,22 +437,18 @@ inputs = [".github/workflows"]
 depends-on = [{task = "robocop--", environment = "lint"}]
 description = "... check robot with robocop"
 
+[feature.tasks-lint.tasks.lint-robot]
+depends-on = [{task = "robot--", environment = "lint", args = ["build/reports/robot-dryrun"]}]
+description = "... check robot with robot dry run"
+
 [feature.tasks-lint.tasks.fix-robocop]
 depends-on = [{task = "robocop--", args = [{fix = "1"}], environment = "lint"}]
 description = "... fix robot with robocop"
 
 # atest ###########################################################################################
 [feature.tasks-atest.tasks.atest-lite]
-args = [{arg = "out", default = "build/reports/robot"}]
-cmd = """
-  rm -rf {{ out }}
-  && mkdir -p {{ out }}
-  && cd {{ out }}
-  && robot --name=importnb $PIXI_PROJECT_ROOT/docs
-"""
-depends-on = ["docs-lite"]
-inputs = ["build/lite", "docs/*.{robot,resource}"]
-outputs = ["{{ out }}"]
+depends-on = [{task = "robot--", environment = "atest", args = ["build/reports/robot"]}]
+description = "... check demo site with robot"
 
 # check ###########################################################################################
 [feature.tasks-check.tasks.check-links]
@@ -452,7 +474,13 @@ inputs = ["site/**/*.html"]
 cmd = "python docs/vale/check.py"
 depends-on = ["docs-mkdocs"]
 description = "... check spelling in documentation"
-inputs = ["!**/.ipynb_checkpoints", "docs/vale", "site/{index,contributing/}.html", "src/**/*.py"]
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "docs/vale",
+  "site/{index,contributing/}.html",
+  "src/**/*.py",
+  "*.md",
+]
 
 [feature.tasks-check.tasks.check-wheel]
 cmd = "check-wheel-contents dist/*.whl"
@@ -619,10 +647,11 @@ lint = [
   "deps-ipykernel",
   "deps-lint",
   "deps-lite",
-  "deps-run",
-  "deps-run-interactive",
+  "deps-robot",
   "deps-run-interactive-max",
+  "deps-run-interactive",
   "deps-run-max",
+  "deps-run",
   "deps-test",
   "tasks-lint",
 ]

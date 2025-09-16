@@ -18,11 +18,14 @@ filterwarnings = [
   # ignore warnings from coverage
   "ignore:.*unclosed database.*:ResourceWarning",
   "ignore:.*Exception ignored in.*:pytest.PytestUnraisableExceptionWarning",
+  # 💡 we're going to install `pytest-cov` late, so need to pass this with `-o`
+  # "ignore:.*Plugin file tracers.*:coverage.exceptions.CoverageWarning",
 ]
 
 # coverage #####################################################################
 [tool.coverage.run]
 data_file = "/tmp/.coverage"
+disable_warnings = ["no-ctracer"]
 plugins = ["importnb.utils.coverage"]
 
 [tool.coverage.html]

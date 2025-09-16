@@ -21,8 +21,8 @@ pytest
 
 ## project
 
-`importnb` uses [`pixi`][pixi] to `fix`, `lint`, `test`, `build`, build `docs`,
-and `check` that it is ready to release.
+`importnb` uses [`pixi`][pixi] to `fix`, `lint`, `test`, `build`, build a `lite` demo,
+build `docs`, `a`cceptance `test` the demo, and `check` that it is ready to release.
 
 see all of the tasks with:
 

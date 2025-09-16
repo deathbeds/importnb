@@ -13,6 +13,8 @@ SITE = ROOT / "site"
 SRC = ROOT / "src"
 
 CHECK_PATHS = {
+    ROOT / "README.md",
+    ROOT / "CONTRIBUTING.md",
     SITE / "index.html",
     SITE / "contributing/index.html",
     SITE / "changelog/index.html",

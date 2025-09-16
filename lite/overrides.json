@@ -18,5 +18,8 @@
   },
   "@jupyter-notebook/application-extension:top": {
     "visible": "no"
+  },
+  "@jupyterlab/apputils-extension:palette": {
+    "modal": false
   }
 }
