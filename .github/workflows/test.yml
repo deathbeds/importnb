@@ -104,7 +104,7 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: inb-${{ github.run_number }}-dist
-      - run: pixi run lite
+      - run: pixi run docs-lite
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -152,10 +152,14 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: inb-${{ github.run_number }}-dist
+      - uses: actions/download-artifact@v5
+        with:
+          name: inb-${{ github.run_number }}-lite
       - run: pixi run atest
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: inb-${{ github.run_number }}-atest
           path: |
+            .pixi/task-cache-v0
             build/reports
