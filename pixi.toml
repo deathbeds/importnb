@@ -196,11 +196,7 @@ outputs = ["{{ out }}"]
 
 # build ###########################################################################################
 [feature.tasks-build.tasks.build-lark]
-cmd = """
-  export PYTHONHASHSEED=1
-  && python build_parser.py > src/importnb/_json_parser.py
-  && ruff format src/importnb/_json_parser.py
-"""
+cmd = """python build_parser.py --update"""
 description = "... build the standalone JSON parser"
 inputs = ["build_parser.py", "src/importnb/json.g"]
 outputs = ["src/importnb/_json_parser.py"]
