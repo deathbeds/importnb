@@ -1,13 +1,14 @@
 from __future__ import annotations
+
+import re
+import shutil
+import subprocess
 import sys
 from functools import partial
-from io import StringIO
-import re
-from pathlib import Path
-import subprocess
-from typing import Any
 from hashlib import sha256
-import shutil
+from io import StringIO
+from pathlib import Path
+from typing import Any
 
 from lark.tools.standalone import (  # type: ignore[attr-defined]
     build_lalr,
@@ -19,11 +20,12 @@ UTF8 = {"encoding": "utf-8"}
 HERE = Path(__file__).parent
 GRAMMAR = HERE / "src/importnb/json.g"
 PARSER = HERE / "src/importnb/_json_parser.py"
-HEADER_STEM = f"# importnb sha256="
+HEADER_STEM = "# importnb sha256="
 G_HASH = sha256(GRAMMAR.read_bytes()).hexdigest()
 HEADER = HEADER_STEM + G_HASH
 RE_HEADER = rf"^{HEADER_STEM}(.*)"
 RUFF = shutil.which("ruff")
+
 
 def get_lark() -> Any:
     ns = lalr_argparser.parse_args(["--propagate_positions", f"{GRAMMAR}"])
@@ -35,6 +37,7 @@ def get_standalone() -> str:
     python = StringIO()
     gen_standalone(lark, partial(print, file=python))  # type: ignore[no-untyped-call]
     return python.getvalue()
+
 
 def main() -> int:
     if "--update" in sys.argv and PARSER.exists():
@@ -52,6 +55,7 @@ def main() -> int:
         sys.stderr.write(f"... formatting with {RUFF}\n")
         return subprocess.call([*map(str, [RUFF, "format", PARSER])])
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
