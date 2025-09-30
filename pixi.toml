@@ -580,6 +580,7 @@ firefox = "*"
 geckodriver = "*"
 
 [feature.deps-docs.dependencies]
+click = "<8.3"
 mkdocs-jupyter = "*"
 mkdocs-material = "*"
 mkdocstrings = "*"
