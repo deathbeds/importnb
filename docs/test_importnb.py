@@ -360,22 +360,28 @@ def test_import_ipy() -> None:
 
 
 def test_cli(clean: None) -> None:
+    import sys
+    from subprocess import CalledProcessError
+
+    from psutil import Popen
+
     from importnb import Notebook, is_ipython
 
     if not is_ipython():
         import pytest
 
         pytest.skip("Not running under IPython")
+
     with Notebook():
         import Untitled42 as module
-    __import__("subprocess").check_call(
-        f"ipython -m {module.__name__}".split(),
-        cwd=str(Path(module.__file__).parent),
-    )
-    __import__("subprocess").check_call(
-        f"ipython -m importnb -- {module.__file__}".split(),
-        cwd=str(Path(module.__file__).parent),
-    )
+    ipym = [sys.executable, "-m", "ipython", "-m"]
+    cmd = [*ipym, module.__name__]
+    cwd = f"{Path(module.__file__).parent}"
+    if not (rc := Popen(cmd, cwd=cwd).wait()):
+        raise CalledProcessError(rc, cmd)
+    cmd = [*ipym, "importnb", "--", module.__file__]
+    if not (rc := Popen(cmd, cwd=cwd).wait()):
+        raise CalledProcessError(rc, cmd)
 
 
 @mark.filterwarnings("ignore::DeprecationWarning")

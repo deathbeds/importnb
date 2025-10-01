@@ -33,7 +33,7 @@ version = "2025.9.0a0"
 [project.optional-dependencies]
 interactive = ["ipython >=7.16.1"]
 tasks = ["doit", "tomli"]
-test = ["doit", "pytest", "pytest-cov", "ruamel.yaml", "tomli", "tomli-w"]
+test = ["doit", "pytest", "pytest-cov", "ruamel.yaml", "psutil >=5", "tomli", "tomli-w"]
 yaml = ["ruamel.yaml"]
 
 [project.urls]

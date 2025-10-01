@@ -47,6 +47,7 @@ tests:
     requirements:
       run:
         - pytest
+        - psutil >=5
         - python ${{ python_min }}.*
     script:
     - ${{ name }} --version

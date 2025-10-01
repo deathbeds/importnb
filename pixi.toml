@@ -2,11 +2,7 @@
 "$schema" = "https://pixi.sh/v0.54.1/schema/manifest/schema.json"
 
 [project]
-channels = [
-  "conda-forge",
-  "conda-forge/label/jupyterlite_core_alpha",
-  "conda-forge/label/jupyterlite_pyodide_kernel_alpha",
-]
+channels = ["conda-forge"]
 name = "importnb"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 requires-pixi = ">=0.54.1"
@@ -531,6 +527,7 @@ deps-run-interactive-prev.dependencies.ipython = "<9"
 deps-run-max.dependencies.python = "3.13.*"
 deps-run-prev.dependencies.python = "3.12.*"
 deps-run-pypy.dependencies.pypy = "*"
+deps-test-min.dependencies.psutil = "5.*"
 deps-test-min.dependencies.pytest = "7.0.*"
 deps-uv.dependencies.uv = "*"
 
@@ -557,12 +554,14 @@ nbstripout = "*"
 robotframework-robocop = "*"
 ruff = "*"
 taplo = "*"
+types-psutil = "*"
 types-pyyaml = "*"
 
 [feature.deps-test.dependencies]
 ansi2html = "*"
 coverage = "*"
 doit = "*"
+psutil = ">=5"
 pytest = "*"
 pytest-cov = "*"
 pytest-html = "*"
@@ -601,11 +600,22 @@ pylsp-mypy = "*"
 python-lsp-ruff = "*"
 vale-ls = "*"
 
+[feature.deps-lite]
+channels = [
+  "conda-forge",
+  "conda-forge/label/jupyterlab_alpha",
+  "conda-forge/label/notebook_alpha",
+  "conda-forge/label/jupyterlite_core_alpha",
+  "conda-forge/label/jupyterlite_pyodide_kernel_alpha",
+]
 [feature.deps-lite.dependencies]
+jupyterlab = {version = ">=4.5.0a0", channel = "conda-forge/label/jupyterlab_alpha"}
 jupyterlite-core = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
-jupyterlite-core-with-libarchive = {version = "*", channel = "conda-forge/label/jupyterlite_core_alpha"}
-jupyterlite-core-with-translation = {version = "*", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-core-with-lab = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-core-with-libarchive = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+jupyterlite-core-with-translation = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
 jupyterlite-pyodide-kernel = {version = ">=0.7.0a1", channel = "conda-forge/label/jupyterlite_pyodide_kernel_alpha"}
+notebook = {version = ">=7.5.0a0", channel = "conda-forge/label/notebook_alpha"}
 pyodide-lock = "*"
 
 [feature.deps-check.dependencies]
