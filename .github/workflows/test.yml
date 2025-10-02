@@ -58,7 +58,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-env: [test-min-noipy, test-min, test-prev, test-max, test-pypy]
+        test-env:
+          - test-max
+          - test-min
+          - test-min-noipy
+          - test-next
+          - test-next-noipy
+          - test-prev
+          - test-pypy
         vm: [ubuntu-latest, macos-latest, windows-latest]
         exclude:
           - { test-env: test-min-noipy, vm: macos-latest }

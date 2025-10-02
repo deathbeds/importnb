@@ -59,6 +59,7 @@ test = {description = """🧪 run ALL tests""", depends-on = [
   "test-max-pytest-i",
   "test-pypy-pytest-maybe",
   "test-next-noipy-pytest",
+  "test-next-pytest",
 ], cmd = "echo 🧪 test OK"}
 
 docs = {description = """📃 build ALL documentation""", depends-on = [
@@ -309,10 +310,19 @@ description = "... run tests in the oldest plain environment"
 depends-on = [{task = "pip-whl--", args = [{env = "test-min-noipy"}]}]
 description = "... install in the oldest plain environment"
 
+# test future #####################################################################################
+[feature.tasks-test-next.tasks.test-next-pytest]
+depends-on = ["test-next-setup", {task = "test-cov--", args = [{env = "test-next"}]}]
+description = "... run tests in the next environment"
+
+[feature.tasks-test-next.tasks.test-next-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "test-next"}]}]
+description = "... install in the next environment"
+
 # test future, no IPython #########################################################################
 [feature.tasks-test-next-noipy.tasks.test-next-noipy-pytest]
 depends-on = ["test-next-noipy-setup", {task = "test-cov--", args = [{env = "test-next-noipy"}]}]
-description = "... run tests in the oldest plain environment"
+description = "... run tests in the next plain environment"
 
 [feature.tasks-test-next-noipy.tasks.test-next-noipy-setup]
 depends-on = [{task = "pip-whl--", args = [{env = "test-next-noipy"}]}]
@@ -713,6 +723,7 @@ test-min = [
   "tasks-test-min",
 ]
 test-min-noipy = ["deps-run", "deps-run-min", "deps-test", "deps-test-min", "tasks-test-min-noipy"]
+test-next = ["deps-run", "deps-run-next", "deps-test", "tasks-test-next"]
 test-next-noipy = ["deps-run", "deps-run-next", "deps-test", "tasks-test-next-noipy"]
 test-prev = [
   "deps-run",
