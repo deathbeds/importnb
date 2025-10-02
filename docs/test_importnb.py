@@ -366,7 +366,7 @@ def test_import_ipy() -> None:
 def test_cli(clean: None) -> None:
     from importnb import Notebook, is_ipython
 
-    if IS_WIN and IS_PYPY:  # pragma: no cover
+    if IS_WIN and IS_PYPY:
         skip(
             "subprocesses fail to clean up on win/pypy: OSError: [WinError 6] The handle is invalid"
         )

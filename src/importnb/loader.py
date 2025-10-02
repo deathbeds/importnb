@@ -254,9 +254,7 @@ class Loader(Interface[M], SourceFileLoader, Generic[M]):  # type: ignore[misc]
         if "anyio" in sys.modules:
             __import__("anyio").run(self.aexec_module, module)
         else:
-            from asyncio import get_event_loop
-
-            get_event_loop().run_until_complete(self.aexec_module(module))
+            __import__("asyncio").run(self.aexec_module(module))
 
     async def aexec_module(self, module: ModuleType) -> None:
         """An async ``exec_module`` method permitting top-level ``await``."""

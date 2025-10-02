@@ -78,7 +78,12 @@ disable_warnings = ["module-not-measured"]
 plugins = ["importnb.utils.coverage"]
 
 [tool.coverage.report]
-exclude_lines = ["""if __name__ == "__main__":""", "if TYPE_CHECKING:", "pragma: no cover"]
+exclude_lines = [
+  """if __name__ == "__main__":""",
+  "if TYPE_CHECKING:",
+  "pragma: no cover",
+  "if IS_WIN and IS_PYPY:",
+]
 omit = ["Untitled42.py", "_json_parser.py", "coverage.py", "minified.ipynb", "my_module.ipynb"]
 
 ## mypy ###########################################################################################
@@ -142,7 +147,7 @@ cache_dir = "build/.cache/pytest"
 filterwarnings = [
   # treat all warnings as errors ...
   "error",
-  # ... except for resource warnings on py3.13 from pytest-cov
+  # ... except for resource warnings on py3.13+ from pytest-cov
   "ignore:.*unclosed database.*:ResourceWarning",
   "ignore:.*Exception ignored in.*:pytest.PytestUnraisableExceptionWarning",
 ]

@@ -58,6 +58,7 @@ test = {description = """🧪 run ALL tests""", depends-on = [
   "test-max-pytest",
   "test-max-pytest-i",
   "test-pypy-pytest-maybe",
+  "test-next-noipy-pytest",
 ], cmd = "echo 🧪 test OK"}
 
 docs = {description = """📃 build ALL documentation""", depends-on = [
@@ -122,6 +123,7 @@ args = ["env"]
 cmd = """export $(pixi run --quiet --environment={{ env }} this-python--)
   && pixi run --environment={{ env }} pip-- --find-links=dist --no-index importnb
   && pixi run --environment={{ env }} pip-check--"""
+depends-on = ["build-pypi-wheel"]
 inputs = ["dist/*.whl"]
 outputs = ["build/reports/{{ env }}/pip-freeze.txt"]
 
@@ -156,7 +158,8 @@ outputs = ["build/reports/{{ env }}/{{ report }}.html"]
 args = ["env", {arg = "report", default = "pytest"}, {arg = "extra", default = ""}]
 cmd = """export COVERAGE_FILE=build/reports/{{ env }}/.{{ report }}.coverage
   && pixi run --environment={{ env }}
-    test-- {{ env }} {{ report }} cov '{{ extra }}'"""
+    test-- {{ env }} {{ report }} cov '{{ extra }} -o "filterwarnings=ignore:.*Plugin file tracers.*:coverage.exceptions.CoverageWarning"'
+  """
 outputs = [
   "build/reports/{{ env }}/.{{ report }}.coverage",
   "build/reports/{{ env }}/{{ report }}.html",
@@ -197,17 +200,34 @@ description = "... build the standalone JSON parser"
 inputs = ["build_parser.py", "src/importnb/json.g"]
 outputs = ["src/importnb/_json_parser.py"]
 
-[feature.tasks-build.tasks.build-pypi]
-cmd = """rm --recursive --force dist/ build/.cache/lite
-  && pyproject-build . --no-isolation"""
+[feature.tasks-build.tasks.build-pypi--]
+args = ["ext"]
+cmd = """
+  rm --recursive --force build/.cache/lite
+  && (rm dist/*.{{ ext }} || echo "no .{{ ext }} to clean")
+  && pyproject-build . --no-isolation {{ "--wheel" if ext == "whl" else "--sdist" }}"""
 depends-on = ["build-lark"]
-description = "... build the source and wheel distributions for PyPI"
 inputs = [
-  "!**/coverage",
-  "{README.md,LICENSE*,build_parser.py,pyproject.toml}",
-  "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "src/**/*.{g,ipy,ipynb,py}",
+  "{README.md,LICENSE*,pyproject.toml}",
+  "{% if ext == 'whl' %}README.md{% else %}docs/**/*.{g,ipy,ipynb,py}{% endif %}",
+  "{% if ext == 'whl' %}README.md{% else %}build_parser.py{% endif %}",
+  "{% if ext == 'whl' %}README.md{% else %}!docs/{coverage,mypy,vale,__pycache__}{% endif %}",
+  "{% if ext == 'whl' %}README.md{% else %}!docs/*.html{% endif %}",
 ]
-outputs = ["dist/*.{whl,tar.gz}"]
+outputs = ["dist/*.{{ ext }}"]
+
+[feature.tasks-build.tasks.build-pypi-wheel]
+depends-on = [{task = "build-pypi--", args = [{ext = "whl"}]}]
+description = "... build the wheel distribution for PyPI"
+
+[feature.tasks-build.tasks.build-pypi-sdist]
+depends-on = [{task = "build-pypi--", args = [{ext = "tar.gz"}]}]
+description = "... build the sdist distribution for PyPI"
+
+[feature.tasks-build.tasks.build-pypi]
+depends-on = ["build-pypi-sdist", "build-pypi-wheel"]
+description = "... build all distribution for PyPI"
 
 [feature.tasks-build-conda.tasks.build-conda]
 cmd = """rm --recursive --force dist/conda build/conda
@@ -220,7 +240,7 @@ cmd = """rm --recursive --force dist/conda build/conda
     --output-dir build/conda
   && mkdir -p dist/conda
   && cp -r build/conda/noarch dist/conda/noarch"""
-depends-on = ["build-pypi"]
+depends-on = ["build-pypi-sdist"]
 description = "... build a conda package with rattler-build"
 inputs = ["dist/*.tar.gz", "docs/recipe.yaml"]
 outputs = ["dist/conda/noarch"]
@@ -288,6 +308,15 @@ description = "... run tests in the oldest plain environment"
 [feature.tasks-test-min-noipy.tasks.test-min-noipy-setup]
 depends-on = [{task = "pip-whl--", args = [{env = "test-min-noipy"}]}]
 description = "... install in the oldest plain environment"
+
+# test future, no IPython #########################################################################
+[feature.tasks-test-next-noipy.tasks.test-next-noipy-pytest]
+depends-on = ["test-next-noipy-setup", {task = "test-cov--", args = [{env = "test-next-noipy"}]}]
+description = "... run tests in the oldest plain environment"
+
+[feature.tasks-test-next-noipy.tasks.test-next-noipy-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "test-next-noipy"}]}]
+description = "... install in the next plain environment"
 
 # test pypy ##################################################################
 [feature.tasks-test-pypy]
@@ -359,7 +388,7 @@ cmd = """export SOURCE_DATE_EPOCH=17302488620
   && cd lite
   && jupyter lite build
   && jupyter lite doit -- pre_archive:report:SHA256SUMS"""
-depends-on = ["build-pypi", "docs-lite-lock"]
+depends-on = ["build-pypi-wheel", "docs-lite-lock"]
 description = "... build the jupyter lite demo"
 inputs = ["!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}", "dist/*.whl", "lite/"]
 outputs = ["build/lite/SHA256SUMS"]
@@ -477,7 +506,7 @@ inputs = [
 
 [feature.tasks-check.tasks.check-wheel]
 cmd = "check-wheel-contents dist/*.whl"
-depends-on = ["build-pypi"]
+depends-on = ["build-pypi-wheel"]
 description = "... check the built wheel"
 inputs = ["dist/*.whl"]
 
@@ -538,6 +567,10 @@ python = ">=3.9"
 [feature.deps-run-min.dependencies]
 importlib-metadata = "4.8.3.*"
 python = "3.9.*"
+
+[feature.deps-run-next]
+channels = ["conda-forge", "conda-forge/label/python_rc"]
+dependencies.python = ">=3.14.0rc3"
 
 [feature.deps-build.dependencies]
 flit-core = ">=3.9,<4"
@@ -680,6 +713,7 @@ test-min = [
   "tasks-test-min",
 ]
 test-min-noipy = ["deps-run", "deps-run-min", "deps-test", "deps-test-min", "tasks-test-min-noipy"]
+test-next-noipy = ["deps-run", "deps-run-next", "deps-test", "tasks-test-next-noipy"]
 test-prev = [
   "deps-run",
   "deps-run-interactive",

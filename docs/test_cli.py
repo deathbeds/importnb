@@ -28,6 +28,10 @@ IS_WIN = platform.system() == "Windows"
 
 NORMALIZE_PATTERNS = [
     [
+        f"""python{".".join(map(str, sys.version_info[:2]))} -m""",
+        "",
+    ],
+    [
         r"UserWarning: Attempting to work in a virtualenv\.",
         "",
     ],
@@ -81,7 +85,7 @@ def untitled_context() -> dict[str, str]:
 def cli_test(command: str, expect_rc: int = 0) -> Callable[..., Callable[..., None]]:
     def delay(f: Callable[..., None]) -> Callable[..., None]:
         def wrapper(tmp_path: Path, untitled_context: dict[str, str]) -> None:
-            if IS_WIN and IS_PYPY:  # pragma: no cover
+            if IS_WIN and IS_PYPY:
                 pytest.skip(
                     "subprocesses fail to clean up on win/pypy: "
                     "OSError: [WinError 6] The handle is invalid"
