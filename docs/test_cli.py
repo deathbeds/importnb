@@ -32,6 +32,10 @@ NORMALIZE_PATTERNS = [
         "",
     ],
     [
+        """python.exe -m""",
+        "",
+    ],
+    [
         r"UserWarning: Attempting to work in a virtualenv\.",
         "",
     ],
