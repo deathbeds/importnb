@@ -1,28 +1,30 @@
 from __future__ import annotations
 
+import platform
 import re
 import sys
 import textwrap
 from difflib import unified_diff
 from pathlib import Path
 from shlex import split
-from subprocess import STDOUT
+from subprocess import STDOUT, call
 from typing import Any, Callable
 
 import pytest
-from psutil import Popen
 from pytest import importorskip
 
 from importnb import Notebook
 from importnb import __version__ as importnb_version
 
-UTF8: Any = {"encoding": "utf-8"}
-
 HERE = Path(__file__).parent
-UNTITLED = HERE / "Untitled42.ipynb"
 
 sys.path.insert(0, str(HERE))
 
+UNTITLED = HERE / "Untitled42.ipynb"
+UTF8: Any = {"encoding": "utf-8"}
+
+IS_PYPY = platform.python_implementation() == "PyPy"
+IS_WIN = platform.system() == "Windows"
 
 NORMALIZE_PATTERNS = [
     [
@@ -79,11 +81,16 @@ def untitled_context() -> dict[str, str]:
 def cli_test(command: str, expect_rc: int = 0) -> Callable[..., Callable[..., None]]:
     def delay(f: Callable[..., None]) -> Callable[..., None]:
         def wrapper(tmp_path: Path, untitled_context: dict[str, str]) -> None:
+            if IS_WIN and IS_PYPY:  # pragma: no cover
+                pytest.skip(
+                    "subprocesses fail to clean up on win/pypy: "
+                    "OSError: [WinError 6] The handle is invalid"
+                )
             path = tmp_path / "tmp"
             args = [sys.executable, *split(command)]
             print(">>>", " \\\n\t".join(args))
             with path.open("w", **UTF8) as fp:
-                rc = Popen(args, stdout=fp, stderr=STDOUT, cwd=str(tmp_path)).wait()
+                rc = call(args, stdout=fp, stderr=STDOUT, cwd=str(tmp_path))
             assert rc == expect_rc, f"didn't get expected return code {expect_rc}"
 
             raw_expected = f"{f.__doc__}".format(**untitled_context)

@@ -5,6 +5,7 @@ import inspect
 import json
 import linecache
 import os
+import platform
 import sys
 from importlib import reload
 from importlib.util import find_spec
@@ -26,6 +27,9 @@ if TYPE_CHECKING:
 
     from importnb import Notebook
     from importnb.finder import FileModuleSpec
+
+IS_WIN = platform.system() == "Windows"
+IS_PYPY = platform.python_implementation() == "PyPy"
 
 CLOBBER = ("Untitled42", "my_package", "__42", "__ed42", "__d42")
 
@@ -360,28 +364,27 @@ def test_import_ipy() -> None:
 
 
 def test_cli(clean: None) -> None:
-    import sys
-    from subprocess import CalledProcessError
-
-    from psutil import Popen
-
     from importnb import Notebook, is_ipython
+
+    if IS_WIN and IS_PYPY:  # pragma: no cover
+        skip(
+            "subprocesses fail to clean up on win/pypy: OSError: [WinError 6] The handle is invalid"
+        )
 
     if not is_ipython():
         import pytest
 
         pytest.skip("Not running under IPython")
-
     with Notebook():
         import Untitled42 as module
-    ipym = [sys.executable, "-m", "ipython", "-m"]
-    cmd = [*ipym, module.__name__]
-    cwd = f"{Path(module.__file__).parent}"
-    if not (rc := Popen(cmd, cwd=cwd).wait()):
-        raise CalledProcessError(rc, cmd)
-    cmd = [*ipym, "importnb", "--", module.__file__]
-    if not (rc := Popen(cmd, cwd=cwd).wait()):
-        raise CalledProcessError(rc, cmd)
+    __import__("subprocess").check_call(
+        f"ipython -m {module.__name__}".split(),
+        cwd=str(Path(module.__file__).parent),
+    )
+    __import__("subprocess").check_call(
+        f"ipython -m importnb -- {module.__file__}".split(),
+        cwd=str(Path(module.__file__).parent),
+    )
 
 
 @mark.filterwarnings("ignore::DeprecationWarning")
