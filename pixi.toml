@@ -564,6 +564,7 @@ deps-run-interactive-max.dependencies.ipython = ">=9"
 deps-run-interactive-min.dependencies.ipython = "7.16.1.*"
 deps-run-interactive-prev.dependencies.ipython = "<9"
 deps-run-max.dependencies.python = "3.13.*"
+deps-run-next.dependencies.python = "3.14.*"
 deps-run-prev.dependencies.python = "3.12.*"
 deps-run-pypy.dependencies.pypy = "*"
 deps-test-min.dependencies.pytest = "7.0.*"
@@ -577,10 +578,6 @@ python = ">=3.9"
 [feature.deps-run-min.dependencies]
 importlib-metadata = "4.8.3.*"
 python = "3.9.*"
-
-[feature.deps-run-next]
-channels = ["conda-forge", "conda-forge/label/python_rc"]
-dependencies.python = ">=3.14.0rc3"
 
 [feature.deps-build.dependencies]
 flit-core = ">=3.9,<4"
