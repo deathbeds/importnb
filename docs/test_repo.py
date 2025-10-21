@@ -135,7 +135,7 @@ def test_deps(the_pyproject: TDict, the_pixi: TDict) -> None:
 
 
 def test_pixi_versions(the_ci: TDict, the_pixi: TDict, the_rtd: TDict) -> None:
-    pxt_version = the_pixi["project"]["requires-pixi"].replace(">=", "")
+    pxt_version = the_pixi["workspace"]["requires-pixi"].replace(">=", "")
     gha_version = the_ci["env"]["INB_PIXI_VERSION"]
     assert gha_version == pxt_version
     assert any(f"pixi=={gha_version}" in line for line in the_rtd["build"]["commands"])
