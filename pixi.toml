@@ -1,11 +1,11 @@
 # repo automation for `importnb`
-"$schema" = "https://pixi.sh/v0.57.0/schema/manifest/schema.json"
+"$schema" = "https://pixi.sh/v0.59.0/schema/manifest/schema.json"
 
 [workspace]
 channels = ["conda-forge"]
 name = "importnb"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
-requires-pixi = ">=0.57.0"
+requires-pixi = ">=0.59.0"
 
 [tasks]
 all = {description = """🚢 run ALL non-interactive tasks to verify the project is ready to release""", depends-on = [

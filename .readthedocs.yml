@@ -7,7 +7,7 @@ build:
     python: mambaforge-23.11
   commands:
     - git fetch --tags --unshallow
-    - mamba install -c conda-forge -c nodefaults pixi==0.57.0
+    - mamba install -c conda-forge -c nodefaults pixi==0.59.0
     - pixi run build-pypi
     - pixi run build || echo "we tried"
     - pixi run test-max-pytest || echo "we tried"
