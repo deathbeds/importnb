@@ -135,7 +135,7 @@ args = [
   {arg = "cov", default = ""},
   {arg = "extra", default = ""},
 ]
-cmd = """pixi run --environment={{ env }} 
+cmd = """pixi run --environment={{ env }}
   {{ report if report == "pytest" else "ipython -m pytest --" }}
     --self-contained-html
     --html build/reports/{{ env }}/{{ report }}.html
@@ -169,7 +169,7 @@ outputs = [
 [tasks.ruff--]
 args = [{arg = "fix", default = ""}]
 cmd = """
-  ruff format {{ "" if fix else "--check" }} 
+  ruff format {{ "" if fix else "--check" }}
   && ruff check {{ "--fix-only" if fix else "" }}"""
 inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{docs,src,lite}/**/*.{g,ipy,ipynb,py}"]
 
@@ -181,8 +181,8 @@ inputs = ["docs/**/*.{robot,resource}", "pyproject.toml"]
 [tasks.robot--]
 args = ["out"]
 cmd = """
-  rm -rf {{ out }} 
-  && mkdir -p {{ out }} 
+  rm -rf {{ out }}
+  && mkdir -p {{ out }}
   && cd {{ out }}
   && robot {{ "--dryrun" if "dryrun" in out }}
     --randomize all
@@ -232,11 +232,11 @@ description = "... build all distribution for PyPI"
 
 [feature.tasks-build-conda.tasks.build-conda]
 cmd = """rm --recursive --force dist/conda build/conda
-  && export INB_VERSION=$(python -c "print(next(__import__('pathlib').Path('dist').glob('*.tar.gz')).name.replace('importnb-', '').replace('.tar.gz', ''))") 
+  && export INB_VERSION=$(python -c "print(next(__import__('pathlib').Path('dist').glob('*.tar.gz')).name.replace('importnb-', '').replace('.tar.gz', ''))")
   && echo "version $INB_VERSION"
-  && rattler-build build 
+  && rattler-build build
     --recipe docs
-    --channel conda-forge 
+    --channel conda-forge
     --color always
     --output-dir build/conda
   && mkdir -p dist/conda
@@ -580,7 +580,7 @@ importlib-metadata = "4.8.3.*"
 python = "3.9.*"
 
 [feature.deps-build.dependencies]
-flit-core = ">=3.9,<4"
+flit-core = ">=3.12,<4"
 lark = "*"
 python-build = "*"
 ruff = "*"
@@ -640,20 +640,29 @@ vale-ls = "*"
 [feature.deps-lite]
 channels = [
   "conda-forge",
-  "conda-forge/label/jupyterlab_beta",
-  "conda-forge/label/notebook_beta",
-  "conda-forge/label/jupyterlite_core_alpha",
-  "conda-forge/label/jupyterlite_pyodide_kernel_alpha",
+  ## when evaluating pre-releases, might look something like...
+  # "conda-forge/label/jupyterlab_beta",
+  # "conda-forge/label/notebook_beta",
+  # "conda-forge/label/jupyterlite_core_alpha",
+  # "conda-forge/label/jupyterlite_pyodide_kernel_alpha",
 ]
 [feature.deps-lite.dependencies]
-jupyterlab = {version = ">=4.5.0b0", channel = "conda-forge/label/jupyterlab_beta"}
-jupyterlite-core = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
-jupyterlite-core-with-lab = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
-jupyterlite-core-with-libarchive = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
-jupyterlite-core-with-translation = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
-jupyterlite-pyodide-kernel = {version = ">=0.7.0a1", channel = "conda-forge/label/jupyterlite_pyodide_kernel_alpha"}
-notebook = {version = ">=7.5.0b0", channel = "conda-forge/label/notebook_beta"}
+jupyterlab = ">=4.5.0,<5"
+jupyterlite-core = ">=0.7.0,<0.8.0"
+jupyterlite-core-with-lab = "*"
+jupyterlite-core-with-libarchive = "*"
+jupyterlite-core-with-translation = "*"
+jupyterlite-pyodide-kernel = ">=0.7.0,<0.8.0"
+notebook = ">=7.5.0,<8"
 pyodide-lock = "*"
+## when evaluating pre-releases, might look something like...
+# jupyterlab = {version = ">=4.5.0b0", channel = "conda-forge/label/jupyterlab_beta"}
+# jupyterlite-core = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+# jupyterlite-core-with-lab = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+# jupyterlite-core-with-libarchive = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+# jupyterlite-core-with-translation = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+# jupyterlite-pyodide-kernel = {version = ">=0.7.0a1", channel = "conda-forge/label/jupyterlite_pyodide_kernel_alpha"}
+# notebook = {version = ">=7.5.0b0", channel = "conda-forge/label/notebook_beta"}
 
 [feature.deps-check.dependencies]
 check-wheel-contents = "*"
