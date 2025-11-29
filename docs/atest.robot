@@ -48,6 +48,12 @@ Notebook As Test
 Notebook As API Docs
     Restart And Run All Notebook    docs_notebooks
 
+Notebook As Interactive Demo
+    Restart And Run All Notebook    widget_notebooks
+
+Notebook As Interactive Demo Backend
+    Restart And Run All Notebook    widget_notebooks_plumbing
+
 
 *** Keywords ***
 # main ############################################################################################
