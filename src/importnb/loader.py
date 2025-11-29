@@ -295,7 +295,7 @@ class Loader(Interface[M], SourceFileLoader, Generic[M]):  # type: ignore[misc]
     def code(self, raw: str) -> str:
         return dedent(raw)
 
-    @_requires_builtin  # type: ignore[misc]
+    @_requires_builtin  # type: ignore[untyped-decorator]
     def is_package(self, fullname: str) -> bool:
         """Return False as built-in modules are never packages."""
         if "." not in fullname:

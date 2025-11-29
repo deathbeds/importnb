@@ -588,11 +588,13 @@ ruff = "*"
 [feature.deps-lint.dependencies]
 actionlint-with-all = "*"
 lxml = "*"
-mypy = "*"
-nbstripout = "*"
-robotframework-robocop = "*"
-ruff = "*"
-taplo = "*"
+mypy = ">=1.19.0"
+nbstripout = ">=0.8.2"
+robotframework-robocop = ">=6.13.0"
+ruff = ">=0.14.7"
+taplo = ">=0.10.0"
+
+[feature.deps-types.dependencies]
 types-pyyaml = "*"
 
 [feature.deps-test.dependencies]
@@ -683,16 +685,17 @@ dev = [
   "deps-check",
   "deps-dev",
   "deps-docs",
-  "deps-lab",
   "deps-ipykernel",
+  "deps-lab",
   "deps-lint",
   "deps-lite",
   "deps-robot",
-  "deps-run",
-  "deps-run-interactive",
   "deps-run-interactive-max",
+  "deps-run-interactive",
   "deps-run-max",
+  "deps-run",
   "deps-test",
+  "deps-types",
   "tasks-dev",
 ]
 docs = ["deps-build", "deps-docs", "deps-ipykernel", "deps-run", "tasks-docs"]
@@ -708,6 +711,7 @@ lint = [
   "deps-run-max",
   "deps-run",
   "deps-test",
+  "deps-types",
   "tasks-lint",
 ]
 lite = ["deps-lab", "deps-ipykernel", "deps-lite", "tasks-lite"]
