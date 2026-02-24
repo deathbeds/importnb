@@ -2,17 +2,17 @@
 schema_version: 1
 
 context:
-  version: ${{ env.get("INB_VERSION") }}
+  version: ${{ load_from_file("../pyproject.toml").project.version }}
   python_min: "3.10"
   python_check_max: "3.14"
-  name: importnb
+  name: ${{ load_from_file("../pyproject.toml").project.name }}
 
 package:
   name: ${{ name }}
   version: ${{ version }}
 
 source:
-  - path: ../dist/importnb-${{ version }}.tar.gz
+  - path: ../dist/${{ name }}-${{ version }}.tar.gz
 
 build:
   number: 0
