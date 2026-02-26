@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json
+schema_version: 1
+
+context:
+  version: ${{ load_from_file("../pyproject.toml").project.version }}
+  python_min: "3.10"
+  python_check_max: "3.14"
+  name: ${{ load_from_file("../pyproject.toml").project.name }}
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  - path: ../dist/${{ name }}-${{ version }}.tar.gz
+
+build:
+  number: 0
+  noarch: python
+  script:
+    - ${{ PYTHON }} -m pip install . --no-deps --no-build-isolation --disable-pip-version-check
+  python:
+    entry_points:
+      - ${{ name }} = ${{ name }}.__main__:main
+
+requirements:
+  host:
+    - flit-core >=3.12.0,<4
+    - lark
+    - pip
+    - python ${{ python_min }}.*
+  run:
+    - importlib-metadata >=4.8.3
+    - python >=${{ python_min }}
+
+tests:
+  - python:
+      imports: ${{ name }}
+      pip_check: true
+      python_version:
+        - ${{ python_min }}.*
+        - ${{ python_check_max }}.*
+  - files:
+      source:
+        - docs/
+        - pyproject.toml
+    requirements:
+      run:
+        - pytest
+        - python ${{ python_min }}.*
+    script:
+    - ${{ name }} --version
+    - ${{ name }} --help
+    - python -c "assert __import__('${{ name }}').__version__ == '${{ version }}'"
+    - pytest -k "not doit"
+
+about:
+  summary: import jupyter notebooks as python modules and scripts.
+  documentation: https://github.com/deathbeds/${{ name }}
+  license: BSD-3-Clause AND MPL-2.0
+  license_file:
+    - LICENSE
+    - LICENSE-MPL-2.0

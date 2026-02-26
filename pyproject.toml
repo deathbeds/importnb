@@ -1,62 +1,50 @@
 [build-system]
-build-backend = "hatchling.build"
-requires = [
-  "hatch-vcs",
-  "hatchling",
-]
+build-backend = "flit_core.buildapi"
+requires = ["flit-core >=3.12.0,<4.0.0"]
 
 [project]
-name = "importnb"
-description = "import jupyter notebooks as python modules and scripts."
-readme = "README.md"
-keywords = [
-]
-license = "BSD-3-Clause AND MPL-2.0"
-license-files = { paths = ["LICENSE", "LICENSE-MPL-2.0"] }
-authors = [{ name = "tonyfast", email = "tony.fast@gmail.com" }]
-requires-python = ">=3.8"
+authors = [{name = "tonyfast", email = "tony.fast@gmail.com"}]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: IPython",
   "Framework :: Jupyter",
-  "License :: OSI Approved :: BSD License",
-  "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
   "Natural Language :: English",
-  "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
+  "Programming Language :: Python",
+  "Typing :: Typed",
 ]
-dynamic = [
-  "version",
-] # uses hatch-vcs
-dependencies = [
-  'importlib-metadata>=4.8.3; python_version < "3.10"',
-]
+dependencies = ['importlib-metadata>=4.8.3; python_version < "3.10"']
+description = "import jupyter notebooks as python modules and scripts."
+keywords = []
+license = "BSD-3-Clause AND MPL-2.0"
+license-files = ["LICENSE", "LICENSE-MPL-2.0"]
+name = "importnb"
+readme = "README.md"
+requires-python = ">=3.9"
+version = "2026.2.0a0"
+
 [project.optional-dependencies]
-docs = [
-  "mkdocs-jupyter",
-  "mkdocs-material",
-  "ruamel.yaml",
-]
-interactive = [
-  "ipython",
-]
-tasks = [
-  "doit",
-  "tomli",
-]
+interactive = ["ipython >=7.16.1"]
+tasks = ["doit", "tomli"]
+test = ["doit", "pytest", "pytest-cov", "ruamel.yaml", "tomli", "tomli-w"]
+yaml = ["ruamel.yaml"]
+
 [project.urls]
 Documentation = "https://github.com/deathbeds/importnb#readme"
 Issues = "https://github.com/deathbeds/importnb/issues"
 Source = "https://github.com/deathbeds/importnb"
+
 [project.scripts]
 importnb = "importnb.__main__:main"
+
 [project.entry-points.importnb]
 ipy = "importnb.loader:Notebook"
 ipynb = "importnb.loader:Notebook"
@@ -65,173 +53,213 @@ py = "importnb.loader:Loader"
 toml = "importnb.loaders:Toml"
 yaml = "importnb.loaders:Yaml"
 yml = "importnb.loaders:Yaml"
-[project.entry-points.pytest11]
-importnb = "importnb.utils.pytest_importnb"
 
-[tool.hatch.build.hooks.custom]
-# we build a json grammar with each release because we fiend for line numbers
-dependencies = ["lark"]
-
-[tool.hatch.version]
-# versioning
-source = "vcs"
-
-[tool.hatch.build.hooks.vcs]
-version-file = "src/importnb/_version.py"
-
-[tool.hatch.build.targets.sdist]
-exclude = ["docs/coverage", "docs/*.png"]
-
-[tool.hatch.envs.test]
-# test matrix
-dependencies = [
-  "pytest",
-  "pytest-cov",
-  "doit",
-  "tomli",
-  "ruamel.yaml",
-  "tomli_w",
+# flit ############################################################################################
+[tool.flit.sdist]
+include = [
+  "docs/test_*.*",
+  # fixtures
+  "docs/Untitled42.ipynb",
+  "docs/async-cells.ipynb",
+  "docs/ascript.ipy",
 ]
 
-[[tool.hatch.envs.test.matrix]]
-version = ["stdlib", "interactive"]
-
-[tool.hatch.envs.test.overrides]
-matrix.version.features = [{ value = "interactive", if = ["interactive"] }]
-matrix.version.dev-mode = [{ value = false, env = ["CI=true"] }]
-
-[tool.hatch.envs.test.scripts]
-cov = """
-pytest --cov=importnb --cov-branch --cov-context=test --cov-report=html --cov-report=term-missing:skip-covered --no-cov-on-fail
-"""
-run = "pytest"
-
-[tool.hatch.envs.released]
-# test a release on test-pypi
-dependencies = [
-  "importnb",
-  "IPython",
-  "pytest",
-  "pytest-cov",
-  "doit",
-  "tomli_w",
-  "ruamel.yaml",
-]
-
-[tool.hatch.envs.released.scripts]
-test = "pytest"
-
-[tool.hatch.envs.released.env-vars]
-PIP_INDEX_URL = "https://test.pypi.org/simple/"
-PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
-PIP_PRE = "1"
-
-[[tool.hatch.envs.released.matrix]]
-version = ["interactive", "stdlib"]
-
-[tool.hatch.envs.docs]
-# documentation
-features = ["docs"]
-
-[tool.hatch.envs.docs.scripts]
-build = "mkdocs build"
-serve = "mkdocs serve"
-
-[tool.hatch.envs.format]
-skip-install = true
-dependencies = [
-  "ruff",
-  "pyproject-fmt"
-]
-
-[tool.hatch.envs.format.scripts]
-code = """
-pyproject-fmt pyproject.toml
-ruff --fix-only .
-ruff format .
-"""
-
-[tool.ruff]
-# formatting cause linting sucks
-cache-dir = "build/.cache/ruff"
-line-length = 100
-extend-include = ["*.ipynb"]
-
-[tool.ruff.lint]
-isort.known-first-party = ["importnb"]
-ignore = [
-  "D203",
-  "D213",
-  "COM812",
-  "ISC001",
-]
-select = [
-  "A",
-  "ANN",
-  "ARG",
-  "B",
-  "BLE",
-  "C4",
-  "C90",
-  "COM",
-  "D",
-  "DJ",
-  "DTZ",
-  "E",
-  "EM",
-  "ERA",
-  "EXE",
-  "F",
-  "FBT",
-  "G",
-  "I",
-  "ICN",
-  "INP",
-  "ISC",
-  "N",
-  "NPY",
-  "PD",
-  "PGH",
-  "PIE",
-  "PL",
-  "PT",
-  "PTH",
-  "PYI",
-  "Q",
-  "RET",
-  "RSE",
-  "RUF",
-  "S",
-  "SIM",
-  "SLF",
-  "T10",
-  "T20",
-  "TCH",
-  "TID",
-  "TRY",
-  "UP",
-  "W",
-  "YTT",
-]
-[tool.ruff.lint.per-file-ignores]
-"test_cli.py" = ["D415", "D207", "D208"]
-
-[tool.pytest.ini_options]
-cache_dir = "build/.cache/pytest"
-addopts = [
-  "-vv",
-  "--tb=long",
-  "--color=yes",
-  "-ppytester",
-]
-filterwarnings = [
-  "error",
+# tools in alphabetical order #####################################################################
+## coverage #######################################################################################
+[tool.coverage.paths]
+source = [
+  # this must come first
+  "src",
+  # unix
+  ".pixi/envs/*/lib/python*/site-packages",
 ]
 
 [tool.coverage.run]
-data_file = "build/.coverage"
+disable_warnings = ["module-not-measured"]
+plugins = ["importnb.utils.coverage"]
+
 [tool.coverage.report]
-omit = ["_json_parser.py"]
+exclude_lines = [
+  """if __name__ == "__main__":""",
+  "if TYPE_CHECKING:",
+  "pragma: no cover",
+  "if IS_WIN and IS_PYPY:",
+]
+omit = ["Untitled42.py", "_json_parser.py", "coverage.py", "minified.ipynb", "my_module.ipynb"]
+
+## mypy ###########################################################################################
 [tool.coverage.html]
-directory = "docs/coverage"
 show_contexts = true
+
+[tool.mypy]
+allow_redefinition = true
+cache_dir = "build/.cache/mypy"
+check_untyped_defs = true
+disallow_untyped_defs = true
+exclude = "_json_parser.py"
+no_implicit_optional = true
+python_version = "3.10"
+show_error_code_links = true
+show_error_codes = true
+show_error_context = true
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = [
+  # core
+  "importlib._bootstrap",
+  "importlib._bootstrap_external",
+  "tomllib",
+  # contrib
+  "doit",
+  "doit.*",
+  # test
+  "Untitled42",
+  "__42",
+  "__d42",
+  "__ed42",
+  "ascript",
+  "async_cells",
+  "json_data",
+  "minified",
+  "my_package",
+  "my_package.*",
+  "toml_data",
+  "yaml_data",
+  # docs
+  "jupyterlite_pyodide_kernel.*",
+]
+
+## pytest #########################################################################################
+[tool.pytest.ini_options]
+addopts = [
+  "--color=yes",
+  "--tb=long",
+  "-pimportnb.utils.pytest_importnb",
+  "-ppytester",
+  "-vv",
+  # need to investigate this
+  "--ignore=docs/ascript.ipy",
+]
+cache_dir = "build/.cache/pytest"
+filterwarnings = [
+  # treat all warnings as errors ...
+  "error",
+  # ... except for resource warnings on py3.13+ from pytest-cov
+  "ignore:.*unclosed database.*:ResourceWarning",
+  "ignore:.*Exception ignored in.*:pytest.PytestUnraisableExceptionWarning",
+]
+testpaths = ["docs", "src"]
+
+## robocop ########################################################################################
+[tool.robocop]
+format.line_length = 100
+lint.ignore = ["DEPR06", "DEPR05", "DOC01", "DOC02", "DOC03", "VAR05"]
+
+## ruff ###########################################################################################
+[tool.ruff]
+cache-dir = "build/.cache/ruff"
+extend-exclude = ["_json_parser.py", ".github", ".pixi/**", "build", "dist", "site"]
+extend-include = ["*.ipynb"]
+line-length = 100
+preview = true
+target-version = "py39"
+
+[tool.ruff.lint]
+ignore = [
+  # linter/formatter incompatibility
+  "COM812",
+  "D203",
+  "D213",
+  "ISC001",
+  # current findings
+  "A001",
+  "A002",
+  "A004",
+  "ANN401",
+  "ARG001",
+  "ARG002",
+  "ARG003",
+  "B007",
+  "B008",
+  "B018",
+  "C408",
+  "CPY001",
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "D107",
+  "D107",
+  "D205",
+  "D400",
+  "D401",
+  "D415",
+  "D419",
+  "DOC201",
+  "DOC402",
+  "DOC501",
+  "E402",
+  "E501",
+  "E722",
+  "E741",
+  "EM101",
+  "EM102",
+  "F841",
+  "FBT001",
+  "FBT002",
+  "FBT003",
+  "FLY002",
+  "FURB192",
+  "INP001",
+  "N801",
+  "N802",
+  "N806",
+  "N813",
+  "PERF203",
+  "PLC0415",
+  "PLC2701",
+  "PLE1142",
+  "PLR0904",
+  "PLR0913",
+  "PLR2004",
+  "PLR6301",
+  "PLW0602",
+  "PLW1514",
+  "PLW3201",
+  "PT013",
+  "PTH103",
+  "PTH123",
+  "PYI034",
+  "RET503",
+  "RUF005",
+  "RUF017",
+  "RUF029",
+  "RUF067",
+  "S101",
+  "S112",
+  "S404",
+  "S603",
+  "SIM102",
+  "SIM105",
+  "SLF001",
+  "T201",
+  "TRY003",
+  "TRY201",
+  "TRY300",
+  "TRY301",
+  "W391",
+  "YTT204",
+]
+isort.known-first-party = ["importnb"]
+select = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"Untitled42.ipynb" = ["ANN001", "ANN201"]
+"lite/*" = ["S310", "PD901", "RET504"]
+"lite/files/*" = ["ANN201", "ANN001", "PT015", "S108", "B011"]
+"test_cli.py" = ["D207", "D208", "D415"]

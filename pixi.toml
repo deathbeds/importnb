@@ -1,0 +1,750 @@
+# repo automation for `importnb`
+"$schema" = "https://pixi.sh/v0.63.2/schema/manifest/schema.json"
+
+[workspace]
+channels = ["conda-forge"]
+name = "importnb"
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+requires-pixi = ">=0.63.2"
+
+[tasks]
+all = {description = """🚢 run ALL non-interactive tasks to verify the project is ready to release""", depends-on = [
+  "fix",
+  "lint",
+  "build",
+  "test-max-pytest",
+  "test-max-pytest-i",
+  "docs",
+  "check",
+], cmd = "echo 🚢 all OK "}
+
+all-epochs = {description = """🚀 run all, including tests in the minimum/latest envs""", depends-on = [
+  "all",
+  "test",
+  "atest",
+], cmd = "echo 🚀 all epochs OK"}
+
+atest = {description = "🤖 run acceptance tests", depends-on = [
+  "atest-lite",
+], cmd = "echo 🤖 atest OK "}
+
+fix = {description = """🧹 apply ALL source formatting tools""", depends-on = [
+  "fix-taplo",
+  "fix-ruff",
+  "fix-nbstripout",
+  "fix-robocop",
+], cmd = "echo 🧹 fix OK"}
+
+build = {description = """📦 build ALL distributions""", depends-on = [
+  "build-lark",
+  "build-pypi",
+  "build-conda",
+], cmd = "echo 📦 build OK"}
+
+lint = {description = """✅ apply ALL static analysis tools""", depends-on = [
+  "lint-ruff",
+  "lint-mypy-src",
+  "lint-mypy-dev",
+  "lint-actionlint",
+  "lint-robocop",
+  "lint-robot",
+], cmd = "echo ✅ lint OK"}
+
+test = {description = """🧪 run ALL tests""", depends-on = [
+  "test-min-noipy-pytest",
+  "test-min-pytest",
+  "test-min-pytest-i",
+  "test-prev-pytest",
+  "test-max-pytest",
+  "test-max-pytest-i",
+  "test-pypy-pytest-maybe",
+  "test-next-noipy-pytest",
+  "test-next-pytest",
+], cmd = "echo 🧪 test OK"}
+
+docs = {description = """📃 build ALL documentation""", depends-on = [
+  "docs-lite",
+  "docs-mkdocs",
+], cmd = "echo 📃 docs OK"}
+
+check = {description = """🤓 perform ALL pre-release checks""", depends-on = [
+  "check-links",
+  "check-twine",
+  "check-vale",
+  "check-wheel",
+], cmd = "echo 🤓 check OK"}
+
+dev = {description = """🎮 start an interactive development environment""", depends-on = [
+  "dev-lab",
+], cmd = "echo 🎮"}
+
+test-pypy-pytest-maybe = {cmd = """(
+    pixi install --environment=test-pypy
+    || (
+      echo "can't install pypy on this platform"
+      && exit 0
+    )
+  ) && pixi run test-pypy-pytest""", description = """
+... run unit tests against pypy (if possible)"""}
+
+# fragments #######################################################################################
+mkdocs-- = """
+  export JUPYTER_PLATFORM_DIRS=1
+  && mkdocs"""
+pip-- = """
+  pixi run --quiet uv-- uninstall importnb
+  && pixi run --quiet uv-- install
+    --no-deps
+    --no-build-isolation
+    --no-cache
+    --offline
+    --link-mode copy"""
+pip-check-- = """
+  export ENV_REPORTS=build/reports/$PIXI_ENVIRONMENT_NAME
+  && export FROZEN=$ENV_REPORTS/pip-freeze.txt
+  && rm --recursive --force $FROZEN
+  && pixi run uv-- check
+  && mkdir --parents $ENV_REPORTS
+  && pixi run --quiet uv-- list --format=freeze > $FROZEN"""
+pixi-get-json-- = "taplo get --output-format json --file-path pixi.toml"
+this-python-- = "echo UV_PYTHON=$(python -c 'import sys; print(sys.executable)')"
+uv-- = "pixi run --quiet --environment=uv uv pip"
+
+# template tasks ##################################################################################
+[tasks.pip-e--]
+args = ["env"]
+cmd = """export $(pixi run --quiet --environment={{ env }} this-python--)
+  && pixi run --environment={{ env }} pip-- --editable .
+  && pixi run --environment={{ env }} pip-check--"""
+inputs = ["pyproject.toml"]
+outputs = ["build/reports/{{ env }}/pip-freeze.txt"]
+
+[tasks.pip-whl--]
+args = ["env"]
+cmd = """export $(pixi run --quiet --environment={{ env }} this-python--)
+  && pixi run --environment={{ env }} pip-- --find-links=dist --no-index importnb
+  && pixi run --environment={{ env }} pip-check--"""
+depends-on = ["build-pypi-wheel"]
+inputs = ["dist/*.whl"]
+outputs = ["build/reports/{{ env }}/pip-freeze.txt"]
+
+[tasks.test--]
+args = [
+  "env",
+  {arg = "report", default = "pytest"},
+  {arg = "cov", default = ""},
+  {arg = "extra", default = ""},
+]
+cmd = """pixi run --environment={{ env }}
+  {{ report if report == "pytest" else "ipython -m pytest --" }}
+    --self-contained-html
+    --html build/reports/{{ env }}/{{ report }}.html
+    --override-ini generate_report_on_test=true {% if cov == "cov" %}
+    --cov importnb
+    --cov docs
+    --cov-branch
+    --cov-context test
+    --cov-report term-missing:skip-covered
+    --no-cov-on-fail
+    {% endif %} {{ extra }}"""
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "build/reports/{{ env }}/pip-freeze.txt",
+  "{docs,src}/**/*.{g,ipy,ipynb,py}",
+  "{pyproject.toml,pixi.toml,.readthedocs.yml,README.md}",
+]
+outputs = ["build/reports/{{ env }}/{{ report }}.html"]
+
+[tasks.test-cov--]
+args = ["env", {arg = "report", default = "pytest"}, {arg = "extra", default = ""}]
+cmd = """export COVERAGE_FILE=build/reports/{{ env }}/.{{ report }}.coverage
+  && pixi run --environment={{ env }}
+    test-- {{ env }} {{ report }} cov '{{ extra }} -o "filterwarnings=ignore:.*Plugin file tracers.*:coverage.exceptions.CoverageWarning"'
+  """
+outputs = [
+  "build/reports/{{ env }}/.{{ report }}.coverage",
+  "build/reports/{{ env }}/{{ report }}.html",
+]
+
+[tasks.ruff--]
+args = [{arg = "fix", default = ""}]
+cmd = """
+  ruff format {{ "" if fix else "--check" }}
+  && ruff check {{ "--fix-only" if fix else "" }}"""
+inputs = ["!**/.ipynb_checkpoints", "pyproject.toml", "{docs,src,lite}/**/*.{g,ipy,ipynb,py}"]
+
+[tasks.robocop--]
+args = [{arg = "fix", default = ""}]
+cmd = """robocop {{ "format" if fix else "check" }} docs"""
+inputs = ["docs/**/*.{robot,resource}", "pyproject.toml"]
+
+[tasks.robot--]
+args = ["out"]
+cmd = """
+  rm -rf {{ out }}
+  && mkdir -p {{ out }}
+  && cd {{ out }}
+  && robot {{ "--dryrun" if "dryrun" in out }}
+    --randomize all
+    --name importnb
+    --console-width 100
+    $PIXI_PROJECT_ROOT/docs
+"""
+depends-on = ["docs-lite"]
+inputs = ["build/lite", "docs/*.{robot,resource}"]
+outputs = ["{{ out }}"]
+
+# build ###########################################################################################
+[feature.tasks-build.tasks.build-lark]
+cmd = """python build_parser.py --update"""
+description = "... build the standalone JSON parser"
+inputs = ["build_parser.py", "src/importnb/json.g"]
+outputs = ["src/importnb/_json_parser.py"]
+
+[feature.tasks-build.tasks.build-pypi--]
+args = ["ext"]
+cmd = """
+  rm --recursive --force build/.cache/lite
+  && (rm dist/*.{{ ext }} || echo "no .{{ ext }} to clean")
+  && pyproject-build . --no-isolation {{ "--wheel" if ext == "whl" else "--sdist" }}"""
+depends-on = ["build-lark"]
+inputs = [
+  "src/**/*.{g,ipy,ipynb,py}",
+  "{README.md,LICENSE*,pyproject.toml}",
+  "{% if ext == 'whl' %}README.md{% else %}docs/**/*.{g,ipy,ipynb,py}{% endif %}",
+  "{% if ext == 'whl' %}README.md{% else %}build_parser.py{% endif %}",
+  "{% if ext == 'whl' %}README.md{% else %}!docs/{coverage,mypy,vale,__pycache__}{% endif %}",
+  "{% if ext == 'whl' %}README.md{% else %}!docs/*.html{% endif %}",
+]
+outputs = ["dist/*.{{ ext }}"]
+
+[feature.tasks-build.tasks.build-pypi-wheel]
+depends-on = [{task = "build-pypi--", args = [{ext = "whl"}]}]
+description = "... build the wheel distribution for PyPI"
+
+[feature.tasks-build.tasks.build-pypi-sdist]
+depends-on = [{task = "build-pypi--", args = [{ext = "tar.gz"}]}]
+description = "... build the sdist distribution for PyPI"
+
+[feature.tasks-build.tasks.build-pypi]
+depends-on = ["build-pypi-sdist", "build-pypi-wheel"]
+description = "... build all distribution for PyPI"
+
+[feature.tasks-build-conda.tasks.build-conda]
+cmd = """rm --recursive --force dist/conda build/conda
+  && rattler-build build
+    --experimental
+    --recipe docs
+    --channel conda-forge
+    --color always
+    --output-dir build/conda
+  && mkdir -p dist/conda
+  && cp -r build/conda/noarch dist/conda/noarch"""
+depends-on = ["build-pypi-sdist"]
+description = "... build a conda package with rattler-build"
+inputs = ["dist/*.tar.gz", "docs/recipe.yaml"]
+outputs = ["dist/conda/noarch"]
+
+# test ############################################################################################
+[feature.tasks-test-max.tasks.test-max-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "test-max"}]}]
+description = "... install the package in the latest test environment"
+
+[feature.tasks-test-max.tasks.test-max-pytest]
+cmd = """rm --recursive --force docs/pytest.html docs/coverage
+  && (
+    pixi run test-cov-- test-max pytest --cov-report=html:docs/coverage
+    && cp build/reports/test-max/pytest.html docs/pytest.html
+  ) || (
+    cp build/reports/test-max/pytest.html docs/pytest.html
+    && exit 1
+  )"""
+depends-on = ["test-max-setup"]
+description = "... run unit tests with coverage, deploy to docs"
+outputs = ["docs/coverage", "docs/pytest.html", "build/reports/test-max/pytest.html"]
+
+[feature.tasks-test-max.tasks.test-max-pytest-i]
+depends-on = [
+  "test-max-setup",
+  {task = "test-cov--", args = [
+    {env = "test-max"},
+    {report = "pytest-i"},
+  ]},
+]
+description = "... run unit tests with coverage (under ipython)"
+
+# test next-to-latest
+[feature.tasks-test-prev.tasks.test-prev-pytest]
+depends-on = ["test-prev-setup", {task = "test-cov--", args = [{env = "test-prev"}]}]
+description = "... run unit tests with coverage"
+[feature.tasks-test-prev.tasks.test-prev-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "test-prev"}]}]
+description = "... install in the next-to-latest test environment"
+
+# test oldest #####################################################################################
+[feature.tasks-test-min.tasks.test-min-pytest]
+depends-on = ["test-min-setup", {task = "test-cov--", args = [{env = "test-min"}]}]
+description = "... pytest in the oldest environment"
+
+[feature.tasks-test-min.tasks.test-min-pytest-i]
+depends-on = [
+  "test-min-setup",
+  {task = "test-cov--", args = [
+    {env = "test-min"},
+    {report = "pytest-i"},
+  ]},
+]
+description = "... ipython pytest in the oldest supported environment"
+
+[feature.tasks-test-min.tasks.test-min-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "test-min"}]}]
+description = "... install in the oldest environment"
+
+# test oldest, no IPython #########################################################################
+[feature.tasks-test-min-noipy.tasks.test-min-noipy-pytest]
+depends-on = ["test-min-noipy-setup", {task = "test-cov--", args = [{env = "test-min-noipy"}]}]
+description = "... run tests in the oldest plain environment"
+
+[feature.tasks-test-min-noipy.tasks.test-min-noipy-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "test-min-noipy"}]}]
+description = "... install in the oldest plain environment"
+
+# test future #####################################################################################
+[feature.tasks-test-next.tasks.test-next-pytest]
+depends-on = ["test-next-setup", {task = "test-cov--", args = [{env = "test-next"}]}]
+description = "... run tests in the next environment"
+
+[feature.tasks-test-next.tasks.test-next-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "test-next"}]}]
+description = "... install in the next environment"
+
+# test future, no IPython #########################################################################
+[feature.tasks-test-next-noipy.tasks.test-next-noipy-pytest]
+depends-on = ["test-next-noipy-setup", {task = "test-cov--", args = [{env = "test-next-noipy"}]}]
+description = "... run tests in the next plain environment"
+
+[feature.tasks-test-next-noipy.tasks.test-next-noipy-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "test-next-noipy"}]}]
+description = "... install in the next plain environment"
+
+# test pypy ##################################################################
+[feature.tasks-test-pypy]
+platforms = ["linux-64", "osx-64", "win-64"]
+
+[feature.tasks-test-pypy.tasks]
+test-pypy-pytest = {description = "... run tests in a pypy environment", depends-on = [
+  "test-pypy-setup",
+  {task = "test--", args = [
+    {env = "test-pypy"},
+  ]},
+]}
+test-pypy-setup = {description = "... install in a pypy environment", depends-on = [
+  {task = "pip-whl--", args = [
+    {env = "test-pypy"},
+  ]},
+]}
+
+# docs ############################################################################################
+[feature.tasks-docs.tasks.docs-setup]
+depends-on = [{task = "pip-e--", args = [{env = "docs"}]}]
+description = "... install for documentation"
+
+[feature.tasks-docs.tasks.docs-mkdocs]
+cmd = "pixi run mkdocs-- build"
+depends-on = ["docs-lite", "docs-setup"]
+description = "... build the documentation site"
+inputs = [
+  "!**/{.ipynb_checkpoints,__pycache__,coverage,vale,mypy}/",
+  "!docs/{pytest.html,atest.robot,atest.html}",
+  "build/lite/SHA256SUMS",
+  "docs/",
+  "src/",
+  "{mkdocs.yml,README.md,CONTRIBUTING.md}",
+]
+outputs = ["!site/lite/", "site/"]
+
+[feature.tasks-docs.tasks.docs-serve]
+cmd = "pixi run mkdocs-- serve"
+depends-on = ["docs-lite", "docs-setup"]
+description = "... serve the documentation site"
+
+[feature.tasks-docs.tasks.docs-rtd]
+cmd = """python -c "
+import os;
+assert all(map(os.getenv, ['READTHEDOCS', 'READTHEDOCS_OUTPUT'])), 'not on ReadTheDocs'
+  "
+  && mkdir --parents "$READTHEDOCS_OUTPUT"
+  && cp --recursive site "$READTHEDOCS_OUTPUT/html"
+  && cd "$READTHEDOCS_OUTPUT"
+  && ls html"""
+depends-on = ["docs-mkdocs"]
+description = "... copy the documentation site to where ReadTheDocs wants it"
+
+# lite ############################################################################################
+[feature.tasks-lite.tasks.docs-lite-setup]
+depends-on = [{task = "pip-whl--", args = [{env = "lite"}]}]
+description = "... install the built package for demo building"
+
+[feature.tasks-lite.tasks.docs-lite-lock]
+cmd = """python lite/lock.py"""
+depends-on = ["docs-lite-setup"]
+inputs = ["dist/*.whl", "lite/lock.py"]
+outputs = ["build/pyodide-core.tar.bz2", "lite/files/pyodide-lock.json"]
+
+[feature.tasks-lite.tasks.docs-lite]
+cmd = """export SOURCE_DATE_EPOCH=17302488620
+  && rm --force --recursive build/lite lite/.jupyterlite.doit.db
+  && cd lite
+  && jupyter lite build
+  && jupyter lite doit -- pre_archive:report:SHA256SUMS"""
+depends-on = ["build-pypi-wheel", "docs-lite-lock"]
+description = "... build the jupyter lite demo"
+inputs = ["!**/*.doit*", "!**/{.ipynb_checkpoints,__pycache__}", "dist/*.whl", "lite/"]
+outputs = ["build/lite/SHA256SUMS"]
+
+[feature.tasks-lite.tasks.docs-lite-serve]
+cmd = "cd build/lite && python -m http.server -b 127.0.0.1 7777"
+depends-on = ["docs-lite"]
+description = "... serve the jupyterlite demo"
+
+# lint ############################################################################################
+[feature.tasks-lint.tasks.lint-setup]
+depends-on = [{task = "pip-e--", args = [{env = "lint"}]}]
+description = "... editable install for static analysis"
+
+[feature.tasks-lint.tasks.fix-nbstripout]
+cmd = "nbstripout --keep-id --drop-empty-cells docs/*.ipynb lite/files/*.ipynb"
+description = "... fix notebook JSON"
+inputs = ["!**/.ipynb_checkpoints", "{docs,lite}/**/*.ipynb"]
+
+[feature.tasks-lint.tasks.fix-ruff]
+depends-on = [{task = "ruff--", environment = "lint", args = [{fix = "1"}]}]
+description = "... fix python source in notebooks and python files"
+
+[feature.tasks-lint.tasks.fix-taplo]
+cmd = """taplo format *.toml lite/files/*.toml
+  --option=array_auto_collapse=true
+  --option=compact_inline_tables=true
+  --option=reorder_keys=true
+  --option=column_width=100"""
+description = "... fix toml files"
+inputs = ["*.toml", "lite/files/*.toml"]
+
+[feature.tasks-lint.tasks.lint-mypy-src]
+cmd = """rm --recursive --force docs/mypy
+  && mypy --package importnb --html-report docs/mypy"""
+depends-on = ["lint-setup"]
+description = "... check python type hints for the shipped source code"
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "build/reports/lint/pip-freeze.txt",
+  "pyproject.toml",
+  "src/**/*.py",
+]
+outputs = ["docs/mypy"]
+
+[feature.tasks-lint.tasks.lint-mypy-dev]
+cmd = "mypy *.py docs/**/*.py lite/**/*.py"
+depends-on = ["lint-setup"]
+description = "... check python type hints for tests and tools"
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "*.py",
+  "build/reports/lint/pip-freeze.txt",
+  "pyproject.toml",
+  "{docs,lite}/**/*.py",
+]
+
+[feature.tasks-lint.tasks.lint-ruff]
+depends-on = [{task = "ruff--", environment = "lint"}]
+description = "... check python and notebook source code style"
+
+[feature.tasks-lint.tasks.lint-actionlint]
+cmd = "actionlint -shellcheck=shellcheck -pyflakes=pyflakes"
+description = "... check github actions workflows"
+inputs = [".github/workflows"]
+
+[feature.tasks-lint.tasks.lint-robocop]
+depends-on = [{task = "robocop--", environment = "lint"}]
+description = "... check robot with robocop"
+
+[feature.tasks-lint.tasks.lint-robot]
+depends-on = [{task = "robot--", environment = "lint", args = ["build/reports/robot-dryrun"]}]
+description = "... check robot with robot dry run"
+
+[feature.tasks-lint.tasks.fix-robocop]
+depends-on = [{task = "robocop--", args = [{fix = "1"}], environment = "lint"}]
+description = "... fix robot with robocop"
+
+# atest ###########################################################################################
+[feature.tasks-atest.tasks.atest-lite]
+depends-on = [{task = "robot--", environment = "atest", args = ["build/reports/robot"]}]
+description = "... check demo site with robot"
+
+# check ###########################################################################################
+[feature.tasks-check.tasks.check-links]
+cmd = """rm --recursive --force build/reports/check-links
+  && mkdir --parents build/reports/check-links
+  && cd build/reports/check-links
+  && touch pytest.ini
+  && pytest
+    -vv
+    --config-file pytest.ini
+    -p no:warnings
+    --rootdir=.
+    --check-links
+    --check-anchors
+    --check-links-ignore '^https?://'
+    -k "not (404 or coverage or lite or mypy or Untitled)"
+    ../../../site/**/*.html"""
+depends-on = ["docs-mkdocs"]
+description = "... check github hyperlinks in documentation"
+inputs = ["site/**/*.html"]
+
+[feature.tasks-check.tasks.check-vale]
+cmd = "python docs/vale/check.py"
+depends-on = ["docs-mkdocs"]
+description = "... check spelling in documentation"
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "docs/vale",
+  "site/{index,contributing/}.html",
+  "src/**/*.py",
+  "*.md",
+]
+
+[feature.tasks-check.tasks.check-wheel]
+cmd = "check-wheel-contents dist/*.whl"
+depends-on = ["build-pypi-wheel"]
+description = "... check the built wheel"
+inputs = ["dist/*.whl"]
+
+[feature.tasks-check.tasks.check-twine]
+cmd = "twine check --strict dist/*.whl dist/*.tar.gz"
+depends-on = ["build-pypi"]
+description = "... check the built distributions for PyPI"
+inputs = ["dist/"]
+
+# dev #############################################################################################
+[feature.tasks-dev.tasks.dev-pip]
+depends-on = [{task = "pip-e--", args = [{env = "dev"}]}]
+description = "... prepare for interactive python development"
+
+[feature.tasks-dev.tasks.dev-overrides]
+cmd = """mkdir -p build/jp/app-settings
+  && pixi run pixi-get-json-- tool.jp.overrides > build/jp/app-settings/overrides.json"""
+description = "... build jupyter client app overrides from [tool.jp.overrides]"
+inputs = ["pixi.toml"]
+outputs = ["build/jp/app-settings"]
+
+[feature.tasks-dev.tasks.dev-app--]
+args = ["app"]
+cmd = """jupyter {{ app }}
+    --no-browser
+    --debug
+    --config=docs/jupyter_config.json
+    --LabApp.app_settings_dir=build/jp/app-settings"""
+depends-on = ["dev-overrides", "dev-pip"]
+
+[feature.tasks-dev.tasks.dev-lab]
+depends-on = [{task = "dev-app--", args = [{app = "lab"}]}]
+description = "... launch jupyterlab in the dev environment"
+
+[feature.tasks-dev.tasks.dev-nb]
+depends-on = [{task = "dev-app--", args = [{app = "notebook"}]}]
+description = "... launch jupyter notebook in the dev environment"
+
+# deps ############################################################################################
+
+[feature]
+## singletons #####################################################################################
+deps--oldest.solve-strategy = "lowest-direct"
+deps-build-conda.dependencies.rattler-build = "*"
+deps-run-interactive.dependencies.ipython = ">=7.16.1"
+deps-run-interactive-max.dependencies.ipython = ">=9"
+deps-run-interactive-prev.dependencies.ipython = "<9"
+deps-run-max.dependencies.python = "3.13.*"
+deps-run-next.dependencies.python = "3.14.*"
+deps-run-prev.dependencies.python = "3.12.*"
+deps-run-pypy.dependencies.pypy = "*"
+deps-uv.dependencies.uv = "*"
+
+## compounds ######################################################################################
+[feature.deps-run.dependencies]
+importlib-metadata = ">=4.8.3"
+python = ">=3.9"
+
+[feature.deps-build.dependencies]
+flit-core = ">=3.12,<4"
+lark = ">=1.3.1,<1.4"
+python-build = ">=1.3.0"
+ruff = ">=0.14.7"
+
+[feature.deps-lint.dependencies]
+actionlint-with-all = ">=1.7.11"
+lxml = ">=6.0.2"
+mypy = ">=1.19.0"
+nbstripout = ">=0.8.2"
+robotframework-robocop = ">=6.13.0"
+ruff = ">=0.14.7"
+taplo = ">=0.10.0"
+
+[feature.deps-types.dependencies]
+types-pyyaml = "*"
+
+[feature.deps-test.dependencies]
+ansi2html = "*"
+coverage = "*"
+doit = ">=0.36"
+pytest = ">=7.0"
+pytest-cov = ">=6"
+pytest-html = "*"
+pytest-xdist = "*"
+"ruamel.yaml" = "*"
+setuptools = "<82"
+tomli-w = "*"
+
+[feature.deps-robot.dependencies]
+robotframework = "*"
+robotframework-ghareports = "*"
+robotframework-seleniumlibrary = "*"
+
+[feature.deps-firefox.dependencies]
+firefox = "*"
+geckodriver = "*"
+
+[feature.deps-docs.dependencies]
+click = "<8.3"
+mkdocs-jupyter = "*"
+mkdocs-material = "*"
+mkdocstrings = "*"
+mkdocstrings-python = "*"
+"ruamel.yaml" = "*"
+
+[feature.deps-lab.dependencies]
+ipywidgets = "*"
+jupyterlab = "*"
+notebook = "*"
+
+[feature.deps-ipykernel.dependencies]
+ipykernel = "!=7.0.0a2"
+
+[feature.deps-dev.dependencies]
+jupyterlab-lsp = "*"
+pylsp-mypy = "*"
+python-lsp-ruff = "*"
+vale-ls = "*"
+
+[feature.deps-lite]
+channels = [
+  "conda-forge",
+  ## when evaluating pre-releases, might look something like...
+  # "conda-forge/label/jupyterlab_beta",
+  # "conda-forge/label/notebook_beta",
+  # "conda-forge/label/jupyterlite_core_alpha",
+  # "conda-forge/label/jupyterlite_pyodide_kernel_alpha",
+]
+[feature.deps-lite.dependencies]
+ipywidgets = ">=8.1.8"
+jupyterlab = ">=4.5.0,<5"
+jupyterlite-core = ">=0.7.0,<0.8.0"
+jupyterlite-core-with-lab = "*"
+jupyterlite-core-with-libarchive = "*"
+jupyterlite-core-with-translation = "*"
+jupyterlite-pyodide-kernel = ">=0.7.0,<0.8.0"
+notebook = ">=7.5.0,<8"
+pyodide-lock = "*"
+## when evaluating pre-releases, might look something like...
+# jupyterlab = {version = ">=4.5.0b0", channel = "conda-forge/label/jupyterlab_beta"}
+# jupyterlite-core = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+# jupyterlite-core-with-lab = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+# jupyterlite-core-with-libarchive = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+# jupyterlite-core-with-translation = {version = ">=0.7.0a2", channel = "conda-forge/label/jupyterlite_core_alpha"}
+# jupyterlite-pyodide-kernel = {version = ">=0.7.0a1", channel = "conda-forge/label/jupyterlite_pyodide_kernel_alpha"}
+# notebook = {version = ">=7.5.0b0", channel = "conda-forge/label/notebook_beta"}
+
+[feature.deps-check.dependencies]
+check-wheel-contents = "*"
+pytest-check-links = "*"
+pytest-html = "*"
+twine = "*"
+vale = ">=3.8,<3.9"
+vale-spelling-aoo-mozilla-en-dict-us = "*"
+
+# envs ############################################################################################
+[environments]
+atest = ["deps-robot", "deps-firefox", "tasks-atest"]
+build = ["deps-build", "tasks-build"]
+build-conda = ["deps-build-conda", "tasks-build-conda"]
+check = ["deps-check", "tasks-check"]
+dev = [
+  "deps-build",
+  "deps-check",
+  "deps-dev",
+  "deps-docs",
+  "deps-ipykernel",
+  "deps-lab",
+  "deps-lint",
+  "deps-lite",
+  "deps-robot",
+  "deps-run-interactive-max",
+  "deps-run-interactive",
+  "deps-run-max",
+  "deps-run",
+  "deps-test",
+  "deps-types",
+  "tasks-dev",
+]
+docs = ["deps-build", "deps-docs", "deps-ipykernel", "deps-run", "tasks-docs"]
+lint = [
+  "deps-build",
+  "deps-docs",
+  "deps-ipykernel",
+  "deps-lint",
+  "deps-lite",
+  "deps-robot",
+  "deps-run-interactive-max",
+  "deps-run-interactive",
+  "deps-run-max",
+  "deps-run",
+  "deps-test",
+  "deps-types",
+  "tasks-lint",
+]
+lite = ["deps-lab", "deps-ipykernel", "deps-lite", "tasks-lite"]
+test-max = [
+  "deps-run",
+  "deps-run-interactive",
+  "deps-run-interactive-max",
+  "deps-run-max",
+  "deps-test",
+  "tasks-test-max",
+]
+test-min = ["deps--oldest", "deps-run", "deps-run-interactive", "deps-test", "tasks-test-min"]
+test-min-noipy = ["deps--oldest", "deps-run", "deps-test", "tasks-test-min-noipy"]
+test-next = ["deps-run", "deps-run-next", "deps-test", "tasks-test-next"]
+test-next-noipy = ["deps-run", "deps-run-next", "deps-test", "tasks-test-next-noipy"]
+test-prev = [
+  "deps-run",
+  "deps-run-interactive",
+  "deps-run-interactive-prev",
+  "deps-run-prev",
+  "deps-test",
+  "tasks-test-prev",
+]
+test-pypy = ["deps-run", "deps-run-pypy", "deps-test", "tasks-test-pypy"]
+uv = ["deps-uv"]
+
+# random tool data ################################################################################
+## jupyter client settings overrides ##############################################################
+[tool.jp.overrides."@jupyterlab/apputils-extension:notification"]
+checkForUpdates = false
+doNotDisturbMode = true
+fetchNews = false
+[tool.jp.overrides."@jupyterlab/extensionmanager-extension:plugin"]
+enabled = false
+[tool.jp.overrides."@jupyterlab/notebook-extension:tracker"]
+codeCellConfig = {autoClosingBrackets = true}
+markdownCellConfig = {autoClosingBrackets = true}
+rawCellConfig = {autoClosingBrackets = true}
+windowingMode = "none"

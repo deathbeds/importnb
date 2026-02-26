@@ -1,0 +1,27 @@
+{
+  "jupyter-config-data": {
+    "appName": "importnb",
+    "faviconUrl": "../logo.svg",
+    "fileTypes": {
+      "ipy": {
+        "extensions": [
+          ".ipy"
+        ],
+        "fileFormat": "text",
+        "mimeTypes": [
+          "text/x-ipython"
+        ],
+        "name": "ipy"
+      }
+    },
+    "litePluginSettings": {
+      "@jupyterlite/pyodide-kernel-extension:kernel": {
+        "loadPyodideOptions": {
+          "packages": ["importnb"],
+          "lockFileURL": "./files/pyodide-lock.json"
+        }
+      }
+    }
+  },
+  "jupyter-lite-schema-version": 0
+}

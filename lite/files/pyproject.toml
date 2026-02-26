@@ -1,0 +1,43 @@
+# pytest #######################################################################
+[tool.pytest.ini_options]
+addopts = [
+  # this is required to work with importnb
+  "-pimportnb.utils.pytest_importnb",
+  # print a line per test
+  "-vv",
+  # in the event of an error, print long tracebacks
+  "--tb=long",
+  # pretty
+  "--color=yes",
+  # concise
+  "--no-header",
+  # 💡 avoid race conditions in `/drive`
+  "-pno:cacheprovider",
+]
+filterwarnings = [
+  # ignore warnings from coverage
+  "ignore:.*unclosed database.*:ResourceWarning",
+  "ignore:.*Exception ignored in.*:pytest.PytestUnraisableExceptionWarning",
+  # 💡 we're going to install `pytest-cov` late, so need to pass this with `-o`
+  # "ignore:.*Plugin file tracers.*:coverage.exceptions.CoverageWarning",
+]
+
+# coverage #####################################################################
+[tool.coverage.run]
+data_file = "/tmp/.coverage"
+disable_warnings = ["no-ctracer"]
+plugins = ["importnb.utils.coverage"]
+
+[tool.coverage.html]
+show_contexts = true
+
+[tool.coverage.report]
+exclude_lines = ["""if __name__ == "__main__":""", "if TYPE_CHECKING:", "pragma: no cover"]
+show_missing = true
+skip_covered = true
+
+# sphinx #######################################################################
+## this gets loaded in `conf.py` ###############################################
+[tool.sphinx]
+extensions = ["myst_parser", "sphinx.ext.autodoc", "sphinx_autodoc_typehints"]
+project = "importnb demo"

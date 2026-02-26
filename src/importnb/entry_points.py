@@ -1,53 +1,64 @@
+from __future__ import annotations
+
 import sys
 from contextlib import ExitStack, contextmanager
+from typing import TYPE_CHECKING, Any
+
+__all__ = ("imports",)
 
 # See compatibility note on `group`
 # https://docs.python.org/3/library/importlib.metadata.html#entry-points
-if sys.version_info < (3, 10):
-    from importlib_metadata import entry_points
-else:
+if sys.version_info >= (3, 10):
     from importlib.metadata import entry_points
+else:
+    from importlib_metadata import entry_points
+
+from .loader import Loader  # noqa: TC001
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from types import ModuleType
+
+ENTRY_POINTS: dict[str, type[Loader[ModuleType]] | str] = {}
 
 
-__all__ = ("imports",)
-ENTRY_POINTS = dict()
-
-
-def get_importnb_entry_points():
+def get_importnb_entry_points() -> dict[str, type[Loader[ModuleType]] | str]:
     """Discover the known importnb entry points"""
-    global ENTRY_POINTS
     for ep in entry_points(group="importnb"):
         ENTRY_POINTS[ep.name] = ep.value
     return ENTRY_POINTS
 
 
-def loader_from_alias(alias):
-    """Load an attribute from a module using the entry points value specificaiton"""
+def loader_from_alias(alias: str) -> type[Loader[ModuleType]]:
+    """Load an attribute from a module using the entry points value specification"""
     from importlib import import_module
     from operator import attrgetter
 
     module, _, member = alias.rpartition(":")
     module = import_module(module)
-    return attrgetter(member)(module)
+    loader: type[Loader[ModuleType]] = attrgetter(member)(module)
+    return loader
 
 
-def loader_from_ep(alias):
-    """Discover a loader for an importnb alias or vaue"""
+def loader_from_ep(alias: str) -> type[Loader[ModuleType]]:
+    """Discover a loader for an importnb alias or value"""
     if ":" in alias:
         return loader_from_alias(alias)
 
     if not ENTRY_POINTS:
         get_importnb_entry_points()
 
-    if alias in ENTRY_POINTS:
-        return loader_from_alias(ENTRY_POINTS[alias])
+    aliased = ENTRY_POINTS.get(alias)
+
+    if isinstance(aliased, str):
+        return loader_from_alias(aliased)
 
     raise ValueError(f"{alias} is not a valid loader alias.")
 
 
 @contextmanager
-def imports(*names):
-    """A shortcut to importnb loaders through entrypoints"""
+def imports(*names: str) -> Iterator[Any]:
+    """A shortcut to importnb loaders through entry points"""
     types = set()
     with ExitStack() as stack:
         for name in names:
@@ -58,7 +69,7 @@ def imports(*names):
         yield stack
 
 
-def list_aliases():
+def list_aliases() -> list[str]:
     """List the entry points associated with importnb"""
     if not ENTRY_POINTS:
         get_importnb_entry_points()

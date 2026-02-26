@@ -1,12 +1,17 @@
 version: 2
 
-python:
-  install:
-  - method: pip
-    path: .
-    extra_requirements:
-      - docs
-
-mkdocs:
-  configuration: mkdocs.yml
-  fail_on_warning: false
+build:
+  os: ubuntu-lts-latest
+  tools:
+    # `mambaforge-latest` will now start failing: we just need a working `mamba`
+    python: mambaforge-23.11
+  commands:
+    - git fetch --tags --unshallow
+    - mamba install -c conda-forge -c nodefaults pixi==0.63.2
+    - pixi run build-pypi
+    - pixi run build || echo "we tried"
+    - pixi run test-max-pytest || echo "we tried"
+    - pixi run lint-mypy-src || echo "we tried"
+    - pixi run docs-lite || echo "we tried"
+    - pixi run docs-mkdocs
+    - pixi run --skip-deps docs-rtd

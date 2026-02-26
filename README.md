@@ -2,175 +2,265 @@
 
 if you're here, then there is a chance you have a notebook (`.ipynb`) in a directory saved as `Untitled.ipynb`. it is just sitting there, but what if it could be used as a python module? `importnb` is here to answer that question.
 
-
 ## basic example
-use `importnb`'s  `Notebook` finder and loader to import notebooks as modules
 
-    # with the new api
-    from importnb import imports
-    with imports("ipynb"):
-        import Untitled
+use `importnb`'s `Notebook` finder and loader to import notebooks as modules
 
-    # with the explicit api
-    from importnb import imports
-    with Notebook():
-        import Untitled
+```python
+import importnb
 
+# with the explicit API
 
+with importnb.Notebook():
+    import Untitled
 
+# with the extensible API
+
+with importnb.imports("ipynb"):
+    import Untitled
+```
 
 ### What does this snippet do?
 
 > the snippet begins `with` a context manager that modifies the files python can discover.
-it will find  the `Untitled.ipynb` notebook and import it as a module with `__name__` `Untitled`.
-the `__file__` description will have `.ipynb` as an extension.
+> it will find the `Untitled.ipynb` notebook and import it as a module with the `__name__`
+> of `Untitled`. the `__file__` description will have `.ipynb` as an extension.
 
 maybe when we give notebooks new life they eventually earn a better name than `Untitled`?
 
 ## run a notebook as a script
 
-the `importnb` command line interface mimics python's. it permits running notebooks files, modules, and raw json data.
+the `importnb` command line interface mimics python's. it permits running notebook files, modules, and raw `json` data.
 
 the commands below execute a notebook module and file respectively.
 
-    importnb -m Untitled         # call the Untitled module as __main__
-    importnb Untitled.ipynb      # call the Untitled file as __main__
+```bash
+importnb -m Untitled         # call the Untitled module as __main__
+importnb Untitled.ipynb      # call the Untitled file as __main__
+```
 
 ## installing `importnb`
 
-use either `pip` or `conda/mamba`
+use either `pip` or s`conda/mamba`
 
-    pip install importnb
-    conda install -cconda-forge importnb
-    mamba install -cconda-forge importnb
-
-
+```bash
+pip install importnb
+# or
+conda install -c conda-forge importnb
+# or
+mamba install -c conda-forge importnb
+```
 
 ## `importnb` features
 
-* `importnb.Notebook` offers parameters to customize how modules are imported
-* imports Jupyter notebooks as python modules
-  * fuzzy finding conventions for finding files that are not valid python names
-* works with top-level await statements
-* integration with `pytest`
-* extensible machinery and entry points
-* translates Jupyter notebook files (ie `.ipynb` files) line-for-line to python source providing natural error messages
-* command line interface for running notebooks as python scripts
-* has no required dependencies
+- `importnb.Notebook` offers parameters to customize how modules are imported
+- imports Jupyter notebooks as python modules
+  - fuzzy finding conventions for finding files that are not valid python names
+- works with top-level await statements
+- integration with `pytest`, `IPython`, and `coverage`
+- extensible machinery and entry points
+- translates Jupyter notebook files (i.e. `.ipynb` files) line-for-line to python source providing natural error messages
+- command line interface for running notebooks as python scripts
+- has no required dependencies
 
 ### customizing parameters
 
 the `Notebook` object has a few features that can be toggled:
 
-* `lazy:bool=False` lazy load the module, the namespace is populated when the module is access the first time.
-* `position:int=0` the relative position of the import loader in the `sys.path_hooks`
-* `fuzzy:bool=True` use fuzzy searching syntax when underscores are encountered.
-* `include_markdown_docstring:bool=True` markdown blocks preceding function/class defs become docstrings.
-* `include_magic:bool=True` ignore any ipython magic syntaxes
-* `only_defs:bool=False` import only function and class definitions. ignore intermediate * expressions.
-* `no_magic:bool=False` execute `IPython` magic statements from the loader.
+- `lazy:bool=False` lazy load the module, the namespace is populated when the module is access the first time.
+- `position:int=0` the relative position of the import loader in the `sys.path_hooks`
+- `include_fuzzy_finder:bool=True` use fuzzy searching syntax when underscores are encountered.
+- `include_markdown_docstring:bool=True` markdown blocks preceding a `class` or `def` become docstrings.
+- `include_non_defs:bool=True` import only function and class definitions. ignore intermediate \* expressions.
+- `no_magic:bool=False` execute `IPython` magic statements from the loader.
 
-these features are defined in the `importnb.loader.Interface` class and they can be controlled throught the command line interface.
+some identifying properties of the loader can be customized:
+
+- `name:str | None=None` a module name for the imported source
+- `path:str | None=None` a path to a source file
+- `extensions:tuple[str, ...]=(".ipy", ".ipynb")` file extensions to be considered importable
+- `module_type:type[M]=SourceModule` the class used to store a module
+
+these features are defined in the `importnb.loader.Interface` class and they can be controlled through the command line interface.
 
 ### importing notebooks
 
 the primary goal of this library is to make it easy to reuse python code in notebooks. below are a few ways to invoke python's import system within the context manager.
 
-    with importnb.imports("ipynb"):
-        import Untitled
-        import Untitled as nb
-        __import__("Untitled")
-        from importlib import import_module
-        import_module("Untitled")
+```python
+import importnb
+from importlib import import_module
+
+with importnb.imports("ipynb"):
+    import Untitled
+    import Untitled as nb
+    __import__("Untitled")
+    import_module("Untitled")
+```
 
 #### import data files
 
-there is support for discovering data files. when discovered, data from disk on loaded and stored on the module with rich reprs.
+`importnb` can import more than notebooks. `json`-like data from disk can be
+loaded and stored on the module with rich representations.
 
-    with importnb.imports("toml", "json", "yaml"):
-        pass
+```python
+import importnb
 
-all the available entry points are found with
+with importnb.imports("toml", "json", "yaml"):
+    pass
+```
 
-    from importnb.entry_points import list_aliases
-    list_aliases()
+all the available entry points are found with:
+
+```python
+from importnb.entry_points import list_aliases
+list_aliases()
+```
 
 #### loading directly from file
 
-    Untitled = Notebook.load("Untitled.ipynb")
+```python
+from importnb import Notebook
 
+Untitled = Notebook.load("Untitled.ipynb")
+```
 
 ### fuzzy finding
 
-often notebooks have names that are not valid python files names that are restricted alphanumeric characters and an `_`.  the `importnb` fuzzy finder converts python's import convention into globs that will find modules matching specific patters. consider the statement:
+often notebooks have names that are not valid python files names that are restricted alphanumeric characters and an `_`. the `importnb` fuzzy finder converts python's import convention into globs that will find modules matching specific patters. consider the statement:
 
-    with importnb.Notebook():
-        import U_titl__d                        # U*titl**d.ipynb
+```python
+import importnb
 
-`importnb` translates `U_titl__d` to a glob format that matches the pattern `U*titl**d.ipynb` when searching for the source. that means that `importnb` should fine `Untitled.ipynb` as the source for the import[^unless].
+with importnb.Notebook():
+    import U_titl__d  # U*titl**d.ipynb
+```
 
-    with importnb.Notebook():
-        import _ntitled                        # *ntitled.ipynb
-        import __d                     # **d.ipynb
-        import U__                        # U**.ipynb
+`importnb` translates `U_titl__d` to a glob format that matches the pattern `U*titl**d.ipynb` when searching for the source. that means that `importnb` should find `Untitled.ipynb` as the source for the import.
 
-a primary motivation for this feature is name notebooks as if they were blog posts using the `YYYY-MM-DD-title-here.ipynb` convention. there are a few ways we could this file explicitly. the fuzzy finder syntax could like any of the following:
+```python
+import importnb
 
-    with importnb.Notebook():
-        import __title_here
-        import YYYY_MM_DD_title_here
-        import __MM_DD_title_here
+with importnb.Notebook():
+    import _ntitled   # *ntitled.ipynb
+    import __d        # **d.ipynb
+    import U__        # U**.ipynb
+```
+
+a motivation for this feature is naming notebooks as if they were blog posts using the `YYYY-MM-DD-title-here.ipynb` convention. there are a few ways we could this file explicitly. the fuzzy finder syntax means all of the following are equivalent:
+
+```python
+import importnb
+
+with importnb.Notebook():
+    import __title_here
+    import YYYY_MM_DD_title_here
+    import __MM_DD_title_here
+```
 
 #### fuzzy name ambiguity
 
-it is possible that a fuzzy import may be ambiguous are return multiple files.
-the `importnb` fuzzy finder will prefer the most recently changed file.
+it is possible that a fuzzy import may be ambiguous and return multiple files.
+the `importnb` fuzzy finder will prefer the **most recently changed** file.
 
-ambiguity can be avoided by using more explicit fuzzy imports that will reduce collisions.
-another option is use python's explicit import functions.
+ambiguity can be avoided by using more explicit fuzzy imports to reduce collisions.
+another option is to use python's explicit import functions.
 
+```python
+from importlib import import_module
 
-    with importnb.Notebook():
-        __import__("YYYY-MM-DD-title-here")
-        import_module("YYYY-MM-DD-title-here")
+import importnb
 
+with importnb.Notebook():
+    __import__("YYYY-MM-DD-title-here")
+    import_module("YYYY-MM-DD-title-here")
+```
 
 #### importing your most recently changed notebook
 
 an outcome of resolving the most recently changed is that you can import your most recent notebook with:
 
-        import __                        # **.ipynb
+```python
+import importnb
+with importnb.Notebook():
+    import __                        # **.ipynb
+```
 
 ### integrations
 
 #### `pytest`
 
 since `importnb` transforms notebooks to python documents we can use these as source for tests.
-`importnb`s `pytest` extension is not fancy, it only allows for conventional pytest test discovery.
+`importnb`s `pytest` extension is not fancy, it only allows for conventional `pytest` test discovery, and must be explicitly enabled.
 
-`nbval` is alternative testing tools that validates notebook outputs. this style is near to using notebooks as `doctest` while `importnb` primarily adds the ability to write `unittest`s in notebooks. adding tests to notebooks help preserve them over time.
+<details>
+
+<summary>... to discover tests with <code>importnb</code> installed...</summary>
+
+add one of:
+
+- call the `pytest` CLI with the plugin enabled
+
+  ```bash
+  pytest -pimportnb.utils.pytest_importnb
+  ```
+
+- set the `PYTEST_PLUGINS` environment variable
+
+  ```bash
+  PYTEST_PLUGINS=importnb.utils.pytest_importnb pytest
+  ```
+
+- add to `[tool.pytest.ini_options]` in `pyproject.toml`
+
+  ```toml
+  [tool.pytest.ini_options]
+  addopts = ["-pimportnb.utils.pytest_importnb"]
+  ```
+
+- add to `conftest.py`
+
+  ```python
+  pytest_plugins = [
+      "importnb.utils.pytest_importnb",
+  ]
+  ```
+
+</details>
+
+#### `coverage`
+
+`coverage` can tell you how much of your code runs.
+
+<details>
+
+<summary>... to gather <code>coverage</code> from notebooks ...</summary>
+
+
+- add to `[tool.coverage.run]` in `pyproject.toml`
+
+  ```toml
+  [tool.coverage.run]
+  plugins = ["importnb.utils.coverage"]
+  ```
+
+</details>
 
 #### extensible
 
 the `importnb.Notebook` machinery is extensible. it allows other file formats to be used. for example, `pidgy` uses `importnb` to import `markdown` files as compiled python code.
 
-    class MyLoader(importnb.Notebook): pass
+```python
+import importnb
 
-
----
-
-## developer
-
-```bash
-pip install -e.      # install in development mode
-hatch run test:cov   # test
+class MyLoader(importnb.Notebook):
+    pass
 ```
-
-* `importnb` uses `hatch` for testing in python and `IPython`
 
 ---
 
 ## appendix
+
 ### line-for-line translation and natural error messages
 
 a challenge with Jupyter notebooks is that they are `json` data. this poses problems:
@@ -184,19 +274,17 @@ a challenge with Jupyter notebooks is that they are `json` data. this poses prob
 
 python's `json` module is not pluggable in the way we need to find line numbers. since `importnb` is meant to be dependency free on installation we couldn't look to any other packages like `ujson` or `json5`.
 
-the need for line numbers is enough that we ship a standalone `json` grammar parser. to do this without extra dependencies we use the `lark` grammar package at build time:
-* we've defined a `json.g`ramar
-* we use `hatch` hooks to invoke `lark-standalone` that generates a standalone parser for the grammar. the generated file is shipped with the package.
-  * this code is licensed under the Mozilla Public License 2.0
+the need for line numbers is enough that we ship a stand-alone `json` grammar parser. to do this without extra dependencies we use the `lark` grammar package at build time:
+
+- we've defined a minimal grammar in `json.g`
+- we invoke `lark-standalone` that generates a stand-alone parser for the grammar.
+  - the generated file is shipped with the package.
+  - this code is licensed under the Mozilla Public License 2.0
 
 the result of `importnb` is `json` data translated into vertically sparse, valid python code.
 
 #### reproducibility caution with the fuzzy finder
 
-⚠️ fuzzy finding is not reproducible as your system will change over time. in python, "explicit is better than implicit" so defining strong fuzzy strings is best practice if you MUST use esotric names. an alternative option is to use the `importlib.import_module` machinery
+⚠️ fuzzy finding is not reproducible as your system will change over time. in python, "explicit is better than implicit" so defining strong fuzzy strings is best practice if you MUST use esoteric names. an alternative option is to use the `importlib.import_module` machinery
 
-
-[pip]: #
-[conda]: #
-[mamba]: #
-[pidgy]: #
+[pixi]: https://pixi.sh

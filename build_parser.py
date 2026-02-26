@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+import re
+import shutil
+import subprocess
+import sys
+from functools import partial
+from hashlib import sha256
+from io import StringIO
+from pathlib import Path
+from typing import Any
+
+import lark
+from lark.tools.standalone import (  # type: ignore[attr-defined]
+    build_lalr,
+    gen_standalone,
+    lalr_argparser,
+)
+
+UTF8 = {"encoding": "utf-8"}
+HERE = Path(__file__).parent
+GRAMMAR = HERE / "src/importnb/json.g"
+PARSER = HERE / "src/importnb/_json_parser.py"
+HEADER_STEM = "# importnb sha256="
+G_HASH = sha256(GRAMMAR.read_bytes()).hexdigest()
+HEADER = HEADER_STEM + G_HASH
+RE_HEADER = rf"^{HEADER_STEM}(.*)"
+RE_LARK_VERSION = '__version__ = "(.*?)"'
+RUFF = shutil.which("ruff")
+
+
+def get_lark() -> Any:
+    ns = lalr_argparser.parse_args(["--propagate_positions", f"{GRAMMAR}"])
+    return build_lalr(ns)[0]  # type: ignore[no-untyped-call]
+
+
+def get_standalone() -> str:
+    lark = get_lark()
+    python = StringIO()
+    gen_standalone(lark, partial(print, file=python))  # type: ignore[no-untyped-call]
+    return python.getvalue()
+
+
+def main() -> int:
+    if "--update" in sys.argv and PARSER.exists():
+        parser_text = PARSER.read_text(encoding="utf-8")
+        hash_match = re.findall(RE_HEADER, parser_text)
+        version_match = re.findall(RE_LARK_VERSION, parser_text)
+
+        sys.stderr.write(
+            f"""... lark version         {lark.__version__}\n"""
+            f"""... grammar hash:        {G_HASH}\n"""
+            f"""... parser header:       {hash_match}\n"""
+            f"""... parser lark version: {version_match}\n"""
+        )
+        if (
+            hash_match
+            and hash_match[0] == G_HASH
+            and version_match
+            and version_match[0] == lark.__version__
+        ):
+            sys.stderr.write("... no change\n")
+            return 0
+
+    raw = get_standalone()
+    sys.stderr.write(f"... writing {PARSER}\n")
+    PARSER.write_text("\n".join([HEADER, raw]), **UTF8)
+    if RUFF:
+        sys.stderr.write(f"... formatting with {RUFF}\n")
+        return subprocess.call([*map(str, [RUFF, "format", PARSER])])
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

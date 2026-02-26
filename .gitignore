@@ -1,6 +1,15 @@
 __pycache__/
 .ipynb_checkpoints/
+.pixi/
+.virtual_documents
+*.doit.*
+*.sqlite*
 build/
 dist/
-src/importnb/_json_parser.py
-src/importnb/_version.py
+docs/coverage
+docs/minified.ipynb
+docs/my_package
+docs/mypy
+docs/pytest.html
+site
+lite/files/pyodide-lock.json

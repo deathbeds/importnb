@@ -1,32 +1,14 @@
 """Import jupyter notebooks as python modules and scripts."""
-__all__ = "Notebook", "reload", "imports", "__version__"
 
+from __future__ import annotations
 
-def is_ipython():
-    from sys import modules
-
-    return "IPython" in modules
-
-
-def get_ipython(force=True):
-    if force or is_ipython():
-        try:
-            from IPython import get_ipython
-        except ModuleNotFoundError:
-            return None
-        shell = get_ipython()
-        if shell is None:
-            from IPython import InteractiveShell
-
-            shell = InteractiveShell.instance()
-        return shell
-    return None
-
+__all__ = "Notebook", "__version__", "get_ipython", "imports", "is_ipython", "reload"
 
 import builtins
 
 from ._version import __version__
 from .entry_points import imports
 from .loader import Notebook, reload
+from .utils.ipython import get_ipython, is_ipython
 
-builtins.true, builtins.false, builtins.null = True, False, None
+builtins.true, builtins.false, builtins.null = True, False, None  # type: ignore[attr-defined]

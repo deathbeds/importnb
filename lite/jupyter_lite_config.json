@@ -1,0 +1,14 @@
+{
+  "LiteBuildConfig": {
+    "output_dir": "../build/lite",
+    "cache_dir": "../build/.cache/lite/"
+  },
+  "PipliteAddon": {
+    "piplite_urls": [
+      "../dist"
+    ]
+  },
+  "PyodideAddon": {
+    "pyodide_url": "../build/pyodide-core.tar.bz2"
+  }
+}

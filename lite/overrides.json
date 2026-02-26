@@ -1,0 +1,25 @@
+{
+  "@jupyterlab/notebook-extension:tracker": {
+    "windowingMode": "none"
+  },
+  "@jupyterlab/statusbar-extension:plugin": {
+    "visible": false
+  },
+  "@jupyterlab/filebrowser-extension:browser": {
+    "navigateToCurrentDirectory": false,
+    "useFuzzyFilter": true,
+    "filterDirectories": true,
+    "showLastModifiedColumn": false,
+    "showFileSizeColumn": false,
+    "showHiddenFiles": false,
+    "showFileCheckboxes": false,
+    "showFullPath": false,
+    "sortNotebooksFirst": false
+  },
+  "@jupyter-notebook/application-extension:top": {
+    "visible": "no"
+  },
+  "@jupyterlab/apputils-extension:palette": {
+    "modal": false
+  }
+}
